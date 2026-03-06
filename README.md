@@ -1,6 +1,12 @@
-# ClawPack
+<p align="center">
+  <img src="./assets/logo.png" alt="ClawPack" width="200" />
+</p>
 
-[中文文档](./README_zh.md)
+<h1 align="center">ClawPack</h1>
+
+<p align="center">
+  <a href="./README_zh.md">中文文档</a>
+</p>
 
 ClawPack is an application-layer packaging and distribution tool for [OpenClaw](https://github.com/openclaw/openclaw) agents.
 
