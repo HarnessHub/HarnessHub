@@ -90,10 +90,18 @@ export function printInspectResult(result: Record<string, unknown>, format: Outp
   console.log("--- Structure ---");
   console.log(`  Config:       ${r.structure.hasConfig ? "found" : "missing"}`);
   console.log(`  Workspace:    ${r.structure.hasWorkspace ? "found" : "missing"}`);
+  console.log(`  Workspaces:   ${r.structure.workspaceDirs.length > 0 ? r.structure.workspaceDirs.join(", ") : "none"}`);
+  console.log(`  Agents:       ${r.structure.hasAgents ? `found (${r.structure.agentIds.length}: ${r.structure.agentIds.join(", ")})` : "none"}`);
   console.log(`  Sessions:     ${r.structure.hasSessions ? `found (${r.structure.sessionFiles.length} files)` : "none"}`);
   console.log(`  Memory DB:    ${r.structure.hasMemory ? "found" : "none"}`);
   console.log(`  Credentials:  ${r.structure.hasCredentials ? "found" : "none"}`);
   console.log(`  Skills:       ${r.structure.hasSkills ? `found (${r.structure.skillDirs.length} dirs)` : "none"}`);
+  console.log(`  Cron:         ${r.structure.hasCron ? `found (${r.structure.cronJobs.length} jobs)` : "none"}`);
+  console.log(`  Hooks:        ${r.structure.hasHooks ? "found" : "none"}`);
+  console.log(`  Extensions:   ${r.structure.hasExtensions ? "found" : "none"}`);
+  console.log(`  Logs:         ${r.structure.hasLogs ? "found" : "none"}`);
+  console.log(`  Browser ext:  ${r.structure.hasBrowser ? "found" : "none"}`);
+  console.log(`  Completions:  ${r.structure.hasCompletions ? "found" : "none"}`);
 
   if (r.structure.workspaceFiles.length > 0) {
     console.log("");
@@ -108,11 +116,15 @@ export function printInspectResult(result: Record<string, unknown>, format: Outp
 
   console.log("");
   console.log("--- Sensitive flags ---");
-  console.log(`  API keys:     ${r.sensitiveFlags.hasApiKeys ? "detected" : "none"}`);
-  console.log(`  Credentials:  ${r.sensitiveFlags.hasCredentials ? "detected" : "none"}`);
-  console.log(`  OAuth tokens: ${r.sensitiveFlags.hasOAuthTokens ? "detected" : "none"}`);
-  console.log(`  Sessions:     ${r.sensitiveFlags.hasSessions ? "detected" : "none"}`);
-  console.log(`  Memory DB:    ${r.sensitiveFlags.hasMemoryDb ? "detected" : "none"}`);
+  console.log(`  API keys:       ${r.sensitiveFlags.hasApiKeys ? "detected" : "none"}`);
+  console.log(`  Auth profiles:  ${r.sensitiveFlags.hasAuthProfiles ? "detected" : "none"}`);
+  console.log(`  Credentials:    ${r.sensitiveFlags.hasCredentials ? "detected" : "none"}`);
+  console.log(`  OAuth tokens:   ${r.sensitiveFlags.hasOAuthTokens ? "detected" : "none"}`);
+  console.log(`  WhatsApp creds: ${r.sensitiveFlags.hasWhatsAppCreds ? "detected" : "none"}`);
+  console.log(`  Copilot token:  ${r.sensitiveFlags.hasCopilotToken ? "detected" : "none"}`);
+  console.log(`  Sessions:       ${r.sensitiveFlags.hasSessions ? "detected" : "none"}`);
+  console.log(`  Memory DB:      ${r.sensitiveFlags.hasMemoryDb ? "detected" : "none"}`);
+  console.log(`  .env file:      ${r.sensitiveFlags.hasEnvFile ? "detected" : "none"}`);
 
   console.log("");
   console.log("--- Recommendation ---");

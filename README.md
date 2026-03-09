@@ -55,6 +55,8 @@ Docker can distribute the runtime environment, but it can't express "which parts
                                           "what the agent is"
 ```
 
+ClawPack understands the current OpenClaw layout, including `agents/*`, `workspace-*`, and config-defined workspaces outside the state dir. During import, it rebinds workspace paths in `openclaw.json` to the target directory so multi-agent packs remain runnable after migration.
+
 ## Install
 
 ```bash
@@ -223,6 +225,9 @@ my-agent.clawpack (gzipped tar)
 │                     ├── AGENTS.md
 │                     ├── SOUL.md
 │                     └── skills/
+│
+├── workspaces/ ───── Additional per-agent workspaces
+│                     └── <agentId>/
 │
 ├── state/ ────────── Session & credential data
 │                     (instance packs only)

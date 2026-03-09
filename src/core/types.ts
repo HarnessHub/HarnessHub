@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = "0.1.0";
+export const SCHEMA_VERSION = "0.3.0";
 
 export type PackType = "template" | "instance";
 
@@ -17,16 +17,28 @@ export interface Manifest {
     configPath: string;
   };
   includedPaths: string[];
+  workspaces: WorkspaceBinding[];
   sensitiveFlags: SensitiveFlags;
   riskLevel: RiskLevel;
+}
+
+export interface WorkspaceBinding {
+  agentId: string;
+  logicalPath: string;
+  packPath: string;
+  isDefault: boolean;
 }
 
 export interface SensitiveFlags {
   hasCredentials: boolean;
   hasApiKeys: boolean;
   hasOAuthTokens: boolean;
+  hasAuthProfiles: boolean;
+  hasWhatsAppCreds: boolean;
+  hasCopilotToken: boolean;
   hasSessions: boolean;
   hasMemoryDb: boolean;
+  hasEnvFile: boolean;
 }
 
 export interface InspectResult {
@@ -49,10 +61,20 @@ export interface InstanceStructure {
   hasMemory: boolean;
   hasCredentials: boolean;
   hasSkills: boolean;
+  hasAgents: boolean;
+  hasCron: boolean;
+  hasHooks: boolean;
+  hasExtensions: boolean;
+  hasLogs: boolean;
+  hasBrowser: boolean;
+  hasCompletions: boolean;
+  workspaceDirs: string[];
   workspaceFiles: string[];
   configFiles: string[];
   sessionFiles: string[];
   skillDirs: string[];
+  agentIds: string[];
+  cronJobs: string[];
 }
 
 export interface VerifyResult {

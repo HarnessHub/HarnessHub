@@ -1,28 +1,49 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { pipeline } from "node:stream/promises";
 import * as tar from "tar";
-import type { Manifest, PackType, SensitiveFlags, RiskLevel } from "./types.js";
+import JSON5 from "json5";
+import type { Manifest, PackType, SensitiveFlags, RiskLevel, WorkspaceBinding } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
-import { inspect, resolveStateDir, findConfigFile } from "./scanner.js";
+import { inspect, resolveStateDir, findConfigFile, resolveWorkspaceBindings } from "./scanner.js";
 
-// Files/dirs to exclude from template packs
+// Files/dirs to exclude from template packs (security-critical)
 const TEMPLATE_EXCLUDES = [
+  // Credentials
   "credentials",
+  "auth-profiles.json",
+  "auth.json",
   "oauth.json",
-  "sessions-*.json5",
+  "creds.json",
+  "creds.json.bak",
+  "github-copilot.token.json",
+  ".env",
+  // Sessions and transcripts
+  "sessions.json",
+  "*.jsonl",
+  "*.jsonl.lock",
+  // Databases
   "*.db",
   "*.sqlite",
   "*.lance",
-  ".env",
+  // Memory and QMD
+  "qmd",
+  // Cron run logs (jobs.json config is ok, run history is not)
+  "runs",
+  // Lock files
+  "*.lock",
 ];
 
-// Files/dirs to always exclude (security)
+// Files/dirs to always exclude
 const ALWAYS_EXCLUDE = [
   "*.log",
   ".git",
   "node_modules",
+  ".clawpack-staging",
+  ".clawpack-import-*",
+  // Backup rotation files (not needed for packaging)
+  "*.bak",
+  "*.bak.*",
 ];
 
 function generatePackId(): string {
@@ -31,12 +52,14 @@ function generatePackId(): string {
 
 function assessRisk(sensitive: SensitiveFlags, packType: PackType): RiskLevel {
   if (packType === "instance") {
-    if (sensitive.hasCredentials || sensitive.hasOAuthTokens || sensitive.hasApiKeys) {
+    if (sensitive.hasCredentials || sensitive.hasOAuthTokens ||
+        sensitive.hasApiKeys || sensitive.hasAuthProfiles ||
+        sensitive.hasWhatsAppCreds || sensitive.hasCopilotToken) {
       return "trusted-migration-only";
     }
     return "internal-only";
   }
-  if (sensitive.hasApiKeys || sensitive.hasCredentials) {
+  if (sensitive.hasApiKeys || sensitive.hasCredentials || sensitive.hasAuthProfiles) {
     return "internal-only";
   }
   return "safe-share";
@@ -44,16 +67,19 @@ function assessRisk(sensitive: SensitiveFlags, packType: PackType): RiskLevel {
 
 function shouldExclude(relativePath: string, packType: PackType): boolean {
   const basename = path.basename(relativePath);
+  const parts = relativePath.split(path.sep);
 
   for (const pattern of ALWAYS_EXCLUDE) {
     if (matchGlob(basename, pattern)) return true;
+    // Also check directory names in the path
+    if (parts.some(p => matchGlob(p, pattern))) return true;
   }
 
   if (packType === "template") {
     for (const pattern of TEMPLATE_EXCLUDES) {
-      if (matchGlob(basename, pattern) || matchGlob(relativePath, pattern)) {
-        return true;
-      }
+      if (matchGlob(basename, pattern)) return true;
+      // Check if any directory component matches (e.g. "credentials" dir)
+      if (parts.some(p => matchGlob(p, pattern))) return true;
     }
   }
 
@@ -70,7 +96,8 @@ function matchGlob(str: string, pattern: string): boolean {
 function collectFiles(
   dir: string,
   relativeTo: string,
-  packType: PackType
+  packType: PackType,
+  skipTopLevelDirs: ReadonlySet<string> = new Set()
 ): string[] {
   if (!fs.existsSync(dir)) return [];
   const results: string[] = [];
@@ -80,6 +107,14 @@ function collectFiles(
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
       const relPath = path.relative(relativeTo, fullPath);
+
+      if (
+        currentDir === dir &&
+        entry.isDirectory() &&
+        skipTopLevelDirs.has(entry.name)
+      ) {
+        continue;
+      }
 
       if (shouldExclude(relPath, packType)) continue;
 
@@ -95,10 +130,61 @@ function collectFiles(
   return results;
 }
 
+/** Determine pack subdirectory for a given source-relative path */
+function classifyPath(relPath: string): string {
+  const parts = relPath.split(path.sep);
+
+  // workspace/ → workspace/
+  if (parts[0] === "workspace") return relPath;
+
+  // agents/<id>/agent/auth-profiles.json, models.json → state/ (instance) or skip
+  // agents/<id>/sessions/ → state/
+  // agents/ subtree preserves structure under state/
+  if (parts[0] === "agents") return path.join("state", relPath);
+
+  // credentials/ → state/
+  if (parts[0] === "credentials") return path.join("state", relPath);
+
+  // cron/ → state/
+  if (parts[0] === "cron") return path.join("state", relPath);
+
+  // memory/ → state/
+  if (parts[0] === "memory") return path.join("state", relPath);
+
+  // hooks/, extensions/, skills/ → config/
+  if (parts[0] === "hooks" || parts[0] === "extensions" || parts[0] === "skills") {
+    return path.join("config", relPath);
+  }
+
+  // completions/ → config/
+  if (parts[0] === "completions") return path.join("config", relPath);
+
+  // Config files at root level
+  const configExts = [".json", ".json5"];
+  const ext = path.extname(relPath);
+  if (parts.length === 1 && configExts.includes(ext)) {
+    return path.join("config", relPath);
+  }
+
+  // .env at root → state/ (only in instance packs)
+  if (parts.length === 1 && relPath === ".env") {
+    return path.join("state", relPath);
+  }
+
+  // Everything else → state/
+  return path.join("state", relPath);
+}
+
 interface ExportOptions {
   sourcePath?: string;
   outputPath?: string;
   packType: PackType;
+}
+
+interface CollectedFile {
+  sourcePath: string;
+  archivePath: string;
+  manifestPath: string;
 }
 
 interface ExportResult {
@@ -110,6 +196,7 @@ interface ExportResult {
 
 export async function exportPack(options: ExportOptions): Promise<ExportResult> {
   const stateDir = resolveStateDir(options.sourcePath);
+  const configPath = findConfigFile(stateDir);
   if (!fs.existsSync(stateDir)) {
     throw new Error(`OpenClaw state directory not found: ${stateDir}`);
   }
@@ -120,13 +207,47 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
   }
 
   const packType = options.packType;
-  const includedPaths = collectFiles(stateDir, stateDir, packType);
+  const resolvedWorkspaceBindings = resolveWorkspaceBindings(stateDir, configPath);
+  const workspaceBindings = resolvedWorkspaceBindings.map<WorkspaceBinding>((binding) => ({
+    agentId: binding.agentId,
+    logicalPath: binding.logicalPath,
+    packPath: binding.packPath,
+    isDefault: binding.isDefault,
+  }));
+  const workspaceDirNames = new Set(
+    resolvedWorkspaceBindings
+      .filter((binding) => path.dirname(binding.sourcePath) === stateDir)
+      .map((binding) => path.basename(binding.sourcePath))
+  );
+
+  const filesToExport: CollectedFile[] = [];
+  const stateFiles = collectFiles(stateDir, stateDir, packType, workspaceDirNames);
+  for (const relPath of stateFiles) {
+    filesToExport.push({
+      sourcePath: path.join(stateDir, relPath),
+      archivePath: classifyPath(relPath),
+      manifestPath: relPath.split(path.sep).join("/"),
+    });
+  }
+
+  for (const binding of resolvedWorkspaceBindings) {
+    const workspaceFiles = collectFiles(binding.sourcePath, binding.sourcePath, packType);
+    for (const relPath of workspaceFiles) {
+      const normalizedRelPath = relPath.split(path.sep).join("/");
+      filesToExport.push({
+        sourcePath: path.join(binding.sourcePath, relPath),
+        archivePath: path.posix.join(binding.packPath, normalizedRelPath),
+        manifestPath: path.posix.join(binding.logicalPath, normalizedRelPath),
+      });
+    }
+  }
+
+  const includedPaths = filesToExport.map((file) => file.manifestPath);
 
   if (includedPaths.length === 0) {
     throw new Error("No files to export");
   }
 
-  const configPath = findConfigFile(stateDir);
   const manifest: Manifest = {
     schemaVersion: SCHEMA_VERSION,
     packType,
@@ -138,6 +259,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       configPath: configPath ? path.relative(stateDir, configPath) : "",
     },
     includedPaths,
+    workspaces: workspaceBindings,
     sensitiveFlags: inspectResult.sensitiveFlags,
     riskLevel: assessRisk(inspectResult.sensitiveFlags, packType),
   };
@@ -156,48 +278,26 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       JSON.stringify(manifest, null, 2)
     );
 
-    // Create pack directory structure
+    // Create base pack directories
     const packDirs = ["config", "workspace", "reports"];
     if (packType === "instance") packDirs.push("state");
+    if (workspaceBindings.some((binding) => !binding.isDefault)) {
+      packDirs.push("workspaces");
+    }
 
     for (const dir of packDirs) {
       fs.mkdirSync(path.join(stagingDir, dir), { recursive: true });
     }
 
-    // Copy files into pack structure
+    // Copy files into pack structure, preserving directory hierarchy
     let totalSize = 0;
-    for (const relPath of includedPaths) {
-      const srcFile = path.join(stateDir, relPath);
-      let destDir: string;
+    for (const file of filesToExport) {
+      const srcFile = file.sourcePath;
+      const destRelPath = file.archivePath;
+      const destFile = path.join(stagingDir, destRelPath);
 
-      if (relPath.startsWith("workspace")) {
-        destDir = path.join(stagingDir, "workspace");
-        const subPath = path.relative("workspace", relPath);
-        const destFile = path.join(destDir, subPath);
-        fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(srcFile, destFile);
-      } else if (relPath.endsWith(".json") || relPath.endsWith(".json5") || relPath === ".env") {
-        if (relPath.startsWith("sessions-")) {
-          destDir = path.join(stagingDir, "state");
-        } else {
-          destDir = path.join(stagingDir, "config");
-        }
-        const destFile = path.join(destDir, path.basename(relPath));
-        fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(srcFile, destFile);
-      } else if (relPath.startsWith("credentials")) {
-        destDir = path.join(stagingDir, "state", "credentials");
-        fs.mkdirSync(destDir, { recursive: true });
-        const destFile = path.join(destDir, path.basename(relPath));
-        fs.copyFileSync(srcFile, destFile);
-      } else {
-        // Other files go to state/
-        destDir = path.join(stagingDir, "state");
-        const destFile = path.join(destDir, relPath);
-        fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(srcFile, destFile);
-      }
-
+      fs.mkdirSync(path.dirname(destFile), { recursive: true });
+      fs.copyFileSync(srcFile, destFile);
       totalSize += fs.statSync(srcFile).size;
     }
 
@@ -206,7 +306,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       exportedAt: manifest.createdAt,
       packType,
       packId: manifest.packId,
-      fileCount: includedPaths.length,
+      fileCount: filesToExport.length,
       totalSize,
       riskLevel: manifest.riskLevel,
       sensitiveFlags: manifest.sensitiveFlags,
@@ -230,9 +330,8 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       fs.readdirSync(stagingDir)
     );
 
-    return { outputFile, manifest, fileCount: includedPaths.length, totalSize };
+    return { outputFile, manifest, fileCount: filesToExport.length, totalSize };
   } finally {
-    // Cleanup staging
     fs.rmSync(stagingDir, { recursive: true, force: true });
   }
 }
@@ -255,7 +354,6 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     throw new Error(`Pack file not found: ${packFile}`);
   }
 
-  // Extract to temp directory first
   const tempDir = path.join(
     path.dirname(packFile),
     `.clawpack-import-${Date.now()}`
@@ -265,22 +363,29 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
   try {
     await tar.extract({ file: packFile, cwd: tempDir });
 
-    // Read manifest
     const manifestPath = path.join(tempDir, "manifest.json");
     if (!fs.existsSync(manifestPath)) {
       throw new Error("Invalid ClawPack: manifest.json not found");
     }
 
-    const manifest: Manifest = JSON.parse(
-      fs.readFileSync(manifestPath, "utf-8")
-    );
+    const parsedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Partial<Manifest>;
+    const manifest: Manifest = {
+      ...parsedManifest,
+      workspaces: Array.isArray(parsedManifest.workspaces) ? parsedManifest.workspaces : [],
+    } as Manifest;
 
-    // Determine target directory
     const targetDir = options.targetPath
       ? path.resolve(options.targetPath)
       : resolveStateDir();
 
     const warnings: string[] = [];
+
+    // Schema version check
+    if (manifest.schemaVersion !== SCHEMA_VERSION) {
+      warnings.push(
+        `Schema version mismatch: pack is ${manifest.schemaVersion}, expected ${SCHEMA_VERSION}. Import may be incomplete.`
+      );
+    }
 
     if (manifest.riskLevel === "trusted-migration-only") {
       warnings.push(
@@ -288,7 +393,6 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
       );
     }
 
-    // Check if target already exists
     if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
       warnings.push(
         `Target directory ${targetDir} is not empty. Files may be overwritten.`
@@ -297,40 +401,31 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
     fs.mkdirSync(targetDir, { recursive: true });
 
-    // Restore workspace
+    // Restore workspace/ → workspace/
     const wsSource = path.join(tempDir, "workspace");
     if (fs.existsSync(wsSource)) {
       copyDirRecursive(wsSource, path.join(targetDir, "workspace"));
     }
 
-    // Restore config
+    const workspacesSource = path.join(tempDir, "workspaces");
+    if (fs.existsSync(workspacesSource)) {
+      restoreAgentWorkspaces(workspacesSource, targetDir);
+    }
+
+    // Restore config/ → root level (config files go to stateDir root)
     const configSource = path.join(tempDir, "config");
     if (fs.existsSync(configSource)) {
-      const configFiles = fs.readdirSync(configSource);
-      for (const file of configFiles) {
-        fs.copyFileSync(
-          path.join(configSource, file),
-          path.join(targetDir, file)
-        );
-      }
+      restoreConfigDir(configSource, targetDir);
     }
 
-    // Restore state (instance packs only)
+    // Restore state/ → preserving nested structure
     const stateSource = path.join(tempDir, "state");
     if (fs.existsSync(stateSource)) {
-      const stateEntries = fs.readdirSync(stateSource, { withFileTypes: true });
-      for (const entry of stateEntries) {
-        const src = path.join(stateSource, entry.name);
-        const dest = path.join(targetDir, entry.name);
-        if (entry.isDirectory()) {
-          copyDirRecursive(src, dest);
-        } else {
-          fs.copyFileSync(src, dest);
-        }
-      }
+      restoreStateDir(stateSource, targetDir);
     }
 
-    // Count imported files
+    rebindWorkspaceConfig(targetDir, manifest, warnings);
+
     let fileCount = 0;
     function countFiles(dir: string) {
       if (!fs.existsSync(dir)) return;
@@ -345,6 +440,105 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+}
+
+function restoreAgentWorkspaces(workspacesSource: string, targetDir: string) {
+  const entries = fs.readdirSync(workspacesSource, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    copyDirRecursive(
+      path.join(workspacesSource, entry.name),
+      path.join(targetDir, `workspace-${entry.name}`)
+    );
+  }
+}
+
+/** Restore config directory: root-level configs go to stateDir root,
+ *  subdirectories (hooks/, extensions/, etc.) preserve structure */
+function restoreConfigDir(configSource: string, targetDir: string) {
+  const entries = fs.readdirSync(configSource, { withFileTypes: true });
+  for (const entry of entries) {
+    const src = path.join(configSource, entry.name);
+    if (entry.isDirectory()) {
+      // Subdirectories like hooks/, extensions/ go to targetDir/<name>/
+      copyDirRecursive(src, path.join(targetDir, entry.name));
+    } else {
+      // Root config files go directly to targetDir/
+      fs.copyFileSync(src, path.join(targetDir, entry.name));
+    }
+  }
+}
+
+/** Restore state directory preserving nested structure:
+ *  state/agents/<id>/... → agents/<id>/...
+ *  state/credentials/... → credentials/...
+ *  state/<file> → <file> */
+function restoreStateDir(stateSource: string, targetDir: string) {
+  const entries = fs.readdirSync(stateSource, { withFileTypes: true });
+  for (const entry of entries) {
+    const src = path.join(stateSource, entry.name);
+    const dest = path.join(targetDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(src, dest);
+    } else {
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(src, dest);
+    }
+  }
+}
+
+function rebindWorkspaceConfig(targetDir: string, manifest: Manifest, warnings: string[]) {
+  const configPath = findConfigFile(targetDir);
+  if (!configPath || manifest.workspaces.length === 0) return;
+
+  let parsed: any;
+  try {
+    parsed = JSON5.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch {
+    warnings.push(`Could not parse config for workspace rebinding: ${path.basename(configPath)}`);
+    return;
+  }
+
+  if (!parsed || typeof parsed !== "object") return;
+
+  if (!parsed.agents || typeof parsed.agents !== "object") {
+    parsed.agents = {};
+  }
+  if (!parsed.agents.defaults || typeof parsed.agents.defaults !== "object") {
+    parsed.agents.defaults = {};
+  }
+  if (!Array.isArray(parsed.agents.list)) {
+    parsed.agents.list = [];
+  }
+
+  let changed = false;
+
+  for (const workspace of manifest.workspaces) {
+    const targetWorkspacePath = workspace.isDefault
+      ? path.join(targetDir, "workspace")
+      : path.join(targetDir, workspace.logicalPath);
+
+    if (workspace.isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
+      parsed.agents.defaults.workspace = targetWorkspacePath;
+      changed = true;
+    }
+
+    const agentEntry = parsed.agents.list.find((entry: any) => {
+      const id = typeof entry?.id === "string" ? entry.id.trim().toLowerCase() : "";
+      return id === workspace.agentId;
+    });
+    if (agentEntry && agentEntry.workspace !== targetWorkspacePath) {
+      agentEntry.workspace = targetWorkspacePath;
+      changed = true;
+    }
+  }
+
+  if (!changed) return;
+
+  fs.writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`);
+  warnings.push(
+    `Rebound workspace paths in ${path.basename(configPath)} to ${targetDir}; JSON5 formatting/comments were normalized.`
+  );
 }
 
 function copyDirRecursive(src: string, dest: string) {

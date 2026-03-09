@@ -53,6 +53,8 @@ Docker 能分发运行环境，但无法表达"哪些是模板、哪些是状态
                                           "Agent 是什么"
 ```
 
+ClawPack 已按当前 OpenClaw 目录模型处理 `agents/*`、`workspace-*` 以及配置里声明在 state dir 之外的 workspace。导入时会把 `openclaw.json` 里的 workspace 路径重绑到目标目录，避免多 agent 包迁移后仍指向旧机器路径。
+
 ## 安装
 
 ```bash
@@ -222,6 +224,9 @@ my-agent.clawpack (gzip 压缩的 tar)
 │                     ├── AGENTS.md
 │                     ├── SOUL.md
 │                     └── skills/
+│
+├── workspaces/ ───── 额外的按 agent 拆分工作区
+│                     └── <agentId>/
 │
 ├── state/ ────────── 会话与凭证数据
 │                     (仅 instance 包)
