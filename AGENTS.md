@@ -51,7 +51,7 @@ Harness and workflow support lives in:
 
 ## Key Concepts
 
-- **PackType**: `"template"` (excludes secrets, safe to share) vs `"instance"` (full migration, includes everything)
+- **PackType**: `"template"` (excludes known secrets and is share-oriented) vs `"instance"` (full migration, includes everything)
 - **RiskLevel**: `"safe-share"` | `"internal-only"` | `"trusted-migration-only"`
 - **State directory**: defaults to `~/.openclaw`, auto-detected from several known names
 

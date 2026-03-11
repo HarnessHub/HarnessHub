@@ -159,15 +159,15 @@ clawpack import my-agent.clawpack -t ./target  # 指定目标目录
 
 ### `clawpack verify`
 
-检查导入后的实例是否结构完整、基础可用。
+检查导入后的实例是否结构完整、基础可读。如果目标目录里存在持久化的导入 manifest，`verify` 还会附带执行 manifest 相关检查。
 
 ```
  ~/.openclaw/
  ├── config/  ✓        clawpack verify
  ├── workspace/  ✓   ─────────────────▶   所有检查通过  ✓
  ├── AGENTS.md  ✓                          - 目录存在
- └── state/  ✓                             - manifest 有效
-                                           - 工作区完整
+ └── state/  ✓                             - 工作区完整
+                                           - manifest 检查（若导入 manifest 可用）
 ```
 
 ```bash
@@ -201,10 +201,10 @@ clawpack verify -p /path/to/dir  # 指定路径
 
 | 类型 | 用途 | 包含内容 | 风险等级 |
 |------|------|----------|----------|
-| **template** | 分享与复用 | 工作区、非敏感配置 | `safe-share` |
-| **instance** | 完整迁移 | 配置、工作区、状态、凭证 | `trusted-migration-only` |
+| **template** | 分享与复用 | 工作区、非敏感配置 | 面向分享；manifest 风险仍取决于源实例检测到的敏感信号 |
+| **instance** | 完整迁移 | 配置、工作区、状态、凭证 | 当包含凭证或状态时通常为 `trusted-migration-only` |
 
-模板包会自动排除凭证、会话数据、记忆数据库和 `.env` 文件。
+模板包会自动排除凭证、会话数据、记忆数据库和 `.env` 文件，但 manifest 仍会记录源实例中检测到的敏感信号。
 
 ## 包格式
 
@@ -253,6 +253,8 @@ my-agent.clawpack (gzip 压缩的 tar)
 | `safe-share` | 无敏感数据，可安全分发 |
 | `internal-only` | 可能包含非关键配置，仅限团队内部分享 |
 | `trusted-migration-only` | 包含凭证或状态数据，仅限受信任环境导入 |
+
+风险等级来自导出 manifest 中记录的检测结果与敏感信号，并不只由 `template` / `instance` 类型本身决定。
 
 ## 输出格式
 
