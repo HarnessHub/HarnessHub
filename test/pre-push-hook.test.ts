@@ -18,6 +18,7 @@ function prepareRepo() {
   git(repo, "config", "user.name", "Test User");
   git(repo, "config", "user.email", "test@example.com");
   git(repo, "remote", "add", "origin", "git@github.com:test/clawpack.git");
+  git(repo, "remote", "add", "upstream", "https://github.com/Mrxuexi/clawpack.git");
 
   const sourceRoot = "/workspace/02-projects/active/clawpack";
   fs.mkdirSync(path.join(repo, ".githooks"), { recursive: true });
@@ -111,6 +112,66 @@ describe("pre-push hook", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("matching task file is not marked done");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("blocks stale review proof mismatches", () => {
+    const { repo, binDir } = prepareRepo();
+    fs.writeFileSync(
+      path.join(repo, ".codex-review-proof"),
+      "branch=issue-42-bootstrap\nhead_sha=deadbeef\nbase_ref=main\ngenerated_at=2026-03-12T00:00:00Z\n",
+      "utf8"
+    );
+
+    const result = spawnSync(path.join(repo, ".githooks", "pre-push"), [], {
+      cwd: repo,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        BYPASS_BRANCH_FRESHNESS_CHECK: "1",
+        CLAWPACK_BASE_REF: "main",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("does not match the current HEAD");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("blocks reusing a branch whose PR already merged", () => {
+    const { repo, binDir } = prepareRepo();
+    fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "pr" && "$2" == "list" ]]; then
+  echo '[{"number":4,"url":"https://github.com/Mrxuexi/clawpack/pull/4"}]'
+  exit 0
+fi
+if [[ "$1" == "pr" && "$2" == "view" ]]; then
+  printf 'Closes #42'
+  exit 0
+fi
+echo "unexpected gh invocation: $*" >&2
+exit 1
+`, "utf8");
+    fs.chmodSync(path.join(binDir, "gh"), 0o755);
+    const taskPath = path.join(repo, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+    const taskText = fs.readFileSync(taskPath, "utf8").replace("status: in_progress", "status: done");
+    fs.writeFileSync(taskPath, taskText, "utf8");
+
+    const result = spawnSync(path.join(repo, ".githooks", "pre-push"), [], {
+      cwd: repo,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        BYPASS_BRANCH_FRESHNESS_CHECK: "1",
+        CLAWPACK_BASE_REF: "main",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("already has a merged PR");
     fs.rmSync(repo, { recursive: true, force: true });
   });
 });
