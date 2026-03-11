@@ -148,6 +148,21 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       message: `Pack type: ${manifest.packType}`,
     });
 
+    const hasHarnessMetadata =
+      manifest.harness?.intent === "agent-runtime-environment" &&
+      typeof manifest.harness?.targetProduct === "string" &&
+      manifest.harness.targetProduct.length > 0;
+    checks.push({
+      name: "manifest_harness",
+      passed: hasHarnessMetadata,
+      message: hasHarnessMetadata
+        ? `Harness intent: ${manifest.harness.intent} for ${manifest.harness.targetProduct}`
+        : "Manifest harness metadata missing or invalid",
+    });
+    if (!hasHarnessMetadata) {
+      warnings.push("Pack manifest does not describe a reusable agent runtime environment");
+    }
+
     if (manifestWorkspaces.length > 0) {
       const missingWorkspace = manifestWorkspaces.find((workspace) => {
         const logicalPath = workspace.isDefault ? "workspace" : workspace.logicalPath;

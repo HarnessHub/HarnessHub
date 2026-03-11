@@ -3,7 +3,15 @@ import path from "node:path";
 import crypto from "node:crypto";
 import * as tar from "tar";
 import JSON5 from "json5";
-import type { Manifest, PackType, SensitiveFlags, RiskLevel, WorkspaceBinding } from "./types.js";
+import type {
+  HarnessComponent,
+  HarnessMetadata,
+  Manifest,
+  PackType,
+  RiskLevel,
+  SensitiveFlags,
+  WorkspaceBinding,
+} from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { inspect, resolveStateDir, findConfigFile, resolveWorkspaceBindings } from "./scanner.js";
 
@@ -175,6 +183,40 @@ function classifyPath(relPath: string): string {
   return path.join("state", relPath);
 }
 
+function hasIncludedPath(includedPaths: readonly string[], pattern: RegExp): boolean {
+  return includedPaths.some((includedPath) => pattern.test(includedPath));
+}
+
+function deriveHarnessComponents(includedPaths: readonly string[], configPath: string | null): HarnessComponent[] {
+  const componentChecks: Array<[HarnessComponent, boolean]> = [
+    ["workspace", hasIncludedPath(includedPaths, /^workspace(?:-[^/]+)?\//)],
+    ["config", Boolean(configPath)],
+    ["skills", hasIncludedPath(includedPaths, /^workspace(?:-[^/]+)?\/skills\//)],
+    ["agents", hasIncludedPath(includedPaths, /^agents\//)],
+    ["credentials", hasIncludedPath(includedPaths, /^credentials\//) || hasIncludedPath(includedPaths, /^agents\/[^/]+\/agent\/auth-profiles\.json$/)],
+    ["sessions", hasIncludedPath(includedPaths, /^agents\/[^/]+\/sessions\//) || hasIncludedPath(includedPaths, /^sessions-[^/]+\.(json|json5)$/)],
+    ["memory", hasIncludedPath(includedPaths, /^memory\//) || hasIncludedPath(includedPaths, /^[^/]+\.(db|sqlite|lance)$/)],
+    ["cron", hasIncludedPath(includedPaths, /^cron\//)],
+    ["hooks", hasIncludedPath(includedPaths, /^hooks\//)],
+    ["extensions", hasIncludedPath(includedPaths, /^extensions\//)],
+    ["logs", hasIncludedPath(includedPaths, /^logs\//)],
+    ["browser", hasIncludedPath(includedPaths, /^browser\//)],
+    ["completions", hasIncludedPath(includedPaths, /^completions\//)],
+  ];
+
+  return componentChecks
+    .filter(([, present]) => present)
+    .map(([component]) => component);
+}
+
+function createHarnessMetadata(includedPaths: readonly string[], configPath: string | null, targetProduct: string): HarnessMetadata {
+  return {
+    intent: "agent-runtime-environment",
+    targetProduct,
+    components: deriveHarnessComponents(includedPaths, configPath),
+  };
+}
+
 interface ExportOptions {
   sourcePath?: string;
   outputPath?: string;
@@ -253,6 +295,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     packType,
     packId: generatePackId(),
     createdAt: new Date().toISOString(),
+    harness: createHarnessMetadata(includedPaths, configPath, inspectResult.product),
     source: {
       product: "openclaw",
       version: inspectResult.version || "unknown",
@@ -371,6 +414,12 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     const parsedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Partial<Manifest>;
     const manifest: Manifest = {
       ...parsedManifest,
+      harness: parsedManifest.harness ?? createHarnessMetadata(
+        Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],
+        parsedManifest.source?.configPath ? parsedManifest.source.configPath : null,
+        parsedManifest.source?.product ?? "openclaw"
+      ),
+      includedPaths: Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],
       workspaces: Array.isArray(parsedManifest.workspaces) ? parsedManifest.workspaces : [],
     } as Manifest;
 
