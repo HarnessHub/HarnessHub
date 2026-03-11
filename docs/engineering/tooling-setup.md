@@ -10,6 +10,10 @@ The repository now includes:
 - `scripts/run-cli-smoke.sh` for the standard CLI smoke validation path
 - `node scripts/codex-pm.mjs issue-state-init <task-path>` for preserving issue-scoped state across longer work
 
+For the full daily workflow and repository rules, see:
+
+- `docs/engineering/repository-governance.md`
+
 To enable the local hook:
 
 ```bash
@@ -44,6 +48,13 @@ For the standard local readiness pass before push, run:
 ```
 
 This checks the local review note, review proof, issue-state, build, tests, and local PR closure sync when `gh` can resolve the current PR body.
+
+A normal issue-scoped path is:
+
+1. `./scripts/run-codex-review-checkpoint.sh`
+2. update `.codex-review`
+3. `./scripts/run-agent-preflight.sh`
+4. open the PR generated from the matching local task twin
 
 Set `CLAWPACK_PREFLIGHT_RUN_SMOKE=1` if you also want the CLI smoke path included in the same pass.
 

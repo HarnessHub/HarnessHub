@@ -3,10 +3,11 @@ type: task
 epic: repository-harness
 slug: document-harness-governance
 title: Document repository harness governance and daily workflow
-status: backlog
+status: done
 task_type: docs
 labels: docs,tooling
-issue: 6
+issue: 7
+state_path: .codex/pm/issue-state/7-document-harness-governance.md
 ---
 
 ## Context
