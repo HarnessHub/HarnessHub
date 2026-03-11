@@ -11,6 +11,10 @@ ClawPack is an application-layer packaging and distribution CLI for OpenClaw age
 ```bash
 npm run build          # compile TypeScript (tsc)
 npm test               # run all tests (vitest run)
+npm run preflight      # build + tests + local harness checks
+npm run smoke          # CLI smoke validation
+npm run review:checkpoint  # create/update .codex-review + proof
+npm run pm -- init     # initialize local PM workspace
 npm run test:watch     # run tests in watch mode
 npx vitest run test/e2e.test.ts              # run a single test file
 npx vitest run -t "exports a template pack"  # run a single test by name
@@ -37,6 +41,14 @@ src/utils/
 
 Tests are in `test/e2e.test.ts` — a single file that tests the core modules directly (scanner, packer, verifier) using temp directories.
 
+Harness and workflow support lives in:
+
+- `.codex/skills/ccpm-codex/` — local issue-task-PR workflow guidance
+- `.codex/skills/harness-gap-closure/` — convert repeated workflow failures into guardrails
+- `.codex/pm/` — local PRD/epic/task/state documents
+- `.githooks/pre-push` — local review/proof/closure guardrail
+- `scripts/` — PM, review checkpoint, preflight, and CLI smoke commands
+
 ## Key Concepts
 
 - **PackType**: `"template"` (excludes secrets, safe to share) vs `"instance"` (full migration, includes everything)
@@ -52,3 +64,6 @@ Tests are in `test/e2e.test.ts` — a single file that tests the core modules di
 - File paths use `node:path` and `node:fs` — no third-party fs utilities
 - Archive handling uses the `tar` npm package
 - Import paths in source use `.js` extensions (ESM convention)
+- Use `node scripts/codex-pm.mjs` for repository-local task, issue-state, and PR-body workflows instead of ad hoc notes
+- Before push, prefer `./scripts/run-codex-review-checkpoint.sh` and `./scripts/run-agent-preflight.sh`
+- Any repeated workflow mistake that should have been blocked locally should be treated as a harness gap and fixed through the local guardrail layer

@@ -474,6 +474,10 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     }
 
     rebindWorkspaceConfig(targetDir, manifest, warnings);
+    fs.writeFileSync(
+      path.join(targetDir, ".clawpack-manifest.json"),
+      `${JSON.stringify(manifest, null, 2)}\n`
+    );
 
     let fileCount = 0;
     function countFiles(dir: string) {
