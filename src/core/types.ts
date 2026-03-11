@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = "0.3.0";
+export const SCHEMA_VERSION = "0.4.0";
 
 export type PackType = "template" | "instance";
 
@@ -11,6 +11,7 @@ export interface Manifest {
   packType: PackType;
   packId: string;
   createdAt: string;
+  harness: HarnessMetadata;
   source: {
     product: string;
     version: string;
@@ -20,6 +21,29 @@ export interface Manifest {
   workspaces: WorkspaceBinding[];
   sensitiveFlags: SensitiveFlags;
   riskLevel: RiskLevel;
+}
+
+export type HarnessIntent = "agent-runtime-environment";
+
+export type HarnessComponent =
+  | "workspace"
+  | "config"
+  | "skills"
+  | "agents"
+  | "credentials"
+  | "sessions"
+  | "memory"
+  | "cron"
+  | "hooks"
+  | "extensions"
+  | "logs"
+  | "browser"
+  | "completions";
+
+export interface HarnessMetadata {
+  intent: HarnessIntent;
+  targetProduct: string;
+  components: HarnessComponent[];
 }
 
 export interface WorkspaceBinding {
