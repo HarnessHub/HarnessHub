@@ -17,6 +17,20 @@ npx vitest run -t "exports a template pack"  # run a single test by name
 npm run dev            # tsc --watch
 ```
 
+## OpenPrecedent Validation
+
+This repository is currently being used as a real-project validation target for OpenPrecedent.
+
+Before starting a new Codex session for active validation work, read:
+
+- `docs/validation/openprecedent-validation-context.md`
+- `docs/validation/current-issue-state.md`
+- `docs/validation/runtime-setup.md`
+- `docs/validation/codex-session-start-prompt.md`
+
+Use a shared `OPENPRECEDENT_HOME` so runtime lineage history is reused across sessions.
+Treat those validation docs as the local execution layer for this repository.
+
 ## Architecture
 
 ```
@@ -52,3 +66,4 @@ Tests are in `test/e2e.test.ts` — a single file that tests the core modules di
 - File paths use `node:path` and `node:fs` — no third-party fs utilities
 - Archive handling uses the `tar` npm package
 - Import paths in source use `.js` extensions (ESM convention)
+- Keep work issue-scoped when running the OpenPrecedent validation flow
