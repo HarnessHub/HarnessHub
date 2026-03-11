@@ -1,0 +1,203 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+review_file="${CLAWPACK_REVIEW_FILE:-$repo_root/.codex-review}"
+review_proof_file="${CLAWPACK_REVIEW_PROOF_FILE:-$repo_root/.codex-review-proof}"
+base_ref="${CLAWPACK_BASE_REF:-upstream/main}"
+current_branch="$(git branch --show-current)"
+origin_url="$(git remote get-url origin 2>/dev/null || true)"
+upstream_url="$(git remote get-url upstream 2>/dev/null || true)"
+
+extract_repo() {
+  local remote_url="$1"
+  if [[ "$remote_url" =~ github\.com[:/]([^/]+)/([^/.]+?)(\.git)?$ ]]; then
+    echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+    return 0
+  fi
+  return 1
+}
+
+extract_owner() {
+  local remote_url="$1"
+  if [[ "$remote_url" =~ github\.com[:/]([^/]+)/[^/]+(\.git)?$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
+
+read_proof_value() {
+  local key="$1"
+  sed -n "s/^${key}=//p" "$review_proof_file" | head -n 1
+}
+
+check_branch_freshness() {
+  if [[ "${BYPASS_BRANCH_FRESHNESS_CHECK:-}" == "1" ]]; then
+    echo "Bypassing branch freshness check because BYPASS_BRANCH_FRESHNESS_CHECK=1"
+    return 0
+  fi
+
+  if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+    echo "Skipping branch freshness check: base ref $base_ref is unavailable"
+    return 0
+  fi
+
+  if ! git merge-base --is-ancestor "$base_ref" HEAD; then
+    cat <<EOF
+Push blocked: current branch does not contain the latest $base_ref.
+
+Rebase or merge $base_ref into the current branch before pushing.
+EOF
+    exit 1
+  fi
+}
+
+run_local_pr_closure_check() {
+  local changed_files pr_body body_input=() base_repo owner
+
+  if [[ -z "$current_branch" ]]; then
+    return 0
+  fi
+
+  if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
+    echo "Skipping local closure sync check: base ref $base_ref is unavailable"
+    return 0
+  fi
+
+  changed_files="$(git diff --name-only "$base_ref"...HEAD)"
+  if [[ -z "$changed_files" ]]; then
+    return 0
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "Skipping local closure sync check: gh is unavailable"
+    return 0
+  fi
+
+  pr_body="$(gh pr view --json body --jq .body 2>/dev/null || true)"
+  if [[ -z "$pr_body" ]]; then
+    echo "Skipping local closure sync check: PR body is unavailable"
+    return 0
+  fi
+
+  while IFS= read -r changed_path; do
+    [[ -n "$changed_path" ]] || continue
+    body_input+=("--changed-file" "$changed_path")
+  done <<< "$changed_files"
+
+  node "$repo_root/scripts/codex-pm.mjs" verify-pr-closure-sync --pr-body "$pr_body" "${body_input[@]}"
+
+  if owner="$(extract_owner "$origin_url")" && base_repo="$(extract_repo "$upstream_url")"; then
+    merged_pr_json="$(
+      gh pr list \
+        --repo "$base_repo" \
+        --head "$owner:$current_branch" \
+        --state merged \
+        --json number,url \
+        2>/dev/null || true
+    )"
+    if [[ "$merged_pr_json" != "[]" ]] && [[ -n "$merged_pr_json" ]]; then
+      cat <<EOF
+Push blocked: the current branch already has a merged PR in $base_repo.
+
+Branch: $current_branch
+
+Create a new branch from $base_ref for follow-up work instead of pushing more commits to a merged PR branch.
+EOF
+      exit 1
+    fi
+  fi
+}
+
+check_branch_freshness
+
+if [[ ! -f "$review_file" ]]; then
+  cat <<'EOF'
+Push blocked: missing .codex-review
+
+Before pushing, run:
+  ./scripts/run-codex-review-checkpoint.sh
+
+Then update .codex-review with:
+  - scope reviewed
+  - findings or "no findings"
+  - remaining risks
+EOF
+  exit 1
+fi
+
+if ! grep -Eq '^scope reviewed:' "$review_file" \
+  || ! grep -Eq '^findings:' "$review_file" \
+  || ! grep -Eq '^remaining risks:' "$review_file"; then
+  cat <<'EOF'
+Push blocked: .codex-review exists but is incomplete.
+
+Include at least:
+  - scope reviewed
+  - findings
+  - remaining risks
+EOF
+  exit 1
+fi
+
+if grep -Fq 'native /review has not been run yet' "$review_file"; then
+  cat <<'EOF'
+Push blocked: .codex-review still contains the checkpoint placeholder.
+
+Run the native Codex /review flow and replace the placeholder text with the real review outcome before pushing.
+EOF
+  exit 1
+fi
+
+if [[ ! -f "$review_proof_file" ]]; then
+  cat <<'EOF'
+Push blocked: missing .codex-review-proof
+
+Before pushing, run:
+  ./scripts/run-codex-review-checkpoint.sh
+EOF
+  exit 1
+fi
+
+proof_head_sha="$(read_proof_value head_sha)"
+proof_branch="$(read_proof_value branch)"
+current_head_sha="$(git rev-parse HEAD)"
+
+if [[ -z "$proof_head_sha" ]]; then
+  echo "Push blocked: .codex-review-proof is missing head_sha."
+  exit 1
+fi
+
+if [[ "$proof_head_sha" != "$current_head_sha" ]]; then
+  cat <<EOF
+Push blocked: .codex-review-proof does not match the current HEAD.
+
+Proof HEAD:   $proof_head_sha
+Current HEAD: $current_head_sha
+
+Rerun ./scripts/run-codex-review-checkpoint.sh and update .codex-review after the native Codex /review step.
+EOF
+  exit 1
+fi
+
+if [[ -n "$current_branch" ]] && [[ -n "$proof_branch" ]] && [[ "$proof_branch" != "$current_branch" ]]; then
+  cat <<EOF
+Push blocked: .codex-review-proof was generated for a different branch.
+
+Proof branch:   $proof_branch
+Current branch: $current_branch
+EOF
+  exit 1
+fi
+
+if [[ "$review_file" -ot "$review_proof_file" ]]; then
+  cat <<'EOF'
+Push blocked: .codex-review has not been updated since the latest review checkpoint.
+EOF
+  exit 1
+fi
+
+run_local_pr_closure_check
+
+echo "Codex review note detected."

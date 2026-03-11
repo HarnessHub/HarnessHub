@@ -348,6 +348,7 @@ describe("export + import", () => {
     expect(importResult.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(fs.existsSync(path.join(targetDir, "workspace", "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, "openclaw.json"))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, ".clawpack-manifest.json"))).toBe(true);
   });
 
   it("imports instance pack preserving agent directory structure", async () => {

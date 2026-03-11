@@ -13,9 +13,13 @@
     "README.md"
   ],
   "scripts": {
+    "pm": "node scripts/codex-pm.mjs",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
+    "review:checkpoint": "./scripts/run-codex-review-checkpoint.sh",
+    "preflight": "./scripts/run-agent-preflight.sh",
+    "smoke": "./scripts/run-cli-smoke.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build && npm test"
