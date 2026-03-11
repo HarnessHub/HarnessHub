@@ -17,6 +17,7 @@ To enable the local hook:
 ```
 
 After that, each push requires both a `.codex-review` file and a current `.codex-review-proof` file in the repository root unless you explicitly bypass the hook. The hook also expects your branch to contain the latest `upstream/main` by default.
+These two files are local review artifacts for the current branch and should stay untracked in normal development.
 
 ## Codex Review Hook
 

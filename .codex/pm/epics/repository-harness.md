@@ -24,9 +24,12 @@ ClawPack gains a practical local harness for disciplined development and validat
 
 ## Child Issues
 
-- bootstrap ccpm-codex and local guardrails
+- #3 bootstrap ccpm-codex and local guardrails
+- #5 harden local harness guardrails for everyday use
+- #6 document repository harness governance and daily workflow
+- #7 expand CLI integration validation for the pack lifecycle
+- #8 reconcile README guarantees with actual CLI behavior
 
 ## Notes
 
 This epic intentionally excludes research-only workflows.
-

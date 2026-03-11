@@ -18,6 +18,8 @@ Thumbs.db
 # Environment
 .env
 .env.*
+.codex-review
+.codex-review-proof
 
 # Coverage
 coverage/
