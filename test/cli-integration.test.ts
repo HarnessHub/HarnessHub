@@ -98,6 +98,7 @@ describe("harness CLI integration", () => {
     expect(verifyResult.status).toBe(0);
     const data = JSON.parse(verifyResult.stdout);
     expect(data.valid).toBe(true);
+    expect(data.runtimeReady).toBe(true);
     expect(data.checks.some((check: { name: string; passed: boolean }) => check.name === "manifest_schema" && check.passed)).toBe(true);
   });
 
@@ -116,6 +117,7 @@ describe("harness CLI integration", () => {
     expect(verifyResult.status).toBe(0);
     const data = JSON.parse(verifyResult.stdout);
     expect(data.valid).toBe(true);
+    expect(data.runtimeReady).toBe(true);
   });
 
   it("returns a JSON error when importing a missing pack file", () => {
@@ -130,6 +132,7 @@ describe("harness CLI integration", () => {
     expect(result.status).toBe(1);
     const data = JSON.parse(result.stdout);
     expect(data.valid).toBe(false);
+    expect(data.runtimeReady).toBe(false);
     expect(data.errors).toContain("Target directory does not exist");
   });
 });

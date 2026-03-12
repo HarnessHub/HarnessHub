@@ -515,6 +515,7 @@ describe("export + import", () => {
 
     const verifyResult = verify(targetDir, importResult.manifest);
     expect(verifyResult.valid).toBe(true);
+    expect(verifyResult.runtimeReady).toBe(true);
     expect(verifyResult.errors).toHaveLength(0);
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_lineage" && c.passed)).toBe(true);
@@ -540,6 +541,7 @@ describe("export + import", () => {
 
     const verifyResult = verify(targetDir, importResult.manifest);
     expect(verifyResult.valid).toBe(true);
+    expect(verifyResult.runtimeReady).toBe(true);
     expect(verifyResult.errors).toHaveLength(0);
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "binding_semantics" && c.passed)).toBe(true);
@@ -552,12 +554,14 @@ describe("verify", () => {
     const result = verify(instanceDir);
 
     expect(result.valid).toBe(true);
+    expect(result.runtimeReady).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
   it("fails for non-existent directory", () => {
     const result = verify(path.join(tmpDir, "nonexistent"));
     expect(result.valid).toBe(false);
+    expect(result.runtimeReady).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
@@ -569,6 +573,7 @@ describe("verify", () => {
     fs.mkdirSync(wsDir);
 
     const result = verify(dir);
+    expect(result.runtimeReady).toBe(false);
     expect(result.warnings.some(w => w.includes("AGENTS.md"))).toBe(true);
   });
 
@@ -577,6 +582,7 @@ describe("verify", () => {
     const result = verify(instanceDir);
 
     expect(result.checks.some(c => c.name === "agents_present" && c.passed)).toBe(true);
+    expect(result.runtimeReady).toBe(true);
   });
 
   it("fails when manifest contract metadata is missing", () => {
@@ -608,6 +614,7 @@ describe("verify", () => {
     } as any);
 
     expect(result.valid).toBe(false);
+    expect(result.runtimeReady).toBe(false);
     expect(result.checks.some(c => c.name === "manifest_contract" && !c.passed)).toBe(true);
     expect(result.errors.some((error) => error.includes("image must be an object"))).toBe(true);
     expect(result.errors.some((error) => error.includes("harness must be an object"))).toBe(true);
@@ -707,6 +714,7 @@ describe("verify", () => {
     } as any);
 
     expect(result.valid).toBe(false);
+    expect(result.runtimeReady).toBe(false);
     expect(result.checks.some((check) => check.name === "pack_type_contract" && !check.passed)).toBe(true);
     expect(result.errors.some((error) => error.includes("template packs must not include agents"))).toBe(true);
   });

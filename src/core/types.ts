@@ -132,6 +132,8 @@ export interface InstanceStructure {
 
 export interface VerifyResult {
   valid: boolean;
+  runtimeReady: boolean;
+  runtimeReadinessIssues: string[];
   checks: VerifyCheck[];
   warnings: string[];
   errors: string[];
