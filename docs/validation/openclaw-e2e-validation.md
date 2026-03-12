@@ -2,11 +2,11 @@
 
 This record comes from a real local `~/.openclaw` validation run using the current `harness` CLI path.
 
-- Validated at: `2026-03-12T06:37:07.412Z`
+- Validated at: `2026-03-12T07:51:35.298Z`
 - Source directory: `~/.openclaw`
-- Artifact path: `.artifacts/openclaw-e2e/20260312T063701Z/openclaw-template.harness`
-- Artifact sha256: `e15876aa51aef57ba57828481ce457a9adffe95610e3ceeccfdc37707e384cb4`
-- Artifact size: `4154926` bytes
+- Artifact path: `.artifacts/openclaw-e2e/20260312T075132Z/openclaw-template.harness`
+- Artifact sha256: `9dbcdb3878de3a12c25c14e9499a55f862f26afdab869616f007be3ce0360015`
+- Artifact size: `4071021` bytes
 
 ## Inspect
 
@@ -23,36 +23,43 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 ## Export
 
 - Success: `true`
-- Pack ID: `64ceb066-b454-46b4-8755-88383a5817ab`
+- Pack ID: `b0e14d8c-2781-4364-9ed1-4c07084d0a28`
 - Pack type: `template`
 - Risk level: `internal-only`
-- File count: `343`
-- Total size: `7279282` bytes
+- File count: `321`
+- Total size: `7011102` bytes
+
+## Export Policy
+
+- Inspect recommended instance; exporting template diverges from the recommended pack type.
 
 ## Manifest
 
 - Schema version: `0.5.0`
 - Adapter: `openclaw`
-- Image ID: `64ceb066-b454-46b4-8755-88383a5817ab`
+- Image ID: `b0e14d8c-2781-4364-9ed1-4c07084d0a28`
 - Binding workspace count: `1`
 - Harness intent: `agent-runtime-environment`
 - Harness target product: `openclaw`
-- Harness components: `workspace, config, skills, agents, sessions, cron, extensions, browser, completions`
+- Harness components: `workspace, config, skills, cron, extensions, completions`
 
 ## Import And Verify
 
 - Import success: `true`
-- Imported target: `.artifacts/openclaw-e2e/20260312T063701Z/imported`
-- Imported file count: `344`
+- Imported target: `.artifacts/openclaw-e2e/20260312T075132Z/imported`
+- Imported file count: `322`
 - Verify valid: `true`
-- Verify checks: `directory_exists, config_exists, workspace_exists, workspace_file_agents.md, config_valid, agents_present, manifest_schema, manifest_pack_type, manifest_image, manifest_lineage, manifest_harness, workspace_bindings, binding_semantics, file_count, workspace_readable`
+- Readiness class: `runtime_ready`
+- Runtime ready: `true`
+- Readiness summary: Imported harness is structurally valid and ready to run without additional manual steps.
+- Verify checks: `directory_exists, config_exists, workspace_exists, workspace_file_agents.md, config_valid, manifest_contract, manifest_schema, manifest_pack_type, manifest_placement, manifest_rebinding, pack_type_contract, manifest_image, manifest_lineage, manifest_harness, workspace_bindings, binding_semantics, file_count, workspace_readable`
 
 ## Warnings
 
 - Inspect: Config contains API keys or tokens
 - Inspect: Agent auth-profiles.json detected (contains API credentials)
 - Inspect: Credentials directory exists
-- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T063701Z/imported; JSON5 formatting/comments were normalized.
-- Verify: Agent "main" missing agent/ subdirectory
+- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T075132Z/imported; JSON5 formatting/comments were normalized.
+- Verify: none
 
 The `.harness` artifact itself is retained only in the local `.artifacts/` directory and is intentionally not committed.
