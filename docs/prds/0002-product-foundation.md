@@ -48,6 +48,29 @@ It may include:
 - verification metadata
 - local development and safety guardrails
 
+### Agent Runtime
+
+An agent runtime is the execution environment that lets an agent process actually run.
+
+It is concerned with:
+
+- process startup and execution
+- model invocation plumbing
+- tool execution mechanisms
+- persistence and state services
+- runtime dependencies and resources
+- event loops, schedulers, and host integration
+
+The runtime answers:
+
+- how the agent runs
+
+The harness answers:
+
+- what working environment and operating method the agent runs with
+
+HarnessHub is concerned with the harness layer, not with replacing the runtime itself.
+
 ### Harness Image
 
 A harness image is a portable, versioned packaging unit for a harness.
@@ -113,6 +136,7 @@ The missing pieces are:
 - layered reuse over flat snapshot copying
 - explicit safety and rebinding contracts
 - architecture continuity from MVP to 1.0
+- harness layer distinct from runtime layer
 - repository harness and runtime harness should align conceptually, but they are not the same artifact
 
 ## What HarnessHub Is Not
@@ -127,3 +151,8 @@ HarnessHub is not:
 
 It is the application-layer image system for agent harnesses.
 
+In practical terms:
+
+- the runtime provides the execution substrate
+- the harness provides the reusable application-layer operating environment
+- HarnessHub packages and verifies the harness, not the underlying runtime platform
