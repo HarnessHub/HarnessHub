@@ -48,7 +48,7 @@ For the standard local readiness pass before push, run:
 ./scripts/run-agent-preflight.sh
 ```
 
-This checks the local review note, review proof, issue-state, build, tests, and local PR closure sync when `gh` can resolve the current PR body.
+This checks the local review note, review proof, merged-branch reuse, issue-state, build, tests, and local PR closure sync when `gh` can resolve the current PR body.
 
 A normal issue-scoped path is:
 

@@ -19,6 +19,26 @@ ENFORCE_ISSUE_STATE="${HARNESSHUB_PREFLIGHT_ENFORCE_ISSUE_STATE:-${CLAWPACK_PREF
 BUILD_COMMAND="${HARNESSHUB_PREFLIGHT_BUILD_COMMAND:-${CLAWPACK_PREFLIGHT_BUILD_COMMAND:-npm run build}}"
 TEST_COMMAND="${HARNESSHUB_PREFLIGHT_TEST_COMMAND:-${CLAWPACK_PREFLIGHT_TEST_COMMAND:-npm test}}"
 SMOKE_COMMAND="${HARNESSHUB_PREFLIGHT_SMOKE_COMMAND:-${CLAWPACK_PREFLIGHT_SMOKE_COMMAND:-./scripts/run-cli-smoke.sh}}"
+ORIGIN_URL="$(git remote get-url origin 2>/dev/null || true)"
+UPSTREAM_URL="$(git remote get-url upstream 2>/dev/null || true)"
+
+extract_repo() {
+  local remote_url="$1"
+  if [[ "$remote_url" =~ github\.com[:/]([^/]+)/([^/.]+?)(\.git)?$ ]]; then
+    echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+    return 0
+  fi
+  return 1
+}
+
+extract_owner() {
+  local remote_url="$1"
+  if [[ "$remote_url" =~ github\.com[:/]([^/]+)/[^/]+(\.git)?$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
 
 read_review_proof_value() {
   local key="$1"
@@ -126,6 +146,40 @@ check_issue_state() {
   echo "Continuing without enforced issue-state check. Set HARNESSHUB_PREFLIGHT_ENFORCE_ISSUE_STATE=1 to require it."
 }
 
+check_merged_pr_branch_reuse() {
+  local current_branch owner base_repo merged_pr_json
+  current_branch="$(git branch --show-current)"
+
+  if [[ -z "$current_branch" ]]; then
+    return 0
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "Skipping merged-branch check: gh is unavailable"
+    return 0
+  fi
+
+  if ! owner="$(extract_owner "$ORIGIN_URL")" || ! base_repo="$(extract_repo "$UPSTREAM_URL")"; then
+    echo "Skipping merged-branch check: GitHub remotes are unavailable"
+    return 0
+  fi
+
+  merged_pr_json="$(
+    gh pr list \
+      --repo "$base_repo" \
+      --head "$owner:$current_branch" \
+      --state merged \
+      --json number,url \
+      2>/dev/null || true
+  )"
+
+  if [[ "$merged_pr_json" != "[]" ]] && [[ -n "$merged_pr_json" ]]; then
+    echo "Preflight failed: the current branch already has a merged PR in $base_repo"
+    echo "Create a new branch from $BASE_REF for follow-up work instead of continuing on $current_branch."
+    exit 1
+  fi
+}
+
 run_local_pr_closure_check() {
   local changed_files pr_body body_input=()
 
@@ -161,6 +215,7 @@ run_local_pr_closure_check() {
 echo "Running agent preflight in $ROOT_DIR"
 
 check_branch_freshness
+check_merged_pr_branch_reuse
 check_review_note
 check_review_proof
 check_issue_state
