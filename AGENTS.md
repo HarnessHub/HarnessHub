@@ -51,6 +51,7 @@ Harness and workflow support lives in:
 
 - `.codex/skills/ccpm-codex/` — local issue-task-PR workflow guidance
 - `.codex/skills/harness-gap-closure/` — convert repeated workflow failures into guardrails
+- `.codex/skills/harness-issue-execution/` — issue-scoped execution sequence for branch/task/review/preflight/PR/merge
 - `.codex/pm/` — local PRD/epic/task/state documents
 - `.githooks/pre-push` — local review/proof/closure guardrail
 - `scripts/` — PM, review checkpoint, preflight, and CLI smoke commands
