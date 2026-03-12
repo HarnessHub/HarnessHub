@@ -155,6 +155,7 @@ export interface VerifyResult {
   readinessClass: ReadinessClass;
   readinessSummary: string;
   runtimeReadinessIssues: string[];
+  remediationSteps: string[];
   checks: VerifyCheck[];
   warnings: string[];
   errors: string[];

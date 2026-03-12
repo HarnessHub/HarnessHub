@@ -402,12 +402,14 @@ function finalizeVerifyResult(
 ): VerifyResult {
   const readinessClass = classifyReadiness(valid, runtimeReadinessIssues);
   const runtimeReady = readinessClass === "runtime_ready";
+  const remediationSteps = deriveRemediationSteps(readinessClass, runtimeReadinessIssues);
   return {
     valid,
     runtimeReady,
     readinessClass,
     readinessSummary: summarizeReadiness(readinessClass),
     runtimeReadinessIssues,
+    remediationSteps,
     checks,
     warnings,
     errors,
@@ -433,4 +435,58 @@ function summarizeReadiness(readinessClass: ReadinessClass): string {
     case "structurally_invalid":
       return "Imported harness is not structurally valid yet and cannot be treated as runtime-ready.";
   }
+}
+
+function deriveRemediationSteps(readinessClass: ReadinessClass, runtimeReadinessIssues: string[]): string[] {
+  if (readinessClass === "runtime_ready") {
+    return [];
+  }
+
+  const remediation = new Set<string>();
+
+  for (const issue of runtimeReadinessIssues) {
+    if (issue === "Target directory does not exist") {
+      remediation.add("Import the .harness package into the target directory before running verify.");
+      continue;
+    }
+    if (issue === "No OpenClaw config file found") {
+      remediation.add("Restore or regenerate openclaw.json before treating this import as runnable.");
+      continue;
+    }
+    if (issue.startsWith("Workspace file missing:")) {
+      remediation.add("Restore the required workspace instructions such as AGENTS.md, or re-export the source so the workspace contract is complete.");
+      continue;
+    }
+    if (issue === "Config file appears invalid" || issue.startsWith("Could not parse config to validate binding semantics:")) {
+      remediation.add("Repair openclaw.json to valid JSON/JSON5 and rerun import if rebinding did not complete cleanly.");
+      continue;
+    }
+    if (issue.startsWith("Missing imported workspace:") || issue.startsWith("Missing bound workspace target ")) {
+      remediation.add("Re-import the pack so all declared workspaces are materialized into the target directory.");
+      continue;
+    }
+    if (issue.startsWith("Default workspace binding not rebound") || issue.startsWith("Agent ") && issue.includes("workspace binding not rebound")) {
+      remediation.add("Re-import the pack so workspace bindings are rewritten into openclaw.json for the target path.");
+      continue;
+    }
+    if (
+      issue.startsWith("Manifest contract error:") ||
+      issue === "Manifest placement contract missing or invalid" ||
+      issue === "Manifest rebinding contract missing or invalid" ||
+      issue.startsWith("Pack type contract error:")
+    ) {
+      remediation.add("Re-export the source with the current harness CLI so the imported manifest and pack-type contract are regenerated.");
+      continue;
+    }
+    if (issue.includes("missing agent/ subdirectory")) {
+      remediation.add("Re-import an instance pack if runtime agent state is required, or restore the expected agent/ subdirectory manually.");
+      continue;
+    }
+  }
+
+  if (remediation.size === 0) {
+    remediation.add("Review the reported readiness issues and re-run import or export before treating the harness as runtime-ready.");
+  }
+
+  return [...remediation];
 }

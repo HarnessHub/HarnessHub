@@ -181,6 +181,14 @@ export function printVerifyResult(result: Record<string, unknown>, format: Outpu
     }
   }
 
+  if (r.remediationSteps.length > 0) {
+    console.log("");
+    console.log("--- Recommended Next Steps ---");
+    for (const step of r.remediationSteps) {
+      console.log(`  -> ${step}`);
+    }
+  }
+
   if (r.errors.length > 0) {
     console.log("");
     console.log("--- Errors ---");

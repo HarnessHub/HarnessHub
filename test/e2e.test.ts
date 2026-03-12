@@ -588,6 +588,7 @@ describe("verify", () => {
     expect(result.valid).toBe(true);
     expect(result.runtimeReady).toBe(true);
     expect(result.readinessClass).toBe("runtime_ready");
+    expect(result.remediationSteps).toEqual([]);
     expect(result.errors).toHaveLength(0);
   });
 
@@ -597,6 +598,7 @@ describe("verify", () => {
     expect(result.runtimeReady).toBe(false);
     expect(result.readinessClass).toBe("structurally_invalid");
     expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.remediationSteps).toContain("Import the .harness package into the target directory before running verify.");
   });
 
   it("warns about missing workspace files", () => {
@@ -610,6 +612,7 @@ describe("verify", () => {
     expect(result.runtimeReady).toBe(false);
     expect(result.readinessClass).toBe("manual_steps_required");
     expect(result.warnings.some(w => w.includes("AGENTS.md"))).toBe(true);
+    expect(result.remediationSteps).toContain("Restore the required workspace instructions such as AGENTS.md, or re-export the source so the workspace contract is complete.");
   });
 
   it("detects agent directories during verification", () => {
@@ -655,6 +658,7 @@ describe("verify", () => {
     expect(result.checks.some(c => c.name === "manifest_contract" && !c.passed)).toBe(true);
     expect(result.errors.some((error) => error.includes("image must be an object"))).toBe(true);
     expect(result.errors.some((error) => error.includes("harness must be an object"))).toBe(true);
+    expect(result.remediationSteps).toContain("Re-export the source with the current harness CLI so the imported manifest and pack-type contract are regenerated.");
   });
 
   it("fails verification when the manifest contract is invalid", () => {
