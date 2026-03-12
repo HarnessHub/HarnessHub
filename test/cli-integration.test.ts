@@ -152,5 +152,6 @@ describe("harness CLI integration", () => {
     expect(data.runtimeReady).toBe(false);
     expect(data.readinessClass).toBe("structurally_invalid");
     expect(data.errors).toContain("Target directory does not exist");
+    expect(data.remediationSteps).toContain("Import the .harness package into the target directory before running verify.");
   });
 });
