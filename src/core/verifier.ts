@@ -5,6 +5,7 @@ import type { Manifest, VerifyResult, VerifyCheck } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
 import { validateManifestContract } from "./manifest.js";
+import { validatePackTypeComponents } from "./pack-contract.js";
 
 const REQUIRED_WORKSPACE_FILES = ["AGENTS.md"];
 
@@ -162,6 +163,21 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       passed: ["template", "instance"].includes(manifest.packType),
       message: `Pack type: ${manifest.packType}`,
     });
+
+    const packTypeContractErrors = validatePackTypeComponents(
+      manifest.packType,
+      manifest.harness.components
+    );
+    checks.push({
+      name: "pack_type_contract",
+      passed: packTypeContractErrors.length === 0,
+      message: packTypeContractErrors.length === 0
+        ? `${manifest.packType} contract satisfied`
+        : packTypeContractErrors.join("; "),
+    });
+    if (packTypeContractErrors.length > 0) {
+      errors.push(...packTypeContractErrors.map((error) => `Pack type contract error: ${error}`));
+    }
 
     const hasImageMetadata =
       typeof manifest.image?.imageId === "string" &&

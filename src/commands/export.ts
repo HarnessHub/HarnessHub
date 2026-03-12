@@ -39,6 +39,7 @@ export const exportCommand = new Command("export")
           riskLevel: result.manifest.riskLevel,
           fileCount: result.fileCount,
           totalSize: result.totalSize,
+          warnings: result.warnings,
         }, null, 2));
       } else {
         console.log("");
@@ -50,6 +51,14 @@ export const exportCommand = new Command("export")
         console.log(`  Files:        ${result.fileCount}`);
         console.log(`  Size:         ${formatSize(result.totalSize)}`);
         console.log(`  Output:       ${result.outputFile}`);
+
+        if (result.warnings.length > 0) {
+          console.log("");
+          console.log("--- Warnings ---");
+          for (const warning of result.warnings) {
+            console.log(`  ! ${warning}`);
+          }
+        }
         console.log("");
         console.log("Export complete.");
         console.log("");

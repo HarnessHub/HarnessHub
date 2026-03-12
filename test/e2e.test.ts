@@ -322,6 +322,30 @@ describe("export + import", () => {
     expect(paths.some(p => p.includes(path.join("cron", "runs")))).toBe(false);
   });
 
+  it("template pack excludes runtime-state directories by contract", async () => {
+    const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "contract"));
+    fs.mkdirSync(path.join(instanceDir, "browser", "profile"), { recursive: true });
+    fs.writeFileSync(path.join(instanceDir, "browser", "profile", "state.json"), "{}");
+    fs.mkdirSync(path.join(instanceDir, "identity"), { recursive: true });
+    fs.writeFileSync(path.join(instanceDir, "identity", "device.json"), "{}");
+    const outputFile = path.join(tmpDir, "contract-template.harness");
+
+    const result = await exportPack({
+      sourcePath: instanceDir,
+      outputPath: outputFile,
+      packType: "template",
+    });
+
+    expect(result.manifest.harness.components).not.toContain("agents");
+    expect(result.manifest.harness.components).not.toContain("sessions");
+    expect(result.manifest.harness.components).not.toContain("credentials");
+    expect(result.manifest.harness.components).not.toContain("browser");
+    expect(result.manifest.includedPaths.some((p) => p.startsWith("agents/"))).toBe(false);
+    expect(result.manifest.includedPaths.some((p) => p.startsWith("credentials/"))).toBe(false);
+    expect(result.manifest.includedPaths.some((p) => p.startsWith("memory/"))).toBe(false);
+    expect(result.warnings.some((warning) => warning.includes("Inspect recommended instance"))).toBe(true);
+  });
+
   it("instance pack preserves agent directory structure", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "full"));
     const outputFile = path.join(tmpDir, "instance.harness");
@@ -636,5 +660,54 @@ describe("verify", () => {
     expect(result.valid).toBe(false);
     expect(result.checks.some((check) => check.name === "manifest_contract" && !check.passed)).toBe(true);
     expect(result.errors.some((error) => error.includes("image.adapter"))).toBe(true);
+  });
+
+  it("fails verification when a template manifest declares forbidden runtime-state components", () => {
+    const instanceDir = createMockInstance(path.join(tmpDir, "verify-pack-contract"));
+    const result = verify(instanceDir, {
+      schemaVersion: "0.5.0",
+      packType: "template",
+      packId: "template-with-agents",
+      createdAt: "2026-03-12T00:00:00.000Z",
+      image: {
+        imageId: "template-with-agents",
+        adapter: "openclaw",
+      },
+      lineage: {
+        parentImage: null,
+        layerOrder: [],
+      },
+      bindings: {
+        workspaces: [],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["workspace", "config", "agents"],
+      },
+      source: {
+        product: "openclaw",
+        version: "unknown",
+        configPath: "openclaw.json",
+      },
+      includedPaths: ["openclaw.json", "workspace/AGENTS.md"],
+      workspaces: [],
+      sensitiveFlags: {
+        hasCredentials: false,
+        hasApiKeys: false,
+        hasOAuthTokens: false,
+        hasAuthProfiles: false,
+        hasWhatsAppCreds: false,
+        hasCopilotToken: false,
+        hasSessions: false,
+        hasMemoryDb: false,
+        hasEnvFile: false,
+      },
+      riskLevel: "safe-share",
+    } as any);
+
+    expect(result.valid).toBe(false);
+    expect(result.checks.some((check) => check.name === "pack_type_contract" && !check.passed)).toBe(true);
+    expect(result.errors.some((error) => error.includes("template packs must not include agents"))).toBe(true);
   });
 });
