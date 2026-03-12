@@ -101,3 +101,5 @@ HarnessHub should be treated as MVP-complete when:
 3. any remaining open work fits under accepted MVP limitations rather than MVP blockers
 
 At that point, the next step is not more MVP-definition work. The next step is to cut and document the first MVP release candidate.
+
+The current release-candidate framing for that cut is documented in [0002-mvp-release-candidate.md](./0002-mvp-release-candidate.md).
