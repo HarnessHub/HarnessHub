@@ -21,6 +21,7 @@ For the current product framing, see:
 - `docs/prds/0002-product-foundation.md`
 - `docs/prds/0003-roadmap-mvp-to-v1.md`
 - `docs/architecture/0001-harness-image-architecture.md`
+- `docs/releases/0001-mvp-exit-criteria.md`
 
 ## Why
 

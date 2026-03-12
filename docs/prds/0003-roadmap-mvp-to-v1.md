@@ -58,6 +58,8 @@ The MVP should not require:
 - verification checks the restored environment and consumed manifest coherently
 - the codebase does not assume OpenClaw is the only future adapter
 
+The current repository-level MVP release gate is documented in [../releases/0001-mvp-exit-criteria.md](../releases/0001-mvp-exit-criteria.md).
+
 ## 1.0 Goal
 
 Version 1.0 should establish HarnessHub as the standard image system for agent harness environments, with a stable layered image model and at least one fully mature adapter.
@@ -111,4 +113,3 @@ to:
 - define and transport a reusable harness image, with OpenClaw as the first adapter
 
 That transition should happen now at the documentation and architecture level, even if the implementation sequence remains incremental.
-
