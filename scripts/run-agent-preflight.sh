@@ -25,6 +25,11 @@ read_review_proof_value() {
   sed -n "s/^${key}=//p" "$REVIEW_PROOF_FILE" | head -n 1
 }
 
+read_review_value() {
+  local key="$1"
+  sed -n "s/^${key}: //p" "$REVIEW_FILE" | head -n 1
+}
+
 check_review_note() {
   if [[ ! -f "$REVIEW_FILE" ]]; then
     echo "Preflight failed: missing .codex-review"
@@ -32,6 +37,7 @@ check_review_note() {
   fi
 
   if ! grep -Eq '^scope reviewed:' "$REVIEW_FILE" \
+    || ! grep -Eq '^head reviewed:' "$REVIEW_FILE" \
     || ! grep -Eq '^findings:' "$REVIEW_FILE" \
     || ! grep -Eq '^remaining risks:' "$REVIEW_FILE"; then
     echo "Preflight failed: .codex-review exists but is incomplete"
@@ -45,7 +51,7 @@ check_review_note() {
 }
 
 check_review_proof() {
-  local current_head proof_head proof_branch current_branch
+  local current_head proof_head proof_branch current_branch reviewed_head
 
   if [[ ! -f "$REVIEW_PROOF_FILE" ]]; then
     echo "Preflight failed: missing .codex-review-proof"
@@ -72,8 +78,14 @@ check_review_proof() {
     exit 1
   fi
 
-  if [[ "$REVIEW_FILE" -ot "$REVIEW_PROOF_FILE" ]]; then
-    echo "Preflight failed: .codex-review has not been updated since the latest review checkpoint"
+  reviewed_head="$(read_review_value "head reviewed")"
+  if [[ -z "$reviewed_head" ]]; then
+    echo "Preflight failed: .codex-review is missing head reviewed"
+    exit 1
+  fi
+
+  if [[ "$reviewed_head" != "$current_head" ]]; then
+    echo "Preflight failed: .codex-review does not record the current HEAD"
     exit 1
   fi
 }

@@ -10,6 +10,37 @@ BASE_REF="${HARNESSHUB_REVIEW_BASE_REF:-${CLAWPACK_REVIEW_BASE_REF:-upstream/mai
 BRANCH_NAME="$(git branch --show-current)"
 HEAD_SHA="$(git rev-parse HEAD)"
 
+upsert_review_line() {
+  local key="$1"
+  local value="$2"
+  if grep -Eq "^${key}:" "$REVIEW_FILE"; then
+    python - "$REVIEW_FILE" "$key" "$value" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+file_path = Path(sys.argv[1])
+key = sys.argv[2]
+value = sys.argv[3]
+text = file_path.read_text(encoding="utf8")
+updated = re.sub(rf"^{re.escape(key)}:.*$", f"{key}: {value}", text, count=1, flags=re.MULTILINE)
+file_path.write_text(updated, encoding="utf8")
+PY
+  else
+    python - "$REVIEW_FILE" "$key" "$value" <<'PY'
+from pathlib import Path
+import sys
+
+file_path = Path(sys.argv[1])
+key = sys.argv[2]
+value = sys.argv[3]
+text = file_path.read_text(encoding="utf8")
+prefix = "" if text.endswith("\n") or not text else "\n"
+file_path.write_text(f"{text}{prefix}{key}: {value}\n", encoding="utf8")
+PY
+  fi
+}
+
 build_diff_summary() {
   local compare_ref="$1"
   if git rev-parse --verify "$compare_ref" >/dev/null 2>&1; then
@@ -36,6 +67,7 @@ if [[ ! -f "$REVIEW_FILE" ]]; then
   diff_summary="$(build_diff_summary "$BASE_REF")"
   cat >"$REVIEW_FILE" <<EOF
 scope reviewed: branch ${BRANCH_NAME:-detached-head}
+head reviewed: $HEAD_SHA
 findings: no findings
 remaining risks: native /review has not been run yet
 
@@ -45,6 +77,7 @@ EOF
   echo "Created review checkpoint template at $REVIEW_FILE"
 else
   echo "Review checkpoint already exists at $REVIEW_FILE"
+  upsert_review_line "head reviewed" "$HEAD_SHA"
 fi
 
 write_review_proof

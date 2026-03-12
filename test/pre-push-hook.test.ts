@@ -55,7 +55,7 @@ Test task.
 
   const headSha = git(repo, "rev-parse", "HEAD");
   fs.writeFileSync(path.join(repo, ".codex-review-proof"), `branch=issue-42-bootstrap\nhead_sha=${headSha}\nbase_ref=main\ngenerated_at=2026-03-12T00:00:00Z\n`, "utf8");
-  fs.writeFileSync(path.join(repo, ".codex-review"), "scope reviewed: hook\nfindings: no findings\nremaining risks: local-only validation\n", "utf8");
+  fs.writeFileSync(path.join(repo, ".codex-review"), `scope reviewed: hook\nhead reviewed: ${headSha}\nfindings: no findings\nremaining risks: local-only validation\n`, "utf8");
 
   const binDir = path.join(repo, "bin");
   fs.mkdirSync(binDir);
@@ -138,6 +138,35 @@ describe("pre-push hook", () => {
 
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("does not match the current HEAD");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("allows proof refresh ordering when review note records the current head", () => {
+    const { repo, binDir } = prepareRepo();
+    const reviewPath = path.join(repo, ".codex-review");
+    const proofPath = path.join(repo, ".codex-review-proof");
+    const reviewTime = new Date("2026-03-12T00:00:00Z");
+    const proofTime = new Date("2026-03-12T01:00:00Z");
+    fs.utimesSync(reviewPath, reviewTime, reviewTime);
+    fs.utimesSync(proofPath, proofTime, proofTime);
+
+    const taskPath = path.join(repo, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+    const taskText = fs.readFileSync(taskPath, "utf8").replace("status: in_progress", "status: done");
+    fs.writeFileSync(taskPath, taskText, "utf8");
+
+    const result = spawnSync(path.join(repo, ".githooks", "pre-push"), [], {
+      cwd: repo,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        BYPASS_BRANCH_FRESHNESS_CHECK: "1",
+        HARNESSHUB_BASE_REF: "main",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Codex review note detected.");
     fs.rmSync(repo, { recursive: true, force: true });
   });
 
