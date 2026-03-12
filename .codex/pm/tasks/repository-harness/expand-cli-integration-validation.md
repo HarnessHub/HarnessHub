@@ -6,7 +6,7 @@ title: Expand CLI integration validation for the pack lifecycle
 status: backlog
 task_type: implementation
 labels: feature,test
-issue: 7
+issue: 6
 ---
 
 ## Context
