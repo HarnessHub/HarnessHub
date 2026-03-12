@@ -1,12 +1,12 @@
-# Contributing to ClawPack
+# Contributing to HarnessHub
 
 Thanks for your interest in contributing! Here's how to get started.
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/Mrxuexi/clawpack.git
-cd clawpack
+git clone https://github.com/HarnessHub/HarnessHub.git
+cd HarnessHub
 npm install
 npm run build
 npm test

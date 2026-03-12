@@ -17,8 +17,8 @@ function prepareRepo() {
   git(repo, "init", "-b", "main");
   git(repo, "config", "user.name", "Test User");
   git(repo, "config", "user.email", "test@example.com");
-  git(repo, "remote", "add", "origin", "git@github.com:test/clawpack.git");
-  git(repo, "remote", "add", "upstream", "https://github.com/Mrxuexi/clawpack.git");
+  git(repo, "remote", "add", "origin", "git@github.com:test/HarnessHub.git");
+  git(repo, "remote", "add", "upstream", "https://github.com/HarnessHub/HarnessHub.git");
 
   const sourceRoot = "/workspace/02-projects/active/clawpack";
   fs.mkdirSync(path.join(repo, ".githooks"), { recursive: true });
@@ -144,7 +144,7 @@ describe("pre-push hook", () => {
     fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
 set -euo pipefail
 if [[ "$1" == "pr" && "$2" == "list" ]]; then
-  echo '[{"number":4,"url":"https://github.com/Mrxuexi/clawpack/pull/4"}]'
+  echo '[{"number":4,"url":"https://github.com/HarnessHub/HarnessHub/pull/4"}]'
   exit 0
 fi
 if [[ "$1" == "pr" && "$2" == "view" ]]; then

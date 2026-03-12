@@ -2,9 +2,9 @@
 
 This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, etc.) when working with code in this repository.
 
-## What is ClawPack?
+## What is HarnessHub?
 
-ClawPack is an application-layer packaging and distribution CLI for OpenClaw agents. It packages an agent's workspace, config, state, and credentials into a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
+HarnessHub is the project name for the repository's harness image system. The current implementation still ships as the `clawpack` CLI for OpenClaw-oriented packaging flows, using a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
 
 The broader product direction is documented in:
 

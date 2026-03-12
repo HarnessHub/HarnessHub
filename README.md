@@ -1,20 +1,20 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="ClawPack" width="200" />
+  <img src="./assets/logo.png" alt="HarnessHub" width="200" />
 </p>
 
-<h1 align="center">ClawPack</h1>
+<h1 align="center">HarnessHub</h1>
 
 <p align="center">
   <a href="./README_zh.md">中文文档</a>
 </p>
 
-ClawPack is an application-layer packaging and distribution tool for [OpenClaw](https://github.com/openclaw/openclaw) agents.
+HarnessHub is a harness image packaging standard for agent runtime environments.
 
-It solves a simple problem: standardized export, import, and verification of a tuned OpenClaw Agent. It's not a container or a VM — it's an application-level distribution package built on top of those infrastructures.
+The current implementation ships as the `clawpack` CLI and started with standardized export, import, and verification of tuned OpenClaw agents. It's not a container or a VM; it is the application-layer packaging system built on top of those infrastructures.
 
 ## Product Direction
 
-The repository started with an OpenClaw-first packaging CLI, but the broader product direction is now clearer: ClawPack is evolving toward a harness image packaging standard for agent runtime environments, with OpenClaw as the first production adapter.
+The repository started with an OpenClaw-first packaging CLI, but the broader product direction is now clearer: HarnessHub is evolving toward a harness image packaging standard for agent runtime environments, with OpenClaw as the first production adapter.
 
 For the current product framing, see:
 
@@ -290,8 +290,8 @@ clawpack inspect -f json | jq '.riskAssessment'
 ## Development
 
 ```bash
-git clone https://github.com/Mrxuexi/clawpack.git
-cd clawpack
+git clone https://github.com/HarnessHub/HarnessHub.git
+cd HarnessHub
 npm install
 npm run build
 npm test
