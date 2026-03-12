@@ -11,6 +11,8 @@ import type {
   HarnessImageMetadata,
   Manifest,
   PackType,
+  PlacementContract,
+  RebindingContract,
   RiskLevel,
   SensitiveFlags,
   WorkspaceBinding,
@@ -60,6 +62,16 @@ const ALWAYS_EXCLUDE = [
   "*.bak.*",
 ];
 
+const DEFAULT_COMPONENT_ROOTS = {
+  config: "config",
+  workspace: "workspace",
+  workspaces: "workspaces",
+  reports: "reports",
+  state: "state",
+} as const;
+
+const DEFAULT_PERSISTED_MANIFEST_PATH = ".harness-manifest.json";
+
 function generatePackId(): string {
   return crypto.randomUUID();
 }
@@ -91,6 +103,27 @@ function createBindingSemantics(workspaces: readonly WorkspaceBinding[]): Bindin
 
   return {
     workspaces: workspaceRules,
+  };
+}
+
+function createPlacementContract(): PlacementContract {
+  return {
+    reservedRoots: [
+      DEFAULT_COMPONENT_ROOTS.config,
+      DEFAULT_COMPONENT_ROOTS.workspace,
+      DEFAULT_COMPONENT_ROOTS.workspaces,
+      DEFAULT_COMPONENT_ROOTS.reports,
+      DEFAULT_COMPONENT_ROOTS.state,
+    ],
+    componentRoots: { ...DEFAULT_COMPONENT_ROOTS },
+    persistedManifestPath: DEFAULT_PERSISTED_MANIFEST_PATH,
+  };
+}
+
+function createRebindingContract(bindings: BindingSemantics): RebindingContract {
+  return {
+    workspaceTargetMode: "absolute-path",
+    mutableConfigTargets: [...new Set(bindings.workspaces.flatMap((binding) => binding.configTargets))],
   };
 }
 
@@ -177,6 +210,7 @@ function collectFiles(
 
 /** Determine pack subdirectory for a given source-relative path */
 function classifyPath(relPath: string): string {
+  const roots = DEFAULT_COMPONENT_ROOTS;
   const parts = relPath.split(path.sep);
 
   // workspace/ → workspace/
@@ -185,39 +219,39 @@ function classifyPath(relPath: string): string {
   // agents/<id>/agent/auth-profiles.json, models.json → state/ (instance) or skip
   // agents/<id>/sessions/ → state/
   // agents/ subtree preserves structure under state/
-  if (parts[0] === "agents") return path.join("state", relPath);
+  if (parts[0] === "agents") return path.join(roots.state, relPath);
 
   // credentials/ → state/
-  if (parts[0] === "credentials") return path.join("state", relPath);
+  if (parts[0] === "credentials") return path.join(roots.state, relPath);
 
   // cron/ → state/
-  if (parts[0] === "cron") return path.join("state", relPath);
+  if (parts[0] === "cron") return path.join(roots.state, relPath);
 
   // memory/ → state/
-  if (parts[0] === "memory") return path.join("state", relPath);
+  if (parts[0] === "memory") return path.join(roots.state, relPath);
 
   // hooks/, extensions/, skills/ → config/
   if (parts[0] === "hooks" || parts[0] === "extensions" || parts[0] === "skills") {
-    return path.join("config", relPath);
+    return path.join(roots.config, relPath);
   }
 
   // completions/ → config/
-  if (parts[0] === "completions") return path.join("config", relPath);
+  if (parts[0] === "completions") return path.join(roots.config, relPath);
 
   // Config files at root level
   const configExts = [".json", ".json5"];
   const ext = path.extname(relPath);
   if (parts.length === 1 && configExts.includes(ext)) {
-    return path.join("config", relPath);
+    return path.join(roots.config, relPath);
   }
 
   // .env at root → state/ (only in instance packs)
   if (parts.length === 1 && relPath === ".env") {
-    return path.join("state", relPath);
+    return path.join(roots.state, relPath);
   }
 
   // Everything else → state/
-  return path.join("state", relPath);
+  return path.join(roots.state, relPath);
 }
 
 function hasIncludedPath(includedPaths: readonly string[], pattern: RegExp): boolean {
@@ -329,6 +363,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
   }
 
   const packId = generatePackId();
+  const bindings = createBindingSemantics(workspaceBindings);
   const manifest: Manifest = {
     schemaVersion: SCHEMA_VERSION,
     packType,
@@ -336,7 +371,9 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     createdAt: new Date().toISOString(),
     image: createImageMetadata(packId, openClawAdapter.id),
     lineage: createInitialLineage(),
-    bindings: createBindingSemantics(workspaceBindings),
+    placement: createPlacementContract(),
+    rebinding: createRebindingContract(bindings),
+    bindings,
     harness: createHarnessMetadata(includedPaths, configPath, inspectResult.product),
     source: {
       product: "openclaw",
@@ -375,10 +412,14 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     );
 
     // Create base pack directories
-    const packDirs = ["config", "workspace", "reports"];
-    if (packType === "instance") packDirs.push("state");
+    const packDirs = [
+      manifest.placement.componentRoots.config,
+      manifest.placement.componentRoots.workspace,
+      manifest.placement.componentRoots.reports,
+    ];
+    if (packType === "instance") packDirs.push(manifest.placement.componentRoots.state);
     if (workspaceBindings.some((binding) => !binding.isDefault)) {
-      packDirs.push("workspaces");
+      packDirs.push(manifest.placement.componentRoots.workspaces);
     }
 
     for (const dir of packDirs) {
@@ -408,7 +449,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       sensitiveFlags: manifest.sensitiveFlags,
     };
     fs.writeFileSync(
-      path.join(stagingDir, "reports", "export-report.json"),
+      path.join(stagingDir, manifest.placement.componentRoots.reports, "export-report.json"),
       JSON.stringify(report, null, 2)
     );
 
@@ -495,31 +536,31 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     fs.mkdirSync(targetDir, { recursive: true });
 
     // Restore workspace/ → workspace/
-    const wsSource = path.join(tempDir, "workspace");
+    const wsSource = path.join(tempDir, manifest.placement.componentRoots.workspace);
     if (fs.existsSync(wsSource)) {
-      copyDirRecursive(wsSource, path.join(targetDir, "workspace"));
+      copyDirRecursive(wsSource, path.join(targetDir, manifest.placement.componentRoots.workspace));
     }
 
-    const workspacesSource = path.join(tempDir, "workspaces");
+    const workspacesSource = path.join(tempDir, manifest.placement.componentRoots.workspaces);
     if (fs.existsSync(workspacesSource)) {
       restoreAgentWorkspaces(workspacesSource, targetDir);
     }
 
     // Restore config/ → root level (config files go to stateDir root)
-    const configSource = path.join(tempDir, "config");
+    const configSource = path.join(tempDir, manifest.placement.componentRoots.config);
     if (fs.existsSync(configSource)) {
       restoreConfigDir(configSource, targetDir);
     }
 
     // Restore state/ → preserving nested structure
-    const stateSource = path.join(tempDir, "state");
+    const stateSource = path.join(tempDir, manifest.placement.componentRoots.state);
     if (fs.existsSync(stateSource)) {
       restoreStateDir(stateSource, targetDir);
     }
 
     openClawAdapter.rebindImportedConfig(targetDir, manifest, warnings);
     fs.writeFileSync(
-      path.join(targetDir, ".harness-manifest.json"),
+      path.join(targetDir, manifest.placement.persistedManifestPath),
       `${JSON.stringify(manifest, null, 2)}\n`
     );
 

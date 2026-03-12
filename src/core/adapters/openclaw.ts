@@ -12,6 +12,7 @@ import type { HarnessAdapter } from "./types.js";
 function rebindImportedConfig(targetDir: string, manifest: Manifest, warnings: string[]) {
   const configPath = findConfigFile(targetDir);
   const workspaceBindings = manifest.bindings?.workspaces ?? [];
+  const mutableTargets = new Set(manifest.rebinding?.mutableConfigTargets ?? []);
   if (!configPath || workspaceBindings.length === 0) return;
 
   let parsed: any;
@@ -40,7 +41,7 @@ function rebindImportedConfig(targetDir: string, manifest: Manifest, warnings: s
     const targetWorkspacePath = `${targetDir}/${workspace.targetRelativePath}`;
     const isDefault = workspace.targetRelativePath === "workspace";
 
-    if (isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
+    if (isDefault && mutableTargets.has("agents.defaults.workspace") && parsed.agents.defaults.workspace !== targetWorkspacePath) {
       parsed.agents.defaults.workspace = targetWorkspacePath;
       changed = true;
     }
@@ -49,7 +50,7 @@ function rebindImportedConfig(targetDir: string, manifest: Manifest, warnings: s
       const id = typeof entry?.id === "string" ? entry.id.trim().toLowerCase() : "";
       return id === workspace.agentId;
     });
-    if (agentEntry && agentEntry.workspace !== targetWorkspacePath) {
+    if (agentEntry && mutableTargets.has(`agents.list[${workspace.agentId}].workspace`) && agentEntry.workspace !== targetWorkspacePath) {
       agentEntry.workspace = targetWorkspacePath;
       changed = true;
     }

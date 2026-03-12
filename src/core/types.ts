@@ -13,6 +13,8 @@ export interface Manifest {
   createdAt: string;
   image: HarnessImageMetadata;
   lineage: HarnessImageLineage;
+  placement: PlacementContract;
+  rebinding: RebindingContract;
   bindings: BindingSemantics;
   harness: HarnessMetadata;
   source: {
@@ -40,6 +42,23 @@ export interface HarnessImageReference {
 export interface HarnessImageLineage {
   parentImage: HarnessImageReference | null;
   layerOrder: string[];
+}
+
+export interface PlacementContract {
+  reservedRoots: string[];
+  componentRoots: {
+    config: string;
+    workspace: string;
+    workspaces: string;
+    reports: string;
+    state: string;
+  };
+  persistedManifestPath: string;
+}
+
+export interface RebindingContract {
+  workspaceTargetMode: "absolute-path";
+  mutableConfigTargets: string[];
 }
 
 export interface BindingSemantics {

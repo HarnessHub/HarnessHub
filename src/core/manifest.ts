@@ -22,6 +22,8 @@ export function validateManifestContract(manifest: unknown): string[] {
 
   validateImageMetadata(manifest.image, errors);
   validateLineage(manifest.lineage, errors);
+  validatePlacement(manifest.placement, errors);
+  validateRebinding(manifest.rebinding, errors);
   validateBindings(manifest.bindings, errors);
   validateHarnessMetadata(manifest.harness, errors);
   validateSource(manifest.source, errors);
@@ -70,6 +72,35 @@ function validateBindings(value: unknown, errors: string[]) {
     return;
   }
   value.workspaces.forEach((workspace, index) => validateWorkspaceBindingRule(workspace, index, errors));
+}
+
+function validatePlacement(value: unknown, errors: string[]) {
+  if (!isRecord(value)) {
+    errors.push("placement must be an object");
+    return;
+  }
+  validateStringArray(value.reservedRoots, "placement.reservedRoots", errors);
+  if (!isRecord(value.componentRoots)) {
+    errors.push("placement.componentRoots must be an object");
+  } else {
+    requireExactString(value.componentRoots, "config", errors, "placement.componentRoots.config");
+    requireExactString(value.componentRoots, "workspace", errors, "placement.componentRoots.workspace");
+    requireExactString(value.componentRoots, "workspaces", errors, "placement.componentRoots.workspaces");
+    requireExactString(value.componentRoots, "reports", errors, "placement.componentRoots.reports");
+    requireExactString(value.componentRoots, "state", errors, "placement.componentRoots.state");
+  }
+  requireExactString(value, "persistedManifestPath", errors, "placement.persistedManifestPath");
+}
+
+function validateRebinding(value: unknown, errors: string[]) {
+  if (!isRecord(value)) {
+    errors.push("rebinding must be an object");
+    return;
+  }
+  if (value.workspaceTargetMode !== "absolute-path") {
+    errors.push("rebinding.workspaceTargetMode must be absolute-path");
+  }
+  validateStringArray(value.mutableConfigTargets, "rebinding.mutableConfigTargets", errors);
 }
 
 function validateWorkspaceBindingRule(value: unknown, index: number, errors: string[]) {

@@ -254,6 +254,9 @@ describe("export + import", () => {
     expect(result.manifest.image.adapter).toBe("openclaw");
     expect(result.manifest.lineage.parentImage).toBeNull();
     expect(result.manifest.lineage.layerOrder).toEqual([]);
+    expect(result.manifest.placement.persistedManifestPath).toBe(".harness-manifest.json");
+    expect(result.manifest.placement.reservedRoots).toEqual(["config", "workspace", "workspaces", "reports", "state"]);
+    expect(result.manifest.rebinding.workspaceTargetMode).toBe("absolute-path");
     expect(result.manifest.bindings.workspaces).toEqual([
       {
         agentId: "main",
@@ -262,6 +265,10 @@ describe("export + import", () => {
         configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
         required: true,
       },
+    ]);
+    expect(result.manifest.rebinding.mutableConfigTargets).toEqual([
+      "agents.defaults.workspace",
+      "agents.list[main].workspace",
     ]);
     expect(result.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(result.manifest.harness.targetProduct).toBe("openclaw");
@@ -519,6 +526,8 @@ describe("export + import", () => {
     expect(verifyResult.errors).toHaveLength(0);
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_lineage" && c.passed)).toBe(true);
+    expect(verifyResult.checks.some(c => c.name === "manifest_placement" && c.passed)).toBe(true);
+    expect(verifyResult.checks.some(c => c.name === "manifest_rebinding" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "binding_semantics" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_harness" && c.passed)).toBe(true);
   });
@@ -635,6 +644,21 @@ describe("verify", () => {
         parentImage: null,
         layerOrder: [],
       },
+      placement: {
+        reservedRoots: ["config", "workspace", "workspaces", "reports", "state"],
+        componentRoots: {
+          config: "config",
+          workspace: "workspace",
+          workspaces: "workspaces",
+          reports: "reports",
+          state: "state",
+        },
+        persistedManifestPath: ".harness-manifest.json",
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: [],
+      },
       bindings: {
         workspaces: [],
       },
@@ -683,6 +707,21 @@ describe("verify", () => {
       lineage: {
         parentImage: null,
         layerOrder: [],
+      },
+      placement: {
+        reservedRoots: ["config", "workspace", "workspaces", "reports", "state"],
+        componentRoots: {
+          config: "config",
+          workspace: "workspace",
+          workspaces: "workspaces",
+          reports: "reports",
+          state: "state",
+        },
+        persistedManifestPath: ".harness-manifest.json",
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: [],
       },
       bindings: {
         workspaces: [],
