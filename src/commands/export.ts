@@ -7,6 +7,7 @@ export const exportCommand = new Command("export")
   .option("-p, --path <path>", "Path to OpenClaw state directory")
   .option("-o, --output <path>", "Output file path")
   .option("-t, --type <type>", "Pack type: template or instance", "template")
+  .option("--allow-pack-type-override", "Allow exporting a pack type that diverges from inspect recommendations")
   .option("-f, --format <format>", "Output format: text or json", "text")
   .action(async (opts) => {
     const format = opts.format as OutputFormat;
@@ -28,6 +29,7 @@ export const exportCommand = new Command("export")
         sourcePath: opts.path,
         outputPath: opts.output,
         packType,
+        allowPackTypeOverride: Boolean(opts.allowPackTypeOverride),
       });
 
       if (format === "json") {
@@ -40,6 +42,7 @@ export const exportCommand = new Command("export")
           fileCount: result.fileCount,
           totalSize: result.totalSize,
           warnings: result.warnings,
+          policyWarnings: result.policyWarnings,
         }, null, 2));
       } else {
         console.log("");

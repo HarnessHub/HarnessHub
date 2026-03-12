@@ -54,11 +54,15 @@ describe("run-openclaw-e2e-validation.sh", () => {
     const report = JSON.parse(fs.readFileSync(reportJson, "utf8"));
     expect(report.sourceDir).toBe(sourceDir);
     expect(report.export.success).toBe(true);
+    expect(report.export.policyWarnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("Inspect recommended instance")]),
+    );
     expect(report.manifest.image.adapter).toBe("openclaw");
     expect(report.verify.valid).toBe(true);
 
     const markdown = fs.readFileSync(reportMd, "utf8");
     expect(markdown).toContain("Artifact path:");
+    expect(markdown).toContain("## Export Policy");
     expect(markdown).toContain("Verify valid: `true`");
 
     fs.rmSync(tmpDir, { recursive: true, force: true });

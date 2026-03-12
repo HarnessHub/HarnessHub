@@ -308,10 +308,17 @@ describe("export + import", () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "sensitive"));
     const outputFile = path.join(tmpDir, "template.harness");
 
+    await expect(exportPack({
+      sourcePath: instanceDir,
+      outputPath: outputFile,
+      packType: "template",
+    })).rejects.toThrow(/explicit pack-type override/);
+
     const result = await exportPack({
       sourcePath: instanceDir,
       outputPath: outputFile,
       packType: "template",
+      allowPackTypeOverride: true,
     });
 
     const paths = result.manifest.includedPaths;
@@ -341,6 +348,7 @@ describe("export + import", () => {
       sourcePath: instanceDir,
       outputPath: outputFile,
       packType: "template",
+      allowPackTypeOverride: true,
     });
 
     expect(result.manifest.harness.components).not.toContain("agents");
@@ -351,6 +359,19 @@ describe("export + import", () => {
     expect(result.manifest.includedPaths.some((p) => p.startsWith("credentials/"))).toBe(false);
     expect(result.manifest.includedPaths.some((p) => p.startsWith("memory/"))).toBe(false);
     expect(result.warnings.some((warning) => warning.includes("Inspect recommended instance"))).toBe(true);
+  });
+
+  it("instance export warns when template would be sufficient", async () => {
+    const instanceDir = createMockInstance(path.join(tmpDir, "template-source"));
+    const outputFile = path.join(tmpDir, "template-source-instance.harness");
+
+    const result = await exportPack({
+      sourcePath: instanceDir,
+      outputPath: outputFile,
+      packType: "instance",
+    });
+
+    expect(result.policyWarnings.some((warning) => warning.includes("qualifies for template"))).toBe(true);
   });
 
   it("instance pack preserves agent directory structure", async () => {
