@@ -3,7 +3,7 @@ import path from "node:path";
 import JSON5 from "json5";
 import type { Manifest, VerifyResult, VerifyCheck } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
-import { findConfigFile, resolveWorkspaceBindings } from "./scanner.js";
+import { openClawAdapter } from "./adapters/openclaw.js";
 
 const REQUIRED_WORKSPACE_FILES = ["AGENTS.md"];
 
@@ -29,7 +29,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   }
 
   // Check 2: Config file exists
-  const configPath = findConfigFile(targetDir);
+  const configPath = openClawAdapter.findConfigFile(targetDir);
   const hasConfig = configPath !== null;
   checks.push({
     name: "config_exists",
@@ -43,7 +43,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   }
 
   // Check 3: Workspace directory exists
-  const resolvedWorkspaces = resolveWorkspaceBindings(targetDir, configPath);
+  const resolvedWorkspaces = openClawAdapter.resolveWorkspaceBindings(targetDir, configPath);
   const workspaceDirs = manifestWorkspaces.length > 0
     ? manifestWorkspaces.map((workspace) =>
         workspace.isDefault ? "workspace" : workspace.logicalPath

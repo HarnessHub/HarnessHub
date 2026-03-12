@@ -13,7 +13,7 @@ import type {
   WorkspaceBinding,
 } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
-import { inspect, resolveStateDir, findConfigFile, resolveWorkspaceBindings } from "./scanner.js";
+import { openClawAdapter } from "./adapters/openclaw.js";
 
 // Files/dirs to exclude from template packs (security-critical)
 const TEMPLATE_EXCLUDES = [
@@ -237,19 +237,19 @@ interface ExportResult {
 }
 
 export async function exportPack(options: ExportOptions): Promise<ExportResult> {
-  const stateDir = resolveStateDir(options.sourcePath);
-  const configPath = findConfigFile(stateDir);
+  const stateDir = openClawAdapter.resolveStateDir(options.sourcePath);
+  const configPath = openClawAdapter.findConfigFile(stateDir);
   if (!fs.existsSync(stateDir)) {
     throw new Error(`OpenClaw state directory not found: ${stateDir}`);
   }
 
-  const inspectResult = inspect(options.sourcePath);
+  const inspectResult = openClawAdapter.inspect(options.sourcePath);
   if (!inspectResult.detected) {
     throw new Error("No OpenClaw instance detected at the specified path");
   }
 
   const packType = options.packType;
-  const resolvedWorkspaceBindings = resolveWorkspaceBindings(stateDir, configPath);
+  const resolvedWorkspaceBindings = openClawAdapter.resolveWorkspaceBindings(stateDir, configPath);
   const workspaceBindings = resolvedWorkspaceBindings.map<WorkspaceBinding>((binding) => ({
     agentId: binding.agentId,
     logicalPath: binding.logicalPath,
@@ -425,7 +425,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
     const targetDir = options.targetPath
       ? path.resolve(options.targetPath)
-      : resolveStateDir();
+      : openClawAdapter.resolveStateDir();
 
     const warnings: string[] = [];
 
@@ -473,7 +473,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
       restoreStateDir(stateSource, targetDir);
     }
 
-    rebindWorkspaceConfig(targetDir, manifest, warnings);
+    openClawAdapter.rebindImportedConfig(targetDir, manifest, warnings);
     fs.writeFileSync(
       path.join(targetDir, ".harness-manifest.json"),
       `${JSON.stringify(manifest, null, 2)}\n`
@@ -538,60 +538,6 @@ function restoreStateDir(stateSource: string, targetDir: string) {
       fs.copyFileSync(src, dest);
     }
   }
-}
-
-function rebindWorkspaceConfig(targetDir: string, manifest: Manifest, warnings: string[]) {
-  const configPath = findConfigFile(targetDir);
-  if (!configPath || manifest.workspaces.length === 0) return;
-
-  let parsed: any;
-  try {
-    parsed = JSON5.parse(fs.readFileSync(configPath, "utf-8"));
-  } catch {
-    warnings.push(`Could not parse config for workspace rebinding: ${path.basename(configPath)}`);
-    return;
-  }
-
-  if (!parsed || typeof parsed !== "object") return;
-
-  if (!parsed.agents || typeof parsed.agents !== "object") {
-    parsed.agents = {};
-  }
-  if (!parsed.agents.defaults || typeof parsed.agents.defaults !== "object") {
-    parsed.agents.defaults = {};
-  }
-  if (!Array.isArray(parsed.agents.list)) {
-    parsed.agents.list = [];
-  }
-
-  let changed = false;
-
-  for (const workspace of manifest.workspaces) {
-    const targetWorkspacePath = workspace.isDefault
-      ? path.join(targetDir, "workspace")
-      : path.join(targetDir, workspace.logicalPath);
-
-    if (workspace.isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
-      parsed.agents.defaults.workspace = targetWorkspacePath;
-      changed = true;
-    }
-
-    const agentEntry = parsed.agents.list.find((entry: any) => {
-      const id = typeof entry?.id === "string" ? entry.id.trim().toLowerCase() : "";
-      return id === workspace.agentId;
-    });
-    if (agentEntry && agentEntry.workspace !== targetWorkspacePath) {
-      agentEntry.workspace = targetWorkspacePath;
-      changed = true;
-    }
-  }
-
-  if (!changed) return;
-
-  fs.writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`);
-  warnings.push(
-    `Rebound workspace paths in ${path.basename(configPath)} to ${targetDir}; JSON5 formatting/comments were normalized.`
-  );
 }
 
 function copyDirRecursive(src: string, dest: string) {

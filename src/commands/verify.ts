@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { verify } from "../core/verifier.js";
 import { printVerifyResult } from "../utils/output.js";
-import { resolveStateDir } from "../core/scanner.js";
+import { openClawAdapter } from "../core/adapters/openclaw.js";
 import type { Manifest, OutputFormat } from "../core/types.js";
 
 export const verifyCommand = new Command("verify")
@@ -12,7 +12,7 @@ export const verifyCommand = new Command("verify")
   .option("-f, --format <format>", "Output format: text or json", "text")
   .action((opts) => {
     const format = opts.format as OutputFormat;
-    const targetDir = opts.path ? path.resolve(opts.path) : resolveStateDir();
+    const targetDir = opts.path ? path.resolve(opts.path) : openClawAdapter.resolveStateDir();
 
     try {
       // Try to find a manifest from a recent import
