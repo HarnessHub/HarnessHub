@@ -12,6 +12,16 @@ ClawPack 是一个面向 [OpenClaw](https://github.com/openclaw/openclaw) Agent 
 
 它解决的问题很简单：将一个已经调好的 OpenClaw Agent **标准化地导出、导入和验证**。它不是容器，也不是虚拟机，而是建立在这些基础设施之上的应用层分发包。
 
+## 产品方向
+
+这个仓库最初从一个 OpenClaw 优先的打包 CLI 出发，但现在更清晰的产品方向已经形成：ClawPack 正在演进为一个面向 Agent 运行环境的 harness image 打包标准，而 OpenClaw 是第一个生产级适配器。
+
+当前产品定义见：
+
+- `docs/prds/0002-product-foundation.md`
+- `docs/prds/0003-roadmap-mvp-to-v1.md`
+- `docs/architecture/0001-harness-image-architecture.md`
+
 ## 为什么需要 ClawPack
 
 一个 OpenClaw Agent 的可用状态不只是代码或配置，还包括：

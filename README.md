@@ -12,6 +12,16 @@ ClawPack is an application-layer packaging and distribution tool for [OpenClaw](
 
 It solves a simple problem: standardized export, import, and verification of a tuned OpenClaw Agent. It's not a container or a VM — it's an application-level distribution package built on top of those infrastructures.
 
+## Product Direction
+
+The repository started with an OpenClaw-first packaging CLI, but the broader product direction is now clearer: ClawPack is evolving toward a harness image packaging standard for agent runtime environments, with OpenClaw as the first production adapter.
+
+For the current product framing, see:
+
+- `docs/prds/0002-product-foundation.md`
+- `docs/prds/0003-roadmap-mvp-to-v1.md`
+- `docs/architecture/0001-harness-image-architecture.md`
+
 ## Why
 
 An OpenClaw agent's usable state is more than just code or config. It includes:
