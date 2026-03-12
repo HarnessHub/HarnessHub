@@ -171,6 +171,38 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       message: `Pack type: ${manifest.packType}`,
     });
 
+    const hasPlacementContract =
+      Array.isArray(manifest.placement?.reservedRoots) &&
+      manifest.placement.reservedRoots.length >= 5 &&
+      typeof manifest.placement?.persistedManifestPath === "string" &&
+      manifest.placement.persistedManifestPath.length > 0;
+    checks.push({
+      name: "manifest_placement",
+      passed: hasPlacementContract,
+      message: hasPlacementContract
+        ? `Placement roots: ${manifest.placement.reservedRoots.join(", ")}`
+        : "Manifest placement contract missing or invalid",
+    });
+    if (!hasPlacementContract) {
+      warnings.push("Manifest placement contract missing or invalid");
+      runtimeReadinessIssues.push("Manifest placement contract missing or invalid");
+    }
+
+    const hasRebindingContract =
+      manifest.rebinding?.workspaceTargetMode === "absolute-path" &&
+      Array.isArray(manifest.rebinding?.mutableConfigTargets);
+    checks.push({
+      name: "manifest_rebinding",
+      passed: hasRebindingContract,
+      message: hasRebindingContract
+        ? `Rebinding targets: ${manifest.rebinding.mutableConfigTargets.join(", ")}`
+        : "Manifest rebinding contract missing or invalid",
+    });
+    if (!hasRebindingContract) {
+      warnings.push("Manifest rebinding contract missing or invalid");
+      runtimeReadinessIssues.push("Manifest rebinding contract missing or invalid");
+    }
+
     const packTypeContractErrors = validatePackTypeComponents(
       manifest.packType,
       manifest.harness.components
