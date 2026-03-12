@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { inspect } from "../core/scanner.js";
+import { openClawAdapter } from "../core/adapters/openclaw.js";
 import { printInspectResult } from "../utils/output.js";
 import type { OutputFormat } from "../core/types.js";
 
@@ -10,7 +10,7 @@ export const inspectCommand = new Command("inspect")
   .action((opts) => {
     const format = opts.format as OutputFormat;
     try {
-      const result = inspect(opts.path);
+      const result = openClawAdapter.inspect(opts.path);
       printInspectResult(result as unknown as Record<string, unknown>, format);
       if (!result.detected) {
         process.exitCode = 1;
