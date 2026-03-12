@@ -124,6 +124,13 @@ export interface InspectResult {
   recommendedPackType: PackType;
   riskAssessment: RiskLevel;
   warnings: string[];
+  workflow?: InspectWorkflow;
+}
+
+export interface InspectWorkflow {
+  recommendedExportCommand: string;
+  recommendationSummary: string;
+  overrideExportCommand?: string;
 }
 
 export interface InstanceStructure {

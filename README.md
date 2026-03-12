@@ -95,8 +95,11 @@ The four commands form a linear workflow:
 # 1. Inspect an OpenClaw instance
 harness inspect
 
-# 2. Export as a template pack (safe to share)
-harness export -t template -o my-agent.harness
+# 2. Follow the inspect recommendation
+#    - template recommendation: harness export -t template -o my-agent.harness
+#    - instance recommendation: harness export -t instance -o my-agent.harness
+#    - share-oriented override from an instance recommendation:
+#      harness export -t template --allow-pack-type-override -o my-agent.harness
 
 # 3. Import on another machine
 harness import my-agent.harness -t ~/.openclaw
@@ -126,6 +129,8 @@ harness inspect                  # auto-detect ~/.openclaw
 harness inspect -p /path/to/dir  # custom path
 harness inspect -f json          # JSON output
 ```
+
+`harness inspect` now returns the recommended next export command directly. When inspect recommends `instance`, it also surfaces the explicit `template` override form for intentional share-oriented export.
 
 ### `harness export`
 
