@@ -102,6 +102,21 @@ describe("harness CLI integration", () => {
     expect(data.checks.some((check: { name: string; passed: boolean }) => check.name === "manifest_schema" && check.passed)).toBe(true);
   });
 
+  it("requires explicit override when exporting template against an instance recommendation", () => {
+    const sourceDir = path.join(tmpDir, "source");
+    const packFile = path.join(tmpDir, "template.harness");
+    createInstanceSource(sourceDir);
+
+    const blocked = runCli(["export", "-p", sourceDir, "-o", packFile, "-t", "template", "-f", "json"]);
+    expect(blocked.status).toBe(1);
+    expect(JSON.parse(blocked.stdout).error).toContain("explicit pack-type override");
+
+    const allowed = runCli(["export", "-p", sourceDir, "-o", packFile, "-t", "template", "--allow-pack-type-override", "-f", "json"]);
+    expect(allowed.status).toBe(0);
+    const data = JSON.parse(allowed.stdout);
+    expect(data.policyWarnings.some((warning: string) => warning.includes("Inspect recommended instance"))).toBe(true);
+  });
+
   it("runs an instance roundtrip and preserves sensitive structure", () => {
     const sourceDir = path.join(tmpDir, "source");
     const targetDir = path.join(tmpDir, "target");

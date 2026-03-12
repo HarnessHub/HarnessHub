@@ -292,6 +292,7 @@ interface ExportOptions {
   sourcePath?: string;
   outputPath?: string;
   packType: PackType;
+  allowPackTypeOverride?: boolean;
 }
 
 interface CollectedFile {
@@ -306,6 +307,7 @@ interface ExportResult {
   fileCount: number;
   totalSize: number;
   warnings: string[];
+  policyWarnings: string[];
 }
 
 export async function exportPack(options: ExportOptions): Promise<ExportResult> {
@@ -386,9 +388,23 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     riskLevel: assessRisk(inspectResult.sensitiveFlags, packType),
   };
   const warnings: string[] = [];
+  const policyWarnings: string[] = [];
   if (inspectResult.recommendedPackType !== packType) {
-    warnings.push(
-      `Inspect recommended ${inspectResult.recommendedPackType}; exporting ${packType} applies the explicit ${packType} contract instead.`
+    const divergenceMessage =
+      `Inspect recommended ${inspectResult.recommendedPackType}; exporting ${packType} diverges from the recommended pack type.`;
+    if (inspectResult.recommendedPackType === "instance" && packType === "template" && !options.allowPackTypeOverride) {
+      throw new Error(`${divergenceMessage} Re-run with explicit pack-type override to allow a template downgrade.`);
+    }
+    policyWarnings.push(divergenceMessage);
+  }
+  if (packType === "instance" && inspectResult.recommendedPackType === "template") {
+    policyWarnings.push(
+      "Exporting instance for a source that qualifies for template will retain additional state for migration-oriented use."
+    );
+  }
+  if (packType === "instance" && manifest.riskLevel === "trusted-migration-only") {
+    policyWarnings.push(
+      "Instance export is trusted-migration-only and may retain sensitive runtime state."
     );
   }
   const packTypeContractErrors = validatePackTypeComponents(packType, manifest.harness.components);
@@ -467,7 +483,14 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       fs.readdirSync(stagingDir)
     );
 
-    return { outputFile, manifest, fileCount: filesToExport.length, totalSize, warnings };
+    return {
+      outputFile,
+      manifest,
+      fileCount: filesToExport.length,
+      totalSize,
+      warnings: [...policyWarnings, ...warnings],
+      policyWarnings,
+    };
   } finally {
     fs.rmSync(stagingDir, { recursive: true, force: true });
   }

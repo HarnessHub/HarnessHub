@@ -22,7 +22,7 @@ mkdir -p "$RUN_DIR" "$(dirname "$REPORT_JSON")" "$(dirname "$REPORT_MD")"
 npm run build >/dev/null
 
 node dist/cli.js inspect -p "$SOURCE_DIR" -f json >"$RUN_DIR/inspect.json"
-node dist/cli.js export -p "$SOURCE_DIR" -o "$PACK_FILE" -t template -f json >"$RUN_DIR/export.json"
+node dist/cli.js export -p "$SOURCE_DIR" -o "$PACK_FILE" -t template --allow-pack-type-override -f json >"$RUN_DIR/export.json"
 node dist/cli.js import "$PACK_FILE" -t "$TARGET_DIR" -f json >"$RUN_DIR/import.json"
 node dist/cli.js verify -p "$TARGET_DIR" -f json >"$RUN_DIR/verify.json"
 tar -xOf "$PACK_FILE" manifest.json >"$RUN_DIR/manifest.json"
@@ -74,6 +74,7 @@ const summary = {
     riskLevel: exported.riskLevel,
     fileCount: exported.fileCount,
     totalSize: exported.totalSize,
+    policyWarnings: (exported.policyWarnings ?? []).map(sanitizeText),
   },
   manifest: {
     schemaVersion: manifest.schemaVersion,
@@ -132,6 +133,12 @@ const md = [
   `- Risk level: \`${summary.export.riskLevel}\``,
   `- File count: \`${summary.export.fileCount}\``,
   `- Total size: \`${summary.export.totalSize}\` bytes`,
+  "",
+  "## Export Policy",
+  "",
+  ...(summary.export.policyWarnings.length > 0
+    ? summary.export.policyWarnings.map((warning) => `- ${warning}`)
+    : ["- none"]),
   "",
   "## Manifest",
   "",
