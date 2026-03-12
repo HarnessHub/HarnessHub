@@ -143,14 +143,12 @@ function taskNew(args, io) {
     depends_on: options["depends-on"] ?? "",
   };
   if (options.issue) metadata.issue = options.issue;
-  writeDocument(taskPath, metadata, {
-    Context: "",
-    Deliverable: "",
-    Scope: "- ",
-    "Acceptance Criteria": "- ",
-    Validation: "- ",
-    "Implementation Notes": "",
-  });
+  writeDocument(taskPath, metadata, buildTaskSections({
+    title: options.title,
+    issue: options.issue,
+    issueBodyFile: options["issue-body-file"],
+    repo: options.repo,
+  }));
   io.log(taskPath);
   return 0;
 }
@@ -475,13 +473,7 @@ export function initIssueState(taskDocument) {
       task: taskDocument.path,
       title: taskDocument.metadata.title ?? "",
       status: taskDocument.metadata.status ?? "",
-    }, {
-      Summary: "Record the current working state for this issue so later sessions do not have to rediscover it.",
-      "Validated Facts": "- ",
-      "Open Questions": "- ",
-      "Next Steps": "- ",
-      Artifacts: "- ",
-    });
+    }, buildIssueStateSections(taskDocument));
   }
   taskDocument.metadata.state_path = filePath;
   persistDocument(taskDocument);
@@ -632,6 +624,30 @@ export function verifyClosureSync(prBody, changedFiles) {
   return errors;
 }
 
+function buildTaskSections({ title, issue, issueBodyFile, repo }) {
+  const hydrated = hydrateTaskFromIssue({ issue, issueBodyFile, repo });
+  const contextParts = [hydrated.Summary, hydrated.Why].filter(Boolean);
+  return {
+    Context: contextParts.join("\n\n"),
+    Deliverable: hydrated.Summary || title || "",
+    Scope: asBulletList(hydrated.Scope),
+    "Acceptance Criteria": asBulletList(hydrated["Acceptance Criteria"]),
+    Validation: "- ",
+    "Implementation Notes": "",
+  };
+}
+
+function buildIssueStateSections(taskDocument) {
+  const context = taskDocument.sections.Context || taskDocument.sections.Deliverable || taskDocument.metadata.title || "";
+  return {
+    Summary: context || "Record the current working state for this issue so later sessions do not have to rediscover it.",
+    "Validated Facts": asBulletList(taskDocument.sections["Acceptance Criteria"]),
+    "Open Questions": "- ",
+    "Next Steps": asBulletList(taskDocument.sections.Scope),
+    Artifacts: "- ",
+  };
+}
+
 function resolvePrBody(options) {
   if (options["pr-body"]) return options["pr-body"];
   if (options["event-path"]) {
@@ -649,6 +665,60 @@ function resolveChangedFiles(options) {
     return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean);
   }
   throw new Error("either --changed-file or both --base-sha and --head-sha are required");
+}
+
+function hydrateTaskFromIssue({ issue, issueBodyFile, repo }) {
+  if (issueBodyFile) {
+    return parseIssueSections(fs.readFileSync(issueBodyFile, "utf8"));
+  }
+  const issueNumber = parseIssueNumber(String(issue ?? ""));
+  if (issueNumber === null) {
+    return {};
+  }
+  const issueBody = loadGithubIssueBody(issueNumber, repo);
+  return issueBody ? parseIssueSections(issueBody) : {};
+}
+
+function loadGithubIssueBody(issueNumber, repo) {
+  const resolvedRepo = repo ?? inferBaseRepo();
+  const args = ["issue", "view", String(issueNumber), "--json", "body"];
+  if (resolvedRepo) args.push("--repo", resolvedRepo);
+  const result = spawnSync("gh", args, { encoding: "utf8" });
+  if (result.status !== 0) {
+    return "";
+  }
+  try {
+    return JSON.parse(result.stdout).body ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function parseIssueSections(markdown) {
+  const sections = {};
+  let currentHeading = null;
+  const currentLines = [];
+  const flush = () => {
+    if (!currentHeading) return;
+    sections[currentHeading] = currentLines.join("\n").trim();
+    currentLines.length = 0;
+  };
+  for (const line of markdown.split("\n")) {
+    if (line.startsWith("## ")) {
+      flush();
+      currentHeading = line.slice(3).trim();
+      continue;
+    }
+    if (currentHeading) currentLines.push(line);
+  }
+  flush();
+  return sections;
+}
+
+function asBulletList(value) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return "- ";
+  return trimmed;
 }
 
 function currentBranch() {

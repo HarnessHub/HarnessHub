@@ -83,4 +83,53 @@ describe("codex-pm", () => {
       path.relative(tmpDir, taskPath),
     ])).toBe(0);
   });
+
+  it("hydrates task twins and issue state from issue intent", () => {
+    expect(main(["init"])).toBe(0);
+    const issueBodyPath = path.join(tmpDir, "issue-body.md");
+    fs.writeFileSync(issueBodyPath, [
+      "## Summary",
+      "Improve local PM twin hydration so startup requires less copy-editing.",
+      "",
+      "## Why",
+      "The local twin structure exists, but initial files are too empty to guide implementation.",
+      "",
+      "## Scope",
+      "- hydrate Context from issue intent",
+      "- hydrate Scope and Acceptance Criteria",
+      "",
+      "## Acceptance Criteria",
+      "- task twins start useful",
+      "- issue-state next steps reflect scope",
+      "",
+    ].join("\n"), "utf8");
+
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "pm-hydration",
+      "--title",
+      "Improve local PM twin hydration",
+      "--issue",
+      "32",
+      "--issue-body-file",
+      issueBodyPath,
+    ])).toBe(0);
+
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "pm-hydration.md");
+    const taskText = fs.readFileSync(taskPath, "utf8");
+    expect(taskText).toContain("Improve local PM twin hydration so startup requires less copy-editing.");
+    expect(taskText).toContain("The local twin structure exists, but initial files are too empty to guide implementation.");
+    expect(taskText).toContain("- hydrate Scope and Acceptance Criteria");
+
+    expect(main(["set-status", taskPath, "in_progress"])).toBe(0);
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "32-pm-hydration.md");
+    const stateText = fs.readFileSync(statePath, "utf8");
+    expect(stateText).toContain("Improve local PM twin hydration so startup requires less copy-editing.");
+    expect(stateText).toContain("- hydrate Context from issue intent");
+    expect(stateText).toContain("- task twins start useful");
+    expect(stateText).toContain("status: in_progress");
+  });
 });
