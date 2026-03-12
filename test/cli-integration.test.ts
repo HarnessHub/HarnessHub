@@ -73,6 +73,20 @@ describe("harness CLI integration", () => {
     const data = JSON.parse(result.stdout);
     expect(data.detected).toBe(true);
     expect(data.recommendedPackType).toBe("template");
+    expect(data.workflow.recommendedExportCommand).toContain("harness export");
+    expect(data.workflow.recommendationSummary).toContain("template export");
+  });
+
+  it("returns instance-oriented workflow guidance when inspect recommends instance", () => {
+    const sourceDir = path.join(tmpDir, "source");
+    createInstanceSource(sourceDir);
+
+    const result = runCli(["inspect", "-p", sourceDir, "-f", "json"]);
+    expect(result.status).toBe(0);
+    const data = JSON.parse(result.stdout);
+    expect(data.recommendedPackType).toBe("instance");
+    expect(data.workflow.recommendedExportCommand).toContain("-t instance");
+    expect(data.workflow.overrideExportCommand).toContain("--allow-pack-type-override");
   });
 
   it("rejects an invalid export type with a JSON error", () => {

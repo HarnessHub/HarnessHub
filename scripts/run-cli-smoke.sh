@@ -47,7 +47,18 @@ EOF
 
 npm run build >/dev/null
 
-node dist/cli.js inspect -p "$SRC_DIR" -f json >/dev/null
+INSPECT_JSON="$(node dist/cli.js inspect -p "$SRC_DIR" -f json)"
+echo "$INSPECT_JSON" | node -e '
+const data = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+if (data.recommendedPackType !== "template") {
+  console.error("inspect did not recommend template for the smoke fixture");
+  process.exit(1);
+}
+if (!data.workflow?.recommendedExportCommand?.includes("harness export")) {
+  console.error("inspect did not provide workflow guidance");
+  process.exit(1);
+}
+'
 node dist/cli.js export -p "$SRC_DIR" -o "$PACK_FILE" -t template -f json >/dev/null
 node dist/cli.js import "$PACK_FILE" -t "$TARGET_DIR" -f json >/dev/null
 

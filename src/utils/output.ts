@@ -130,6 +130,15 @@ export function printInspectResult(result: Record<string, unknown>, format: Outp
   console.log("--- Recommendation ---");
   console.log(`  Pack type:    ${r.recommendedPackType}`);
   console.log(`  Risk level:   ${r.riskAssessment}`);
+  if (r.workflow) {
+    console.log("");
+    console.log("--- Next Step ---");
+    console.log(`  Summary:      ${r.workflow.recommendationSummary}`);
+    console.log(`  Export:       ${r.workflow.recommendedExportCommand}`);
+    if (r.workflow.overrideExportCommand) {
+      console.log(`  Override:     ${r.workflow.overrideExportCommand}`);
+    }
+  }
 
   if (r.warnings.length > 0) {
     console.log("");
