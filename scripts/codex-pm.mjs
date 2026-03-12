@@ -310,7 +310,7 @@ function prCreate(args, io) {
     issue,
     tests,
     title: options.title,
-    baseRepo: options["base-repo"] ?? inferBaseRepo() ?? "Mrxuexi/clawpack",
+    baseRepo: options["base-repo"] ?? inferBaseRepo() ?? "HarnessHub/HarnessHub",
     baseBranch: options["base-branch"] ?? "main",
     headOwner: options["head-owner"],
     headBranch: options["head-branch"],

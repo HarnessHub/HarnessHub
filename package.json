@@ -1,7 +1,7 @@
 {
   "name": "clawpack",
   "version": "0.1.0",
-  "description": "Application-layer packaging and distribution tool for OpenClaw agents",
+  "description": "Harness image packaging standard for agent runtime environments, currently implemented through the clawpack CLI",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
@@ -35,11 +35,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Mrxuexi/clawpack.git"
+    "url": "git+https://github.com/HarnessHub/HarnessHub.git"
   },
-  "homepage": "https://github.com/Mrxuexi/clawpack#readme",
+  "homepage": "https://github.com/HarnessHub/HarnessHub#readme",
   "bugs": {
-    "url": "https://github.com/Mrxuexi/clawpack/issues"
+    "url": "https://github.com/HarnessHub/HarnessHub/issues"
   },
   "author": "Mrxuexi",
   "engines": {
