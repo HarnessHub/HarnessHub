@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import * as tar from "tar";
 import JSON5 from "json5";
 import type {
+  BindingSemantics,
   HarnessComponent,
   HarnessMetadata,
   HarnessImageLineage,
@@ -13,6 +14,7 @@ import type {
   RiskLevel,
   SensitiveFlags,
   WorkspaceBinding,
+  WorkspaceBindingRule,
 } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
@@ -71,6 +73,22 @@ function createInitialLineage(): HarnessImageLineage {
   return {
     parentImage: null,
     layerOrder: [],
+  };
+}
+
+function createBindingSemantics(workspaces: readonly WorkspaceBinding[]): BindingSemantics {
+  const workspaceRules: WorkspaceBindingRule[] = workspaces.map((workspace) => ({
+    agentId: workspace.agentId,
+    logicalPath: workspace.logicalPath,
+    targetRelativePath: workspace.isDefault ? "workspace" : workspace.logicalPath,
+    configTargets: workspace.isDefault
+      ? ["agents.defaults.workspace", `agents.list[${workspace.agentId}].workspace`]
+      : [`agents.list[${workspace.agentId}].workspace`],
+    required: true,
+  }));
+
+  return {
+    workspaces: workspaceRules,
   };
 }
 
@@ -314,6 +332,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     createdAt: new Date().toISOString(),
     image: createImageMetadata(packId, openClawAdapter.id),
     lineage: createInitialLineage(),
+    bindings: createBindingSemantics(workspaceBindings),
     harness: createHarnessMetadata(includedPaths, configPath, inspectResult.product),
     source: {
       product: "openclaw",
@@ -439,6 +458,11 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
       lineage: {
         parentImage: parsedManifest.lineage?.parentImage ?? null,
         layerOrder: Array.isArray(parsedManifest.lineage?.layerOrder) ? parsedManifest.lineage.layerOrder : [],
+      },
+      bindings: {
+        workspaces: Array.isArray(parsedManifest.bindings?.workspaces)
+          ? parsedManifest.bindings.workspaces
+          : createBindingSemantics(Array.isArray(parsedManifest.workspaces) ? parsedManifest.workspaces : []).workspaces,
       },
       harness: parsedManifest.harness ?? createHarnessMetadata(
         Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],

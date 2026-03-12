@@ -11,7 +11,8 @@ import type { HarnessAdapter } from "./types.js";
 
 function rebindImportedConfig(targetDir: string, manifest: Manifest, warnings: string[]) {
   const configPath = findConfigFile(targetDir);
-  if (!configPath || manifest.workspaces.length === 0) return;
+  const workspaceBindings = manifest.bindings?.workspaces ?? [];
+  if (!configPath || workspaceBindings.length === 0) return;
 
   let parsed: any;
   try {
@@ -35,12 +36,11 @@ function rebindImportedConfig(targetDir: string, manifest: Manifest, warnings: s
 
   let changed = false;
 
-  for (const workspace of manifest.workspaces) {
-    const targetWorkspacePath = workspace.isDefault
-      ? `${targetDir}/workspace`
-      : `${targetDir}/${workspace.logicalPath}`;
+  for (const workspace of workspaceBindings) {
+    const targetWorkspacePath = `${targetDir}/${workspace.targetRelativePath}`;
+    const isDefault = workspace.targetRelativePath === "workspace";
 
-    if (workspace.isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
+    if (isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
       parsed.agents.defaults.workspace = targetWorkspacePath;
       changed = true;
     }

@@ -253,6 +253,15 @@ describe("export + import", () => {
     expect(result.manifest.image.adapter).toBe("openclaw");
     expect(result.manifest.lineage.parentImage).toBeNull();
     expect(result.manifest.lineage.layerOrder).toEqual([]);
+    expect(result.manifest.bindings.workspaces).toEqual([
+      {
+        agentId: "main",
+        logicalPath: "workspace",
+        targetRelativePath: "workspace",
+        configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+        required: true,
+      },
+    ]);
     expect(result.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(result.manifest.harness.targetProduct).toBe("openclaw");
     expect(result.manifest.harness.components).toEqual(["workspace", "config", "skills"]);
@@ -353,6 +362,7 @@ describe("export + import", () => {
     expect(importResult.manifest.packType).toBe("template");
     expect(importResult.manifest.image.imageId).toBe(importResult.manifest.packId);
     expect(importResult.manifest.lineage.layerOrder).toEqual([]);
+    expect(importResult.manifest.bindings.workspaces[0].targetRelativePath).toBe("workspace");
     expect(importResult.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(fs.existsSync(path.join(targetDir, "workspace", "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, "openclaw.json"))).toBe(true);
@@ -410,6 +420,10 @@ describe("export + import", () => {
     const importedConfig = JSON.parse(fs.readFileSync(path.join(targetDir, "openclaw.json"), "utf-8"));
     expect(importedConfig.agents.defaults.workspace).toBe(path.join(targetDir, "workspace"));
     expect(importedConfig.agents.list[1].workspace).toBe(path.join(targetDir, "workspace-work"));
+    expect(importResult.manifest.bindings.workspaces.map((binding) => binding.targetRelativePath)).toEqual([
+      "workspace",
+      "workspace-work",
+    ]);
     expect(importResult.warnings.some((warning) => warning.includes("Rebound workspace paths"))).toBe(true);
   });
 
@@ -434,6 +448,7 @@ describe("export + import", () => {
     expect(verifyResult.errors).toHaveLength(0);
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_lineage" && c.passed)).toBe(true);
+    expect(verifyResult.checks.some(c => c.name === "binding_semantics" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_harness" && c.passed)).toBe(true);
   });
 
@@ -457,6 +472,7 @@ describe("export + import", () => {
     expect(verifyResult.valid).toBe(true);
     expect(verifyResult.errors).toHaveLength(0);
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
+    expect(verifyResult.checks.some(c => c.name === "binding_semantics" && c.passed)).toBe(true);
   });
 });
 
