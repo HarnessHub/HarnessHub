@@ -19,6 +19,7 @@ import type {
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
 import { assertValidManifest } from "./manifest.js";
+import { isForbiddenInPackType, validatePackTypeComponents } from "./pack-contract.js";
 
 // Files/dirs to exclude from template packs (security-critical)
 const TEMPLATE_EXCLUDES = [
@@ -159,6 +160,7 @@ function collectFiles(
         continue;
       }
 
+      if (isForbiddenInPackType(relPath.split(path.sep).join("/"), packType)) continue;
       if (shouldExclude(relPath, packType)) continue;
 
       if (entry.isFile()) {
@@ -269,6 +271,7 @@ interface ExportResult {
   manifest: Manifest;
   fileCount: number;
   totalSize: number;
+  warnings: string[];
 }
 
 export async function exportPack(options: ExportOptions): Promise<ExportResult> {
@@ -345,6 +348,16 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     sensitiveFlags: inspectResult.sensitiveFlags,
     riskLevel: assessRisk(inspectResult.sensitiveFlags, packType),
   };
+  const warnings: string[] = [];
+  if (inspectResult.recommendedPackType !== packType) {
+    warnings.push(
+      `Inspect recommended ${inspectResult.recommendedPackType}; exporting ${packType} applies the explicit ${packType} contract instead.`
+    );
+  }
+  const packTypeContractErrors = validatePackTypeComponents(packType, manifest.harness.components);
+  if (packTypeContractErrors.length > 0) {
+    throw new Error(`Pack type contract violation: ${packTypeContractErrors.join("; ")}`);
+  }
   assertValidManifest(manifest);
 
   // Create staging directory
@@ -413,7 +426,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
       fs.readdirSync(stagingDir)
     );
 
-    return { outputFile, manifest, fileCount: filesToExport.length, totalSize };
+    return { outputFile, manifest, fileCount: filesToExport.length, totalSize, warnings };
   } finally {
     fs.rmSync(stagingDir, { recursive: true, force: true });
   }
