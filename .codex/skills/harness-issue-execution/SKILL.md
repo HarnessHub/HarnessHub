@@ -26,7 +26,7 @@ Keep issue execution fast without relying on memory for repository workflow deta
 8. Commit the issue changes before refreshing review proof.
 9. Refresh the review checkpoint:
    - `npm run review:checkpoint`
-10. Update `.codex-review` after the proof refresh so the review note is newer than the proof file.
+10. Update `.codex-review` with real findings and make sure `head reviewed:` still matches the current HEAD.
 11. Run local preflight:
    - `./scripts/run-agent-preflight.sh`
 12. Push the branch.
@@ -37,7 +37,7 @@ Keep issue execution fast without relying on memory for repository workflow deta
 ## Timing Rules
 
 - Do not refresh `.codex-review-proof` before the issue commit exists.
-- Do not run preflight before `.codex-review` has been updated after the latest proof refresh.
+- Do not run preflight until `.codex-review` has real review content and `head reviewed:` matches the current HEAD.
 - Do not create the PR before the branch has been pushed and is visible on the remote.
 
 ## Branch Rules

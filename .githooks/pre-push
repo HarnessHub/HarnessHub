@@ -32,6 +32,11 @@ read_proof_value() {
   sed -n "s/^${key}=//p" "$review_proof_file" | head -n 1
 }
 
+read_review_value() {
+  local key="$1"
+  sed -n "s/^${key}: //p" "$review_file" | head -n 1
+}
+
 check_branch_freshness() {
   if [[ "${BYPASS_BRANCH_FRESHNESS_CHECK:-}" == "1" ]]; then
     echo "Bypassing branch freshness check because BYPASS_BRANCH_FRESHNESS_CHECK=1"
@@ -128,6 +133,7 @@ EOF
 fi
 
 if ! grep -Eq '^scope reviewed:' "$review_file" \
+  || ! grep -Eq '^head reviewed:' "$review_file" \
   || ! grep -Eq '^findings:' "$review_file" \
   || ! grep -Eq '^remaining risks:' "$review_file"; then
   cat <<'EOF'
@@ -135,6 +141,7 @@ Push blocked: .codex-review exists but is incomplete.
 
 Include at least:
   - scope reviewed
+  - head reviewed
   - findings
   - remaining risks
 EOF
@@ -191,9 +198,20 @@ EOF
   exit 1
 fi
 
-if [[ "$review_file" -ot "$review_proof_file" ]]; then
+reviewed_head="$(read_review_value "head reviewed")"
+if [[ -z "$reviewed_head" ]]; then
   cat <<'EOF'
-Push blocked: .codex-review has not been updated since the latest review checkpoint.
+Push blocked: .codex-review is missing head reviewed.
+EOF
+  exit 1
+fi
+
+if [[ "$reviewed_head" != "$current_head_sha" ]]; then
+  cat <<EOF
+Push blocked: .codex-review does not record the current HEAD.
+
+Reviewed HEAD: $reviewed_head
+Current HEAD:  $current_head_sha
 EOF
   exit 1
 fi

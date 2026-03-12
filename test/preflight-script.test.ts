@@ -33,7 +33,7 @@ describe("run-agent-preflight.sh", () => {
     const headSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" }).stdout.trim();
 
     fs.writeFileSync(path.join(tmpDir, ".codex-review-proof"), `branch=${branch}\nhead_sha=${headSha}\nbase_ref=HEAD\ngenerated_at=2026-03-12T00:00:00Z\n`, "utf8");
-    fs.writeFileSync(path.join(tmpDir, ".codex-review"), "scope reviewed: preflight\nfindings: no findings\nremaining risks: smoke skipped\n", "utf8");
+    fs.writeFileSync(path.join(tmpDir, ".codex-review"), `scope reviewed: preflight\nhead reviewed: ${headSha}\nfindings: no findings\nremaining risks: smoke skipped\n`, "utf8");
 
     const result = spawnSync("./scripts/run-agent-preflight.sh", [], {
       cwd: repoRoot,
@@ -41,6 +41,40 @@ describe("run-agent-preflight.sh", () => {
         ...process.env,
         HARNESSHUB_REVIEW_FILE: path.join(tmpDir, ".codex-review"),
         HARNESSHUB_REVIEW_PROOF_FILE: path.join(tmpDir, ".codex-review-proof"),
+        HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
+        HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
+        HARNESSHUB_PREFLIGHT_ACTIVE: "0",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Agent preflight passed.");
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("passes when review note is older than proof but records the current head", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-preflight-"));
+    const branch = spawnSync("git", ["branch", "--show-current"], { cwd: repoRoot, encoding: "utf8" }).stdout.trim();
+    const headSha = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" }).stdout.trim();
+    const reviewPath = path.join(tmpDir, ".codex-review");
+    const proofPath = path.join(tmpDir, ".codex-review-proof");
+
+    fs.writeFileSync(reviewPath, `scope reviewed: preflight\nhead reviewed: ${headSha}\nfindings: no findings\nremaining risks: smoke skipped\n`, "utf8");
+    const reviewTime = new Date("2026-03-12T00:00:00Z");
+    fs.utimesSync(reviewPath, reviewTime, reviewTime);
+
+    fs.writeFileSync(proofPath, `branch=${branch}\nhead_sha=${headSha}\nbase_ref=HEAD\ngenerated_at=2026-03-12T01:00:00Z\n`, "utf8");
+    const proofTime = new Date("2026-03-12T01:00:00Z");
+    fs.utimesSync(proofPath, proofTime, proofTime);
+
+    const result = spawnSync("./scripts/run-agent-preflight.sh", [], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        HARNESSHUB_REVIEW_FILE: reviewPath,
+        HARNESSHUB_REVIEW_PROOF_FILE: proofPath,
         HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
         HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",

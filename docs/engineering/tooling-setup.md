@@ -35,6 +35,7 @@ Then update `.codex-review` with a short review note:
 
 ```text
 scope reviewed: hook and preflight changes
+head reviewed: <current HEAD sha>
 findings: no findings
 remaining risks: smoke validation was not run locally
 ```
@@ -52,7 +53,7 @@ This checks the local review note, review proof, issue-state, build, tests, and 
 A normal issue-scoped path is:
 
 1. `./scripts/run-codex-review-checkpoint.sh`
-2. update `.codex-review`
+2. update `.codex-review` with real findings and keep `head reviewed:` aligned with the current commit
 3. `./scripts/run-agent-preflight.sh`
 4. open the PR generated from the matching local task twin
 
