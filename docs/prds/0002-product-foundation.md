@@ -12,6 +12,8 @@ HarnessHub should be defined as a harness image packaging standard for agent run
 
 OpenClaw is the first production-grade adapter, not the terminal scope of the product.
 
+The deeper packaging boundary for that thesis is documented in [../architecture/0002-harness-capability-packaging.md](../architecture/0002-harness-capability-packaging.md).
+
 ## Problem Statement
 
 An agent that works well in practice depends on more than prompt text or source code. It usually depends on a harness:
