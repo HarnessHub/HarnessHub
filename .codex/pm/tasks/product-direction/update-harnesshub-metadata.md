@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: update-harnesshub-metadata
 title: Update repository metadata and remotes after HarnessHub migration
-status: in_progress
+status: done
 task_type: implementation
 labels: docs,chore
 issue: 15

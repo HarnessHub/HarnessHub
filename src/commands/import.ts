@@ -4,7 +4,7 @@ import type { OutputFormat } from "../core/types.js";
 
 export const importCommand = new Command("import")
   .description("Import a HarnessHub package into a target environment")
-  .argument("<file>", "Path to the .clawpack file")
+  .argument("<file>", "Path to the .harness file")
   .option("-t, --target <path>", "Target directory (defaults to ~/.openclaw)")
   .option("-f, --format <format>", "Output format: text or json", "text")
   .action(async (file, opts) => {

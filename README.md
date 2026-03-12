@@ -85,7 +85,7 @@ The four commands form a linear workflow:
  │                                    │    │                             │
  │  ① inspect ──▶ ② export           │    │  ③ import ──▶ ④ verify     │
  │     scan          pack to          │    │     unpack        check    │
- │     & report      .clawpack  ──────┼───▶│     & restore     struct  │
+ │     & report      .harness  ──────┼───▶│     & restore     struct  │
  │                                    │    │                             │
  └────────────────────────────────────┘    └─────────────────────────────┘
 ```
@@ -95,10 +95,10 @@ The four commands form a linear workflow:
 harness inspect
 
 # 2. Export as a template pack (safe to share)
-harness export -t template -o my-agent.clawpack
+harness export -t template -o my-agent.harness
 
 # 3. Import on another machine
-harness import my-agent.clawpack -t ~/.openclaw
+harness import my-agent.harness -t ~/.openclaw
 
 # 4. Verify the import
 harness verify
@@ -128,14 +128,14 @@ harness inspect -f json          # JSON output
 
 ### `harness export`
 
-Export an instance as a `.clawpack` package.
+Export an instance as a `.harness` package.
 
 ```
- ~/.openclaw/                                my-agent.clawpack
+ ~/.openclaw/                                my-agent.harness
  ├── config/          harness export        (gzipped tar)
  ├── workspace/    ─────────────────────▶    ┌──────────────┐
  ├── state/           -t template            │ manifest.json│
- ├── .env             -o my-agent.clawpack   │ config/      │
+ ├── .env             -o my-agent.harness   │ config/      │
  └── ...                                     │ workspace/   │
                        ▲                     │ reports/     │
                        │                     └──────────────┘
@@ -146,16 +146,16 @@ Export an instance as a `.clawpack` package.
 ```bash
 harness export -t template       # template pack (excludes secrets)
 harness export -t instance       # instance pack (full migration)
-harness export -o out.clawpack   # custom output path
+harness export -o out.harness   # custom output path
 harness export -p /path/to/dir   # custom source path
 ```
 
 ### `harness import`
 
-Import a `.clawpack` package into a target environment.
+Import a `.harness` package into a target environment.
 
 ```
- my-agent.clawpack                          ~/.openclaw/
+ my-agent.harness                          ~/.openclaw/
  ┌──────────────┐    harness import        ├── config/
  │ manifest.json│  ─────────────────────▶   ├── workspace/
  │ config/      │    -t ~/.openclaw         ├── state/
@@ -165,8 +165,8 @@ Import a `.clawpack` package into a target environment.
 ```
 
 ```bash
-harness import my-agent.clawpack              # restore to ~/.openclaw
-harness import my-agent.clawpack -t ./target  # custom target
+harness import my-agent.harness              # restore to ~/.openclaw
+harness import my-agent.harness -t ./target  # custom target
 ```
 
 ### `harness verify`
@@ -190,7 +190,7 @@ harness verify -p /path/to/dir  # custom path
 ## Package Types
 
 ```
-                          .clawpack
+                          .harness
                         ┌───────────┐
                         │           │
                 ┌───────┴───┐ ┌────┴──────┐
@@ -219,10 +219,10 @@ Template packs automatically exclude credentials, sessions, memory databases, an
 
 ## Package Format
 
-A `.clawpack` file is a gzipped tar archive containing:
+A `.harness` file is a gzipped tar archive containing:
 
 ```
-my-agent.clawpack (gzipped tar)
+my-agent.harness (gzipped tar)
 │
 ├── manifest.json ─── Pack metadata
 │                     ├── schema version
@@ -304,8 +304,8 @@ src/
 ├── cli.ts ─────────── Entry point (commander, 4 commands)
 ├── commands/
 │   ├── inspect.ts ─── Scan & report
-│   ├── export.ts ──── Export to .clawpack
-│   ├── import.ts ──── Import from .clawpack
+│   ├── export.ts ──── Export to .harness
+│   ├── import.ts ──── Import from .harness
 │   └── verify.ts ──── Structural verification
 ├── core/
 │   ├── scanner.ts ─── Instance detection, sensitive data scan

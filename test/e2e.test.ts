@@ -238,7 +238,7 @@ describe("inspect", () => {
 describe("export + import", () => {
   it("exports a template pack", async () => {
     const instanceDir = createMockInstance(path.join(tmpDir, "instance"));
-    const outputFile = path.join(tmpDir, "test.clawpack");
+    const outputFile = path.join(tmpDir, "test.harness");
 
     const result = await exportPack({
       sourcePath: instanceDir,
@@ -258,7 +258,7 @@ describe("export + import", () => {
 
   it("exports an instance pack with sensitive data", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "sensitive"));
-    const outputFile = path.join(tmpDir, "instance.clawpack");
+    const outputFile = path.join(tmpDir, "instance.harness");
 
     const result = await exportPack({
       sourcePath: instanceDir,
@@ -283,7 +283,7 @@ describe("export + import", () => {
 
   it("template pack excludes all sensitive files", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "sensitive"));
-    const outputFile = path.join(tmpDir, "template.clawpack");
+    const outputFile = path.join(tmpDir, "template.harness");
 
     const result = await exportPack({
       sourcePath: instanceDir,
@@ -308,7 +308,7 @@ describe("export + import", () => {
 
   it("instance pack preserves agent directory structure", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "full"));
-    const outputFile = path.join(tmpDir, "instance.clawpack");
+    const outputFile = path.join(tmpDir, "instance.harness");
 
     const result = await exportPack({
       sourcePath: instanceDir,
@@ -329,7 +329,7 @@ describe("export + import", () => {
 
   it("imports a pack to a new directory", async () => {
     const instanceDir = createMockInstance(path.join(tmpDir, "source"));
-    const packFile = path.join(tmpDir, "test.clawpack");
+    const packFile = path.join(tmpDir, "test.harness");
     const targetDir = path.join(tmpDir, "target");
 
     await exportPack({
@@ -348,12 +348,12 @@ describe("export + import", () => {
     expect(importResult.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(fs.existsSync(path.join(targetDir, "workspace", "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, "openclaw.json"))).toBe(true);
-    expect(fs.existsSync(path.join(targetDir, ".clawpack-manifest.json"))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, ".harness-manifest.json"))).toBe(true);
   });
 
   it("imports instance pack preserving agent directory structure", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "source"));
-    const packFile = path.join(tmpDir, "instance.clawpack");
+    const packFile = path.join(tmpDir, "instance.harness");
     const targetDir = path.join(tmpDir, "target");
 
     await exportPack({
@@ -377,7 +377,7 @@ describe("export + import", () => {
 
   it("imports config-defined external workspaces into target defaults", async () => {
     const { dir } = createMockInstanceWithCustomWorkspaces(path.join(tmpDir, "external-source"));
-    const packFile = path.join(tmpDir, "external.clawpack");
+    const packFile = path.join(tmpDir, "external.harness");
     const targetDir = path.join(tmpDir, "external-target");
 
     const exportResult = await exportPack({
@@ -407,7 +407,7 @@ describe("export + import", () => {
 
   it("full round-trip: export -> import -> verify", async () => {
     const instanceDir = createMockInstance(path.join(tmpDir, "source"));
-    const packFile = path.join(tmpDir, "roundtrip.clawpack");
+    const packFile = path.join(tmpDir, "roundtrip.harness");
     const targetDir = path.join(tmpDir, "target");
 
     const exportResult = await exportPack({
@@ -429,7 +429,7 @@ describe("export + import", () => {
 
   it("full round-trip with instance pack", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "source"));
-    const packFile = path.join(tmpDir, "roundtrip-instance.clawpack");
+    const packFile = path.join(tmpDir, "roundtrip-instance.harness");
     const targetDir = path.join(tmpDir, "target");
 
     await exportPack({

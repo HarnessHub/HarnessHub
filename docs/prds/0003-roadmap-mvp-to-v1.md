@@ -23,7 +23,7 @@ The MVP is intentionally narrow, but it must already reflect the eventual 1.0 ar
 The MVP should deliver:
 
 1. one production-grade adapter: OpenClaw
-2. one canonical image format: `.clawpack`
+2. one canonical image format: `.harness`
 3. one minimal lifecycle slice:
    `inspect -> export -> import -> verify`
 4. one base image model with explicit metadata for:

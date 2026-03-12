@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- `clawpack inspect` — scan an OpenClaw instance structure, detect sensitive data, recommend export type
-- `clawpack export` — export an instance as a `.clawpack` package (template or instance mode)
-- `clawpack import` — import a `.clawpack` package into a target directory
-- `clawpack verify` — verify an imported instance is structurally complete
+- `harness inspect` — scan an OpenClaw instance structure, detect sensitive data, recommend export type
+- `harness export` — export an instance as a `.harness` package (template or instance mode)
+- `harness import` — import a `.harness` package into a target directory
+- `harness verify` — verify an imported instance is structurally complete
 - Template packs automatically exclude credentials, sessions, memory databases, and `.env` files
 - Three risk levels: `safe-share`, `internal-only`, `trusted-migration-only`
 - JSON and text output formats for all commands
