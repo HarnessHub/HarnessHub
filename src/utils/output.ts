@@ -151,7 +151,8 @@ export function printVerifyResult(result: Record<string, unknown>, format: Outpu
   console.log("");
   console.log("=== HarnessHub Verify ===");
   console.log("");
-  console.log(`  Valid: ${r.valid ? "YES" : "NO"}`);
+  console.log(`  Structural restore: ${r.valid ? "YES" : "NO"}`);
+  console.log(`  Runtime ready:      ${r.runtimeReady ? "YES" : "NO"}`);
   console.log("");
 
   if (r.checks.length > 0) {
@@ -167,6 +168,14 @@ export function printVerifyResult(result: Record<string, unknown>, format: Outpu
     console.log("--- Warnings ---");
     for (const w of r.warnings) {
       console.log(`  ! ${w}`);
+    }
+  }
+
+  if (r.runtimeReadinessIssues.length > 0) {
+    console.log("");
+    console.log("--- Runtime Readiness Issues ---");
+    for (const issue of r.runtimeReadinessIssues) {
+      console.log(`  ! ${issue}`);
     }
   }
 

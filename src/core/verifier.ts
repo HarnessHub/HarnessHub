@@ -13,6 +13,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   const checks: VerifyCheck[] = [];
   const warnings: string[] = [];
   const errors: string[] = [];
+  const runtimeReadinessIssues: string[] = [];
   const manifestWorkspaces = manifest?.workspaces ?? [];
   const manifestBindingRules = manifest?.bindings?.workspaces ?? [];
 
@@ -28,7 +29,8 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
 
   if (!dirExists) {
     errors.push("Target directory does not exist");
-    return { valid: false, checks, warnings, errors };
+    runtimeReadinessIssues.push("Target directory does not exist");
+    return { valid: false, runtimeReady: false, runtimeReadinessIssues, checks, warnings, errors };
   }
 
   // Check 2: Config file exists
@@ -43,6 +45,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   });
   if (!hasConfig) {
     warnings.push("No config file found - instance may need manual configuration");
+    runtimeReadinessIssues.push("No OpenClaw config file found");
   }
 
   // Check 3: Workspace directory exists
@@ -81,6 +84,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       });
       if (!exists) {
         warnings.push(`Workspace file missing: ${file}`);
+        runtimeReadinessIssues.push(`Workspace file missing: ${file}`);
       }
     }
   }
@@ -94,6 +98,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       configValid = true;
     } catch {
       warnings.push("Config file may not be valid JSON/JSON5");
+      runtimeReadinessIssues.push("Config file appears invalid");
     }
     checks.push({
       name: "config_valid",
@@ -126,6 +131,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
         const hasAgentDir = fs.existsSync(agentDir);
         if (!hasAgentDir) {
           warnings.push(`Agent "${agentId}" missing agent/ subdirectory`);
+          runtimeReadinessIssues.push(`Agent "${agentId}" missing agent/ subdirectory`);
         }
       }
     } catch { /* ignore */ }
@@ -143,7 +149,8 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
     });
     if (manifestContractErrors.length > 0) {
       errors.push(...manifestContractErrors.map((error: string) => `Manifest contract error: ${error}`));
-      return { valid: false, checks, warnings, errors };
+      runtimeReadinessIssues.push(...manifestContractErrors.map((error: string) => `Manifest contract error: ${error}`));
+      return { valid: false, runtimeReady: false, runtimeReadinessIssues, checks, warnings, errors };
     }
 
     const schemaMatch = manifest.schemaVersion === SCHEMA_VERSION;
@@ -177,6 +184,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
     });
     if (packTypeContractErrors.length > 0) {
       errors.push(...packTypeContractErrors.map((error) => `Pack type contract error: ${error}`));
+      runtimeReadinessIssues.push(...packTypeContractErrors.map((error) => `Pack type contract error: ${error}`));
     }
 
     const hasImageMetadata =
@@ -241,6 +249,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       });
       if (missingWorkspace) {
         warnings.push(`Missing imported workspace: ${missingWorkspace.logicalPath}`);
+        runtimeReadinessIssues.push(`Missing imported workspace: ${missingWorkspace.logicalPath}`);
       }
     }
 
@@ -253,6 +262,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
           parsedConfig = JSON5.parse(fs.readFileSync(configPathForBindings, "utf-8"));
         } catch {
           warnings.push(`Could not parse config to validate binding semantics: ${path.basename(configPathForBindings)}`);
+          runtimeReadinessIssues.push(`Could not parse config to validate binding semantics: ${path.basename(configPathForBindings)}`);
         }
       }
 
@@ -288,6 +298,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
           : bindingFailures.join("; "),
       });
       warnings.push(...bindingFailures);
+      runtimeReadinessIssues.push(...bindingFailures);
     }
 
     // Check that expected file count roughly matches
@@ -345,6 +356,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   const valid = errors.length === 0 && checks.every(
     c => c.passed || !["directory_exists", "workspace_exists"].includes(c.name)
   );
+  const runtimeReady = valid && runtimeReadinessIssues.length === 0;
 
-  return { valid, checks, warnings, errors };
+  return { valid, runtimeReady, runtimeReadinessIssues, checks, warnings, errors };
 }
