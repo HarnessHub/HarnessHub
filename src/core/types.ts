@@ -13,6 +13,7 @@ export interface Manifest {
   createdAt: string;
   image: HarnessImageMetadata;
   lineage: HarnessImageLineage;
+  bindings: BindingSemantics;
   harness: HarnessMetadata;
   source: {
     product: string;
@@ -39,6 +40,18 @@ export interface HarnessImageReference {
 export interface HarnessImageLineage {
   parentImage: HarnessImageReference | null;
   layerOrder: string[];
+}
+
+export interface BindingSemantics {
+  workspaces: WorkspaceBindingRule[];
+}
+
+export interface WorkspaceBindingRule {
+  agentId: string;
+  logicalPath: string;
+  targetRelativePath: string;
+  configTargets: string[];
+  required: boolean;
 }
 
 export type HarnessComponent =

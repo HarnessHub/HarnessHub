@@ -12,6 +12,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   const warnings: string[] = [];
   const errors: string[] = [];
   const manifestWorkspaces = manifest?.workspaces ?? [];
+  const manifestBindingRules = manifest?.bindings?.workspaces ?? [];
 
   // Check 1: Target directory exists
   const dirExists = fs.existsSync(targetDir);
@@ -211,6 +212,52 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       if (missingWorkspace) {
         warnings.push(`Missing imported workspace: ${missingWorkspace.logicalPath}`);
       }
+    }
+
+    if (manifestBindingRules.length > 0) {
+      const configPathForBindings = openClawAdapter.findConfigFile(targetDir);
+      const bindingFailures: string[] = [];
+      let parsedConfig: any = null;
+      if (configPathForBindings) {
+        try {
+          parsedConfig = JSON5.parse(fs.readFileSync(configPathForBindings, "utf-8"));
+        } catch {
+          warnings.push(`Could not parse config to validate binding semantics: ${path.basename(configPathForBindings)}`);
+        }
+      }
+
+      for (const binding of manifestBindingRules) {
+        const expectedPath = path.join(targetDir, binding.targetRelativePath);
+        if (binding.required && !fs.existsSync(expectedPath)) {
+          bindingFailures.push(`Missing bound workspace target ${binding.targetRelativePath}`);
+        }
+        if (!parsedConfig) continue;
+
+        if (binding.targetRelativePath === "workspace") {
+          if (parsedConfig.agents?.defaults?.workspace !== expectedPath) {
+            bindingFailures.push(`Default workspace binding not rebound to ${binding.targetRelativePath}`);
+          }
+        }
+
+        const agentEntry = Array.isArray(parsedConfig.agents?.list)
+          ? parsedConfig.agents.list.find((entry: any) => {
+              const id = typeof entry?.id === "string" ? entry.id.trim().toLowerCase() : "";
+              return id === binding.agentId;
+            })
+          : null;
+        if (agentEntry && agentEntry.workspace !== expectedPath) {
+          bindingFailures.push(`Agent ${binding.agentId} workspace binding not rebound to ${binding.targetRelativePath}`);
+        }
+      }
+
+      checks.push({
+        name: "binding_semantics",
+        passed: bindingFailures.length === 0,
+        message: bindingFailures.length === 0
+          ? `Binding semantics validated for ${manifestBindingRules.length} workspaces`
+          : bindingFailures.join("; "),
+      });
+      warnings.push(...bindingFailures);
     }
 
     // Check that expected file count roughly matches
