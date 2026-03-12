@@ -1,0 +1,50 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="96" y1="72" x2="416" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7E7C6"/>
+      <stop offset="0.55" stop-color="#E8D9B5"/>
+      <stop offset="1" stop-color="#D5C39B"/>
+    </linearGradient>
+    <linearGradient id="hub" x1="176" y1="164" x2="336" y2="348" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#123C3A"/>
+      <stop offset="1" stop-color="#0A2322"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="116" y1="142" x2="382" y2="388" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E36F2D"/>
+      <stop offset="1" stop-color="#C4491F"/>
+    </linearGradient>
+    <filter id="shadow" x="78" y="70" width="356" height="372" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="16"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.07 0 0 0 0 0.12 0 0 0 0 0.11 0 0 0 0.16 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="120" fill="#F6F0E4"/>
+  <g filter="url(#shadow)">
+    <rect x="96" y="72" width="320" height="320" rx="92" fill="url(#bg)"/>
+    <rect x="96" y="72" width="320" height="320" rx="92" stroke="#143F3D" stroke-width="10"/>
+
+    <path d="M160 150L256 212L352 150" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M160 314L256 252L352 314" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M160 150V314" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M352 150V314" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M256 212V252" stroke="url(#accent)" stroke-width="16" stroke-linecap="round"/>
+
+    <rect x="204" y="164" width="104" height="136" rx="28" fill="url(#hub)"/>
+    <rect x="204" y="164" width="104" height="136" rx="28" stroke="#F6F0E4" stroke-width="10"/>
+
+    <path d="M232 194H252V226H260V194H280V270H260V238H252V270H232V194Z" fill="#F7E7C6"/>
+
+    <circle cx="160" cy="150" r="22" fill="#143F3D"/>
+    <circle cx="352" cy="150" r="22" fill="#143F3D"/>
+    <circle cx="160" cy="314" r="22" fill="#143F3D"/>
+    <circle cx="352" cy="314" r="22" fill="#143F3D"/>
+    <circle cx="256" cy="212" r="20" fill="#E36F2D"/>
+    <circle cx="256" cy="252" r="20" fill="#E36F2D"/>
+  </g>
+</svg>
