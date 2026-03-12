@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: define-product-foundation-roadmap
 title: Define ClawPack product foundation and architecture-aligned MVP/1.0 roadmap
-status: in_progress
+status: done
 task_type: implementation
 labels: docs,feature
 issue: 13

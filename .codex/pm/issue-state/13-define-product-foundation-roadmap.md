@@ -3,7 +3,7 @@ type: issue_state
 issue: 13
 task: .codex/pm/tasks/product-direction/define-product-foundation-roadmap.md
 title: Define HarnessHub product foundation and architecture-aligned MVP/1.0 roadmap
-status: in_progress
+status: done
 ---
 
 ## Summary

@@ -3,6 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function git(cwd: string, ...args: string[]) {
   const result = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -20,7 +23,6 @@ function prepareRepo() {
   git(repo, "remote", "add", "origin", "git@github.com:test/HarnessHub.git");
   git(repo, "remote", "add", "upstream", "https://github.com/HarnessHub/HarnessHub.git");
 
-  const sourceRoot = "/workspace/02-projects/active/clawpack";
   fs.mkdirSync(path.join(repo, ".githooks"), { recursive: true });
   fs.mkdirSync(path.join(repo, "scripts"), { recursive: true });
   fs.copyFileSync(path.join(sourceRoot, ".githooks", "pre-push"), path.join(repo, ".githooks", "pre-push"));

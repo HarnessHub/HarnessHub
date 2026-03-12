@@ -10,7 +10,7 @@
 
 HarnessHub 是一个面向 Agent 运行环境的 harness image 打包标准。
 
-当前实现仍通过 `harness` CLI 提供，并且最初从对 OpenClaw Agent 的**标准化导出、导入和验证**出发。它不是容器，也不是虚拟机，而是建立在这些基础设施之上的应用层打包系统。
+当前实现通过 `harness` CLI 提供，并且最初从对 OpenClaw Agent 的**标准化导出、导入和验证**出发。它不是容器，也不是虚拟机，而是建立在这些基础设施之上的应用层打包系统。
 
 ## 产品方向
 
@@ -83,7 +83,7 @@ npm install -g harnesshub
  │                                    │    │                             │
  │  ① inspect ──▶ ② export           │    │  ③ import ──▶ ④ verify     │
  │     扫描          打包为            │    │     解包          验证      │
- │     & 报告        .clawpack  ──────┼───▶│     & 还原        结构完整性│
+ │     & 报告        .harness  ──────┼───▶│     & 还原        结构完整性│
  │                                    │    │                             │
  └────────────────────────────────────┘    └─────────────────────────────┘
 ```
@@ -93,10 +93,10 @@ npm install -g harnesshub
 harness inspect
 
 # 2. 导出为模板包（可安全分享）
-harness export -t template -o my-agent.clawpack
+harness export -t template -o my-agent.harness
 
 # 3. 在另一台机器导入
-harness import my-agent.clawpack -t ~/.openclaw
+harness import my-agent.harness -t ~/.openclaw
 
 # 4. 验证导入结果
 harness verify
@@ -126,14 +126,14 @@ harness inspect -f json          # JSON 格式输出
 
 ### `harness export`
 
-将实例导出为 `.clawpack` 包。
+将实例导出为 `.harness` 包。
 
 ```
- ~/.openclaw/                                my-agent.clawpack
+ ~/.openclaw/                                my-agent.harness
  ├── config/          harness export        (gzip 压缩的 tar)
  ├── workspace/    ─────────────────────▶    ┌──────────────┐
  ├── state/           -t template            │ manifest.json│
- ├── .env             -o my-agent.clawpack   │ config/      │
+ ├── .env             -o my-agent.harness   │ config/      │
  └── ...                                     │ workspace/   │
                        ▲                     │ reports/     │
                        │                     └──────────────┘
@@ -144,16 +144,16 @@ harness inspect -f json          # JSON 格式输出
 ```bash
 harness export -t template       # 模板包（排除敏感信息）
 harness export -t instance       # 实例包（完整迁移）
-harness export -o out.clawpack   # 指定输出路径
+harness export -o out.harness   # 指定输出路径
 harness export -p /path/to/dir   # 指定源路径
 ```
 
 ### `harness import`
 
-将 `.clawpack` 包导入目标环境。
+将 `.harness` 包导入目标环境。
 
 ```
- my-agent.clawpack                          ~/.openclaw/
+ my-agent.harness                          ~/.openclaw/
  ┌──────────────┐    harness import        ├── config/
  │ manifest.json│  ─────────────────────▶   ├── workspace/
  │ config/      │    -t ~/.openclaw         ├── state/
@@ -163,8 +163,8 @@ harness export -p /path/to/dir   # 指定源路径
 ```
 
 ```bash
-harness import my-agent.clawpack              # 还原到 ~/.openclaw
-harness import my-agent.clawpack -t ./target  # 指定目标目录
+harness import my-agent.harness              # 还原到 ~/.openclaw
+harness import my-agent.harness -t ./target  # 指定目标目录
 ```
 
 ### `harness verify`
@@ -188,7 +188,7 @@ harness verify -p /path/to/dir  # 指定路径
 ## 包类型
 
 ```
-                          .clawpack
+                          .harness
                         ┌───────────┐
                         │           │
                 ┌───────┴───┐ ┌────┴──────┐
@@ -218,10 +218,10 @@ harness verify -p /path/to/dir  # 指定路径
 
 ## 包格式
 
-`.clawpack` 文件是一个 gzip 压缩的 tar 归档，包含以下结构：
+`.harness` 文件是一个 gzip 压缩的 tar 归档，包含以下结构：
 
 ```
-my-agent.clawpack (gzip 压缩的 tar)
+my-agent.harness (gzip 压缩的 tar)
 │
 ├── manifest.json ─── 包元数据
 │                     ├── schema 版本
@@ -303,8 +303,8 @@ src/
 ├── cli.ts ─────────── 入口 (commander, 4 个命令)
 ├── commands/
 │   ├── inspect.ts ─── 扫描与报告
-│   ├── export.ts ──── 导出为 .clawpack
-│   ├── import.ts ──── 从 .clawpack 导入
+│   ├── export.ts ──── 导出为 .harness
+│   ├── import.ts ──── 从 .harness 导入
 │   └── verify.ts ──── 结构验证
 ├── core/
 │   ├── scanner.ts ─── 实例检测、敏感数据扫描

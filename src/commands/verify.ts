@@ -19,7 +19,7 @@ export const verifyCommand = new Command("verify")
       let manifest: Manifest | undefined;
       const manifestCandidates = [
         path.join(targetDir, "manifest.json"),
-        path.join(targetDir, ".clawpack-manifest.json"),
+        path.join(targetDir, ".harness-manifest.json"),
       ];
       for (const candidate of manifestCandidates) {
         if (fs.existsSync(candidate)) {

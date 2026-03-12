@@ -3,8 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = "/workspace/02-projects/active/clawpack";
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(repoRoot, "dist", "cli.js");
 
 function runCli(args: string[], cwd = repoRoot) {
@@ -87,7 +88,7 @@ describe("harness CLI integration", () => {
   it("runs a full template roundtrip through CLI commands", () => {
     const sourceDir = path.join(tmpDir, "source");
     const targetDir = path.join(tmpDir, "target");
-    const packFile = path.join(tmpDir, "template.clawpack");
+    const packFile = path.join(tmpDir, "template.harness");
     createTemplateSource(sourceDir);
 
     expect(runCli(["export", "-p", sourceDir, "-o", packFile, "-t", "template", "-f", "json"]).status).toBe(0);
@@ -103,13 +104,13 @@ describe("harness CLI integration", () => {
   it("runs an instance roundtrip and preserves sensitive structure", () => {
     const sourceDir = path.join(tmpDir, "source");
     const targetDir = path.join(tmpDir, "target");
-    const packFile = path.join(tmpDir, "instance.clawpack");
+    const packFile = path.join(tmpDir, "instance.harness");
     createInstanceSource(sourceDir);
 
     expect(runCli(["export", "-p", sourceDir, "-o", packFile, "-t", "instance", "-f", "json"]).status).toBe(0);
     expect(runCli(["import", packFile, "-t", targetDir, "-f", "json"]).status).toBe(0);
     expect(fs.existsSync(path.join(targetDir, "agents", "main", "agent", "auth-profiles.json"))).toBe(true);
-    expect(fs.existsSync(path.join(targetDir, ".clawpack-manifest.json"))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, ".harness-manifest.json"))).toBe(true);
 
     const verifyResult = runCli(["verify", "-p", targetDir, "-f", "json"]);
     expect(verifyResult.status).toBe(0);
@@ -118,7 +119,7 @@ describe("harness CLI integration", () => {
   });
 
   it("returns a JSON error when importing a missing pack file", () => {
-    const result = runCli(["import", path.join(tmpDir, "missing.clawpack"), "-f", "json"]);
+    const result = runCli(["import", path.join(tmpDir, "missing.harness"), "-f", "json"]);
     expect(result.status).toBe(1);
     const data = JSON.parse(result.stdout);
     expect(data.error).toContain("Pack file not found");

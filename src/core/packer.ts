@@ -47,8 +47,8 @@ const ALWAYS_EXCLUDE = [
   "*.log",
   ".git",
   "node_modules",
-  ".clawpack-staging",
-  ".clawpack-import-*",
+  ".harness-staging",
+  ".harness-import-*",
   // Backup rotation files (not needed for packaging)
   "*.bak",
   "*.bak.*",
@@ -308,7 +308,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
   };
 
   // Create staging directory
-  const stagingDir = path.join(stateDir, ".clawpack-staging");
+  const stagingDir = path.join(stateDir, ".harness-staging");
   if (fs.existsSync(stagingDir)) {
     fs.rmSync(stagingDir, { recursive: true });
   }
@@ -361,7 +361,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
 
     // Determine output path
     const outputFile = options.outputPath ||
-      path.join(process.cwd(), `openclaw-${packType}-${Date.now()}.clawpack`);
+      path.join(process.cwd(), `openclaw-${packType}-${Date.now()}.harness`);
 
     // Create tar.gz archive
     await tar.create(
@@ -399,7 +399,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
   const tempDir = path.join(
     path.dirname(packFile),
-    `.clawpack-import-${Date.now()}`
+    `.harness-import-${Date.now()}`
   );
   fs.mkdirSync(tempDir, { recursive: true });
 
@@ -475,7 +475,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
     rebindWorkspaceConfig(targetDir, manifest, warnings);
     fs.writeFileSync(
-      path.join(targetDir, ".clawpack-manifest.json"),
+      path.join(targetDir, ".harness-manifest.json"),
       `${JSON.stringify(manifest, null, 2)}\n`
     );
 

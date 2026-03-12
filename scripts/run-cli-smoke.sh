@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 TMP_DIR="$(mktemp -d)"
 SRC_DIR="$TMP_DIR/source"
 TARGET_DIR="$TMP_DIR/target"
-PACK_FILE="$TMP_DIR/sample.clawpack"
+PACK_FILE="$TMP_DIR/sample.harness"
 
 cleanup() {
   rm -rf "$TMP_DIR"

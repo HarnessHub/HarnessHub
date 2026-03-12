@@ -3,7 +3,7 @@ type: issue_state
 issue: 15
 task: .codex/pm/tasks/product-direction/update-harnesshub-metadata.md
 title: Update repository metadata and remotes after HarnessHub migration
-status: in_progress
+status: done
 ---
 
 ## Summary

@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, etc
 
 ## What is HarnessHub?
 
-HarnessHub is the project name for the repository's harness image system. The current implementation still ships as the `harness` CLI for OpenClaw-oriented packaging flows, using a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
+HarnessHub is the project name for the repository's harness image system. The current implementation ships as the `harness` CLI for OpenClaw-oriented packaging flows, using a portable `.harness` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
 
 The broader product direction is documented in:
 
@@ -33,8 +33,8 @@ npm run dev            # tsc --watch
 src/cli.ts               — entry point, registers four commands via commander
 src/commands/
   inspect.ts             — scan and report on an OpenClaw instance
-  export.ts              — export instance to .clawpack archive
-  import.ts              — import .clawpack archive to target directory
+  export.ts              — export instance to .harness archive
+  import.ts              — import .harness archive to target directory
   verify.ts              — post-import structural checks
 src/core/
   scanner.ts             — detect OpenClaw instances, sensitive data detection (SENSITIVE_PATTERNS, detectSensitiveContent())
