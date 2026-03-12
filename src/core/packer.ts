@@ -6,6 +6,8 @@ import JSON5 from "json5";
 import type {
   HarnessComponent,
   HarnessMetadata,
+  HarnessImageLineage,
+  HarnessImageMetadata,
   Manifest,
   PackType,
   RiskLevel,
@@ -56,6 +58,20 @@ const ALWAYS_EXCLUDE = [
 
 function generatePackId(): string {
   return crypto.randomUUID();
+}
+
+function createImageMetadata(packId: string, adapter: string): HarnessImageMetadata {
+  return {
+    imageId: packId,
+    adapter,
+  };
+}
+
+function createInitialLineage(): HarnessImageLineage {
+  return {
+    parentImage: null,
+    layerOrder: [],
+  };
 }
 
 function assessRisk(sensitive: SensitiveFlags, packType: PackType): RiskLevel {
@@ -290,11 +306,14 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     throw new Error("No files to export");
   }
 
+  const packId = generatePackId();
   const manifest: Manifest = {
     schemaVersion: SCHEMA_VERSION,
     packType,
-    packId: generatePackId(),
+    packId,
     createdAt: new Date().toISOString(),
+    image: createImageMetadata(packId, openClawAdapter.id),
+    lineage: createInitialLineage(),
     harness: createHarnessMetadata(includedPaths, configPath, inspectResult.product),
     source: {
       product: "openclaw",
@@ -412,8 +431,15 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     }
 
     const parsedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Partial<Manifest>;
+    const packId = parsedManifest.packId ?? generatePackId();
     const manifest: Manifest = {
       ...parsedManifest,
+      packId,
+      image: parsedManifest.image ?? createImageMetadata(packId, parsedManifest.source?.product ?? openClawAdapter.id),
+      lineage: {
+        parentImage: parsedManifest.lineage?.parentImage ?? null,
+        layerOrder: Array.isArray(parsedManifest.lineage?.layerOrder) ? parsedManifest.lineage.layerOrder : [],
+      },
       harness: parsedManifest.harness ?? createHarnessMetadata(
         Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],
         parsedManifest.source?.configPath ? parsedManifest.source.configPath : null,

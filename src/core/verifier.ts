@@ -148,6 +148,39 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
       message: `Pack type: ${manifest.packType}`,
     });
 
+    const hasImageMetadata =
+      typeof manifest.image?.imageId === "string" &&
+      manifest.image.imageId.length > 0 &&
+      typeof manifest.image?.adapter === "string" &&
+      manifest.image.adapter.length > 0;
+    checks.push({
+      name: "manifest_image",
+      passed: hasImageMetadata,
+      message: hasImageMetadata
+        ? `Image identity: ${manifest.image.imageId} via ${manifest.image.adapter}`
+        : "Manifest image metadata missing or invalid",
+    });
+    if (!hasImageMetadata) {
+      warnings.push("Pack manifest does not declare explicit image identity metadata");
+    }
+
+    const hasLineageMetadata =
+      manifest.lineage !== undefined &&
+      Array.isArray(manifest.lineage.layerOrder) &&
+      (manifest.lineage.parentImage === null ||
+        (typeof manifest.lineage.parentImage?.imageId === "string" &&
+          manifest.lineage.parentImage.imageId.length > 0));
+    checks.push({
+      name: "manifest_lineage",
+      passed: hasLineageMetadata,
+      message: hasLineageMetadata
+        ? `Manifest lineage declared with ${manifest.lineage.layerOrder.length} reserved layers`
+        : "Manifest lineage metadata missing or invalid",
+    });
+    if (!hasLineageMetadata) {
+      warnings.push("Pack manifest does not reserve explicit lineage metadata for future composition");
+    }
+
     const hasHarnessMetadata =
       manifest.harness?.intent === "agent-runtime-environment" &&
       typeof manifest.harness?.targetProduct === "string" &&

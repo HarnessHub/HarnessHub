@@ -249,6 +249,10 @@ describe("export + import", () => {
     expect(result.outputFile).toBe(outputFile);
     expect(result.manifest.packType).toBe("template");
     expect(result.manifest.riskLevel).toBe("safe-share");
+    expect(result.manifest.image.imageId).toBe(result.manifest.packId);
+    expect(result.manifest.image.adapter).toBe("openclaw");
+    expect(result.manifest.lineage.parentImage).toBeNull();
+    expect(result.manifest.lineage.layerOrder).toEqual([]);
     expect(result.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(result.manifest.harness.targetProduct).toBe("openclaw");
     expect(result.manifest.harness.components).toEqual(["workspace", "config", "skills"]);
@@ -268,6 +272,8 @@ describe("export + import", () => {
 
     expect(result.manifest.packType).toBe("instance");
     expect(result.manifest.riskLevel).toBe("trusted-migration-only");
+    expect(result.manifest.image.imageId).toBe(result.manifest.packId);
+    expect(result.manifest.image.adapter).toBe("openclaw");
     expect(result.manifest.harness.components).toEqual([
       "workspace",
       "config",
@@ -345,6 +351,8 @@ describe("export + import", () => {
 
     expect(importResult.targetDir).toBe(targetDir);
     expect(importResult.manifest.packType).toBe("template");
+    expect(importResult.manifest.image.imageId).toBe(importResult.manifest.packId);
+    expect(importResult.manifest.lineage.layerOrder).toEqual([]);
     expect(importResult.manifest.harness.intent).toBe("agent-runtime-environment");
     expect(fs.existsSync(path.join(targetDir, "workspace", "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(targetDir, "openclaw.json"))).toBe(true);
@@ -424,6 +432,8 @@ describe("export + import", () => {
     const verifyResult = verify(targetDir, importResult.manifest);
     expect(verifyResult.valid).toBe(true);
     expect(verifyResult.errors).toHaveLength(0);
+    expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
+    expect(verifyResult.checks.some(c => c.name === "manifest_lineage" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "manifest_harness" && c.passed)).toBe(true);
   });
 
@@ -446,6 +456,7 @@ describe("export + import", () => {
     const verifyResult = verify(targetDir, importResult.manifest);
     expect(verifyResult.valid).toBe(true);
     expect(verifyResult.errors).toHaveLength(0);
+    expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
   });
 });
 
@@ -510,6 +521,8 @@ describe("verify", () => {
       riskLevel: "safe-share",
     } as any);
 
+    expect(result.checks.some(c => c.name === "manifest_image" && !c.passed)).toBe(true);
+    expect(result.checks.some(c => c.name === "manifest_lineage" && !c.passed)).toBe(true);
     expect(result.checks.some(c => c.name === "manifest_harness" && !c.passed)).toBe(true);
     expect(result.warnings.some(w => w.includes("reusable agent runtime environment"))).toBe(true);
   });

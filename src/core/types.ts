@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = "0.4.0";
+export const SCHEMA_VERSION = "0.5.0";
 
 export type PackType = "template" | "instance";
 
@@ -11,6 +11,8 @@ export interface Manifest {
   packType: PackType;
   packId: string;
   createdAt: string;
+  image: HarnessImageMetadata;
+  lineage: HarnessImageLineage;
   harness: HarnessMetadata;
   source: {
     product: string;
@@ -24,6 +26,20 @@ export interface Manifest {
 }
 
 export type HarnessIntent = "agent-runtime-environment";
+
+export interface HarnessImageMetadata {
+  imageId: string;
+  adapter: string;
+}
+
+export interface HarnessImageReference {
+  imageId: string;
+}
+
+export interface HarnessImageLineage {
+  parentImage: HarnessImageReference | null;
+  layerOrder: string[];
+}
 
 export type HarnessComponent =
   | "workspace"
