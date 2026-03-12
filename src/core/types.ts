@@ -152,11 +152,18 @@ export interface InstanceStructure {
 export interface VerifyResult {
   valid: boolean;
   runtimeReady: boolean;
+  readinessClass: ReadinessClass;
+  readinessSummary: string;
   runtimeReadinessIssues: string[];
   checks: VerifyCheck[];
   warnings: string[];
   errors: string[];
 }
+
+export type ReadinessClass =
+  | "runtime_ready"
+  | "manual_steps_required"
+  | "structurally_invalid";
 
 export interface VerifyCheck {
   name: string;
