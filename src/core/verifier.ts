@@ -4,6 +4,7 @@ import JSON5 from "json5";
 import type { Manifest, VerifyResult, VerifyCheck } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
+import { validateManifestContract } from "./manifest.js";
 
 const REQUIRED_WORKSPACE_FILES = ["AGENTS.md"];
 
@@ -131,6 +132,19 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
 
   // Check 7: Manifest validation
   if (manifest) {
+    const manifestContractErrors = validateManifestContract(manifest);
+    checks.push({
+      name: "manifest_contract",
+      passed: manifestContractErrors.length === 0,
+      message: manifestContractErrors.length === 0
+        ? "Manifest contract is valid"
+        : manifestContractErrors.join("; "),
+    });
+    if (manifestContractErrors.length > 0) {
+      errors.push(...manifestContractErrors.map((error: string) => `Manifest contract error: ${error}`));
+      return { valid: false, checks, warnings, errors };
+    }
+
     const schemaMatch = manifest.schemaVersion === SCHEMA_VERSION;
     checks.push({
       name: "manifest_schema",

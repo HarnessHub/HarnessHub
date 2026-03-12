@@ -18,6 +18,7 @@ import type {
 } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
+import { assertValidManifest } from "./manifest.js";
 
 // Files/dirs to exclude from template packs (security-critical)
 const TEMPLATE_EXCLUDES = [
@@ -344,6 +345,7 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
     sensitiveFlags: inspectResult.sensitiveFlags,
     riskLevel: assessRisk(inspectResult.sensitiveFlags, packType),
   };
+  assertValidManifest(manifest);
 
   // Create staging directory
   const stagingDir = path.join(stateDir, ".harness-staging");
@@ -449,29 +451,8 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
       throw new Error("Invalid HarnessHub package: manifest.json not found");
     }
 
-    const parsedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Partial<Manifest>;
-    const packId = parsedManifest.packId ?? generatePackId();
-    const manifest: Manifest = {
-      ...parsedManifest,
-      packId,
-      image: parsedManifest.image ?? createImageMetadata(packId, parsedManifest.source?.product ?? openClawAdapter.id),
-      lineage: {
-        parentImage: parsedManifest.lineage?.parentImage ?? null,
-        layerOrder: Array.isArray(parsedManifest.lineage?.layerOrder) ? parsedManifest.lineage.layerOrder : [],
-      },
-      bindings: {
-        workspaces: Array.isArray(parsedManifest.bindings?.workspaces)
-          ? parsedManifest.bindings.workspaces
-          : createBindingSemantics(Array.isArray(parsedManifest.workspaces) ? parsedManifest.workspaces : []).workspaces,
-      },
-      harness: parsedManifest.harness ?? createHarnessMetadata(
-        Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],
-        parsedManifest.source?.configPath ? parsedManifest.source.configPath : null,
-        parsedManifest.source?.product ?? "openclaw"
-      ),
-      includedPaths: Array.isArray(parsedManifest.includedPaths) ? parsedManifest.includedPaths : [],
-      workspaces: Array.isArray(parsedManifest.workspaces) ? parsedManifest.workspaces : [],
-    } as Manifest;
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Manifest;
+    assertValidManifest(manifest);
 
     const targetDir = options.targetPath
       ? path.resolve(options.targetPath)
