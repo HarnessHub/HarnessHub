@@ -1,9 +1,9 @@
 {
-  "validatedAt": "2026-03-12T06:37:07.412Z",
+  "validatedAt": "2026-03-12T07:51:35.298Z",
   "sourceDir": "~/.openclaw",
-  "artifactPath": ".artifacts/openclaw-e2e/20260312T063701Z/openclaw-template.harness",
-  "artifactSha256": "e15876aa51aef57ba57828481ce457a9adffe95610e3ceeccfdc37707e384cb4",
-  "artifactSizeBytes": 4154926,
+  "artifactPath": ".artifacts/openclaw-e2e/20260312T075132Z/openclaw-template.harness",
+  "artifactSha256": "9dbcdb3878de3a12c25c14e9499a55f862f26afdab869616f007be3ce0360015",
+  "artifactSizeBytes": 4071021,
   "inspect": {
     "detected": true,
     "product": "openclaw",
@@ -26,16 +26,19 @@
   },
   "export": {
     "success": true,
-    "packId": "64ceb066-b454-46b4-8755-88383a5817ab",
+    "packId": "b0e14d8c-2781-4364-9ed1-4c07084d0a28",
     "packType": "template",
     "riskLevel": "internal-only",
-    "fileCount": 343,
-    "totalSize": 7279282
+    "fileCount": 321,
+    "totalSize": 7011102,
+    "policyWarnings": [
+      "Inspect recommended instance; exporting template diverges from the recommended pack type."
+    ]
   },
   "manifest": {
     "schemaVersion": "0.5.0",
     "image": {
-      "imageId": "64ceb066-b454-46b4-8755-88383a5817ab",
+      "imageId": "b0e14d8c-2781-4364-9ed1-4c07084d0a28",
       "adapter": "openclaw"
     },
     "lineage": {
@@ -49,11 +52,8 @@
         "workspace",
         "config",
         "skills",
-        "agents",
-        "sessions",
         "cron",
         "extensions",
-        "browser",
         "completions"
       ]
     },
@@ -66,23 +66,29 @@
   },
   "import": {
     "success": true,
-    "targetDir": ".artifacts/openclaw-e2e/20260312T063701Z/imported",
-    "fileCount": 344,
+    "targetDir": ".artifacts/openclaw-e2e/20260312T075132Z/imported",
+    "fileCount": 322,
     "warnings": [
-      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T063701Z/imported; JSON5 formatting/comments were normalized."
+      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T075132Z/imported; JSON5 formatting/comments were normalized."
     ]
   },
   "verify": {
     "valid": true,
+    "readinessClass": "runtime_ready",
+    "readinessSummary": "Imported harness is structurally valid and ready to run without additional manual steps.",
+    "runtimeReady": true,
     "checkNames": [
       "directory_exists",
       "config_exists",
       "workspace_exists",
       "workspace_file_agents.md",
       "config_valid",
-      "agents_present",
+      "manifest_contract",
       "manifest_schema",
       "manifest_pack_type",
+      "manifest_placement",
+      "manifest_rebinding",
+      "pack_type_contract",
       "manifest_image",
       "manifest_lineage",
       "manifest_harness",
@@ -91,9 +97,8 @@
       "file_count",
       "workspace_readable"
     ],
-    "warnings": [
-      "Agent \"main\" missing agent/ subdirectory"
-    ],
+    "runtimeReadinessIssues": [],
+    "warnings": [],
     "errors": []
   }
 }
