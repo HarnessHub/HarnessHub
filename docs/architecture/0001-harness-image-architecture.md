@@ -8,6 +8,8 @@ This document describes the 1.0-oriented architecture and the MVP subset that sh
 
 The currently implemented MVP image contract is specified in [../specs/0001-mvp-harness-image-specification.md](../specs/0001-mvp-harness-image-specification.md).
 
+The deeper product boundary for what HarnessHub is packaging is documented in [0002-harness-capability-packaging.md](./0002-harness-capability-packaging.md).
+
 ## Architectural Decision
 
 HarnessHub should adopt a 1.0-oriented harness image architecture now, then implement only the MVP subset of that architecture.
