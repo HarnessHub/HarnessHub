@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import * as tar from "tar";
 import { inspect } from "../src/core/scanner.js";
 import { exportPack, importPack } from "../src/core/packer.js";
 import { verify } from "../src/core/verifier.js";
@@ -369,6 +370,51 @@ describe("export + import", () => {
     expect(fs.existsSync(path.join(targetDir, ".harness-manifest.json"))).toBe(true);
   });
 
+  it("rejects importing a pack with an invalid manifest contract", async () => {
+    const packFile = path.join(tmpDir, "invalid-manifest.harness");
+    const stagingDir = path.join(tmpDir, "invalid-pack");
+    fs.mkdirSync(path.join(stagingDir, "workspace"), { recursive: true });
+    fs.writeFileSync(path.join(stagingDir, "workspace", "AGENTS.md"), "# Agent\n");
+    fs.writeFileSync(path.join(stagingDir, "manifest.json"), JSON.stringify({
+      schemaVersion: "0.5.0",
+      packType: "template",
+      packId: "broken-pack",
+      createdAt: "2026-03-12T00:00:00.000Z",
+      lineage: { parentImage: null, layerOrder: [] },
+      bindings: { workspaces: [] },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["workspace", "config"],
+      },
+      source: {
+        product: "openclaw",
+        version: "unknown",
+        configPath: "openclaw.json",
+      },
+      includedPaths: ["workspace/AGENTS.md"],
+      workspaces: [],
+      sensitiveFlags: {
+        hasCredentials: false,
+        hasApiKeys: false,
+        hasOAuthTokens: false,
+        hasAuthProfiles: false,
+        hasWhatsAppCreds: false,
+        hasCopilotToken: false,
+        hasSessions: false,
+        hasMemoryDb: false,
+        hasEnvFile: false,
+      },
+      riskLevel: "safe-share",
+    }, null, 2));
+    await tar.create({ gzip: true, file: packFile, cwd: stagingDir }, ["manifest.json", "workspace"]);
+
+    await expect(importPack({
+      packFile,
+      targetPath: path.join(tmpDir, "broken-target"),
+    })).rejects.toThrow(/Manifest contract validation failed/);
+  });
+
   it("imports instance pack preserving agent directory structure", async () => {
     const instanceDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "source"));
     const packFile = path.join(tmpDir, "instance.harness");
@@ -509,7 +555,7 @@ describe("verify", () => {
     expect(result.checks.some(c => c.name === "agents_present" && c.passed)).toBe(true);
   });
 
-  it("warns when manifest harness metadata is missing", () => {
+  it("fails when manifest contract metadata is missing", () => {
     const instanceDir = createMockInstance(path.join(tmpDir, "verify-harness"));
     const result = verify(instanceDir, {
       schemaVersion: "0.3.0",
@@ -537,9 +583,58 @@ describe("verify", () => {
       riskLevel: "safe-share",
     } as any);
 
-    expect(result.checks.some(c => c.name === "manifest_image" && !c.passed)).toBe(true);
-    expect(result.checks.some(c => c.name === "manifest_lineage" && !c.passed)).toBe(true);
-    expect(result.checks.some(c => c.name === "manifest_harness" && !c.passed)).toBe(true);
-    expect(result.warnings.some(w => w.includes("reusable agent runtime environment"))).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.checks.some(c => c.name === "manifest_contract" && !c.passed)).toBe(true);
+    expect(result.errors.some((error) => error.includes("image must be an object"))).toBe(true);
+    expect(result.errors.some((error) => error.includes("harness must be an object"))).toBe(true);
+  });
+
+  it("fails verification when the manifest contract is invalid", () => {
+    const instanceDir = createMockInstance(path.join(tmpDir, "verify-invalid-manifest"));
+    const result = verify(instanceDir, {
+      schemaVersion: "0.5.0",
+      packType: "template",
+      packId: "broken-pack",
+      createdAt: "2026-03-12T00:00:00.000Z",
+      image: {
+        imageId: "broken-pack",
+        adapter: "",
+      },
+      lineage: {
+        parentImage: null,
+        layerOrder: [],
+      },
+      bindings: {
+        workspaces: [],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["workspace"],
+      },
+      source: {
+        product: "openclaw",
+        version: "unknown",
+        configPath: "openclaw.json",
+      },
+      includedPaths: [],
+      workspaces: [],
+      sensitiveFlags: {
+        hasCredentials: false,
+        hasApiKeys: false,
+        hasOAuthTokens: false,
+        hasAuthProfiles: false,
+        hasWhatsAppCreds: false,
+        hasCopilotToken: false,
+        hasSessions: false,
+        hasMemoryDb: false,
+        hasEnvFile: false,
+      },
+      riskLevel: "safe-share",
+    } as any);
+
+    expect(result.valid).toBe(false);
+    expect(result.checks.some((check) => check.name === "manifest_contract" && !check.passed)).toBe(true);
+    expect(result.errors.some((error) => error.includes("image.adapter"))).toBe(true);
   });
 });
