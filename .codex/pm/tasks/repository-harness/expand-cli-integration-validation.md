@@ -3,10 +3,11 @@ type: task
 epic: repository-harness
 slug: expand-cli-integration-validation
 title: Expand CLI integration validation for the pack lifecycle
-status: backlog
+status: done
 task_type: implementation
 labels: feature,test
 issue: 6
+state_path: .codex/pm/issue-state/6-expand-cli-integration-validation.md
 ---
 
 ## Context
