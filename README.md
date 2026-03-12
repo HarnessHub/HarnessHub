@@ -161,15 +161,15 @@ clawpack import my-agent.clawpack -t ./target  # custom target
 
 ### `clawpack verify`
 
-Verify an imported instance is structurally complete and usable.
+Verify an imported instance is structurally complete and basically readable. When a persisted import manifest is present, `verify` also checks manifest-related expectations.
 
 ```
  ~/.openclaw/
  ├── config/  ✓        clawpack verify
  ├── workspace/  ✓   ─────────────────▶   All checks passed  ✓
  ├── AGENTS.md  ✓                          - directories exist
- └── state/  ✓                             - manifest valid
-                                           - workspace intact
+ └── state/  ✓                             - workspace intact
+                                           - manifest checks (if imported manifest is available)
 ```
 
 ```bash
@@ -202,10 +202,10 @@ clawpack verify -p /path/to/dir  # custom path
 
 | Type | Use Case | Includes | Risk Level |
 |------|----------|----------|------------|
-| **template** | Share & reuse | Workspace, non-sensitive config | `safe-share` |
-| **instance** | Full migration | Config, workspace, state, credentials | `trusted-migration-only` |
+| **template** | Share & reuse | Workspace, non-sensitive config | Share-oriented; manifest risk is still derived from detected source sensitivity |
+| **instance** | Full migration | Config, workspace, state, credentials | Usually `trusted-migration-only` when credentials or state are present |
 
-Template packs automatically exclude credentials, sessions, memory databases, and `.env` files.
+Template packs automatically exclude credentials, sessions, memory databases, and `.env` files, but the manifest still records what sensitive indicators were detected in the source instance.
 
 ## Package Format
 
@@ -254,6 +254,8 @@ my-agent.clawpack (gzipped tar)
 | `safe-share` | No sensitive data, safe to distribute |
 | `internal-only` | May contain non-critical config, share within team |
 | `trusted-migration-only` | Contains credentials/state, trusted environments only |
+
+Risk level is assessed from the exported manifest metadata and detected source sensitivity, not only from the chosen pack type.
 
 ## Output Formats
 

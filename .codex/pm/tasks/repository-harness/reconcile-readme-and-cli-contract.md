@@ -3,10 +3,11 @@ type: task
 epic: repository-harness
 slug: reconcile-readme-and-cli-contract
 title: Reconcile README guarantees with actual CLI behavior
-status: backlog
+status: done
 task_type: docs
 labels: docs,test
 issue: 8
+state_path: .codex/pm/issue-state/8-reconcile-readme-and-cli-contract.md
 ---
 
 ## Context
