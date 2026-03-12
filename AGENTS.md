@@ -6,6 +6,12 @@ This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, etc
 
 ClawPack is an application-layer packaging and distribution CLI for OpenClaw agents. It packages an agent's workspace, config, state, and credentials into a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
 
+The broader product direction is documented in:
+
+- `docs/prds/0002-product-foundation.md`
+- `docs/prds/0003-roadmap-mvp-to-v1.md`
+- `docs/architecture/0001-harness-image-architecture.md`
+
 ## Commands
 
 ```bash
