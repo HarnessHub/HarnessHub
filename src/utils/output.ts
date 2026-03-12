@@ -152,7 +152,9 @@ export function printVerifyResult(result: Record<string, unknown>, format: Outpu
   console.log("=== HarnessHub Verify ===");
   console.log("");
   console.log(`  Structural restore: ${r.valid ? "YES" : "NO"}`);
+  console.log(`  Readiness class:    ${r.readinessClass}`);
   console.log(`  Runtime ready:      ${r.runtimeReady ? "YES" : "NO"}`);
+  console.log(`  Readiness summary:  ${r.readinessSummary}`);
   console.log("");
 
   if (r.checks.length > 0) {

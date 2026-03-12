@@ -92,6 +92,8 @@ const summary = {
   },
   verify: {
     valid: verify.valid,
+    readinessClass: verify.readinessClass,
+    readinessSummary: sanitizeText(verify.readinessSummary ?? ""),
     runtimeReady: verify.runtimeReady,
     checkNames: (verify.checks ?? []).map((check) => check.name),
     runtimeReadinessIssues: (verify.runtimeReadinessIssues ?? []).map(sanitizeText),
@@ -156,7 +158,9 @@ const md = [
   `- Imported target: \`${summary.import.targetDir}\``,
   `- Imported file count: \`${summary.import.fileCount}\``,
   `- Verify valid: \`${summary.verify.valid}\``,
+  `- Readiness class: \`${summary.verify.readinessClass}\``,
   `- Runtime ready: \`${summary.verify.runtimeReady}\``,
+  `- Readiness summary: ${summary.verify.readinessSummary}`,
   `- Verify checks: \`${summary.verify.checkNames.join(", ")}\``,
   "",
   "## Warnings",

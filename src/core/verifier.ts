@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import JSON5 from "json5";
-import type { Manifest, VerifyResult, VerifyCheck } from "./types.js";
+import type { Manifest, VerifyResult, VerifyCheck, ReadinessClass } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
 import { validateManifestContract } from "./manifest.js";
@@ -30,7 +30,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   if (!dirExists) {
     errors.push("Target directory does not exist");
     runtimeReadinessIssues.push("Target directory does not exist");
-    return { valid: false, runtimeReady: false, runtimeReadinessIssues, checks, warnings, errors };
+    return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues);
   }
 
   // Check 2: Config file exists
@@ -150,7 +150,7 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
     if (manifestContractErrors.length > 0) {
       errors.push(...manifestContractErrors.map((error: string) => `Manifest contract error: ${error}`));
       runtimeReadinessIssues.push(...manifestContractErrors.map((error: string) => `Manifest contract error: ${error}`));
-      return { valid: false, runtimeReady: false, runtimeReadinessIssues, checks, warnings, errors };
+      return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues);
     }
 
     const schemaMatch = manifest.schemaVersion === SCHEMA_VERSION;
@@ -388,7 +388,49 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
   const valid = errors.length === 0 && checks.every(
     c => c.passed || !["directory_exists", "workspace_exists"].includes(c.name)
   );
-  const runtimeReady = valid && runtimeReadinessIssues.length === 0;
+  return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues, valid);
+}
 
-  return { valid, runtimeReady, runtimeReadinessIssues, checks, warnings, errors };
+function finalizeVerifyResult(
+  checks: VerifyCheck[],
+  warnings: string[],
+  errors: string[],
+  runtimeReadinessIssues: string[],
+  valid = errors.length === 0 && checks.every(
+    (check) => check.passed || !["directory_exists", "workspace_exists"].includes(check.name)
+  ),
+): VerifyResult {
+  const readinessClass = classifyReadiness(valid, runtimeReadinessIssues);
+  const runtimeReady = readinessClass === "runtime_ready";
+  return {
+    valid,
+    runtimeReady,
+    readinessClass,
+    readinessSummary: summarizeReadiness(readinessClass),
+    runtimeReadinessIssues,
+    checks,
+    warnings,
+    errors,
+  };
+}
+
+function classifyReadiness(valid: boolean, runtimeReadinessIssues: string[]): ReadinessClass {
+  if (!valid) {
+    return "structurally_invalid";
+  }
+  if (runtimeReadinessIssues.length > 0) {
+    return "manual_steps_required";
+  }
+  return "runtime_ready";
+}
+
+function summarizeReadiness(readinessClass: ReadinessClass): string {
+  switch (readinessClass) {
+    case "runtime_ready":
+      return "Imported harness is structurally valid and ready to run without additional manual steps.";
+    case "manual_steps_required":
+      return "Imported harness is structurally valid but still needs manual follow-up before it is runtime-ready.";
+    case "structurally_invalid":
+      return "Imported harness is not structurally valid yet and cannot be treated as runtime-ready.";
+  }
 }

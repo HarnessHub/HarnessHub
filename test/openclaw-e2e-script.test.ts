@@ -59,10 +59,12 @@ describe("run-openclaw-e2e-validation.sh", () => {
     );
     expect(report.manifest.image.adapter).toBe("openclaw");
     expect(report.verify.valid).toBe(true);
+    expect(report.verify.readinessClass).toBe("runtime_ready");
 
     const markdown = fs.readFileSync(reportMd, "utf8");
     expect(markdown).toContain("Artifact path:");
     expect(markdown).toContain("## Export Policy");
+    expect(markdown).toContain("Readiness class: `runtime_ready`");
     expect(markdown).toContain("Verify valid: `true`");
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
