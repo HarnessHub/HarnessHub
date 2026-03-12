@@ -9,8 +9,8 @@ import { verifyCommand } from "./commands/verify.js";
 const program = new Command();
 
 program
-  .name("clawpack")
-  .description("Application-layer packaging and distribution tool for OpenClaw agents")
+  .name("harness")
+  .description("HarnessHub CLI for packaging OpenClaw-style agent runtimes")
   .version("0.1.0");
 
 program.addCommand(inspectCommand);

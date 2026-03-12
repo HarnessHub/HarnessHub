@@ -2,7 +2,7 @@
 
 ## Summary
 
-Captured the updated product framing that treats ClawPack as a harness image packaging system rather than only an OpenClaw packaging CLI.
+Captured the updated product framing that treats HarnessHub as a harness image packaging system rather than only an OpenClaw packaging CLI.
 
 ## Key Decisions
 

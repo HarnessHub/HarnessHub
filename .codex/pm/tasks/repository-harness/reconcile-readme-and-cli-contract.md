@@ -37,4 +37,4 @@ Update README and related docs so they match the implemented CLI semantics and t
 
 ## Implementation Notes
 
-This is a ClawPack-specific correctness task, not a generic harness export task.
+This is a HarnessHub-specific correctness task, not a generic harness export task.

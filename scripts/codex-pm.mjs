@@ -586,7 +586,7 @@ function createPr(document, { issue, tests, title, baseRepo, baseBranch, headOwn
     }
   }
   const body = renderPrBody(document, { issue, tests });
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "clawpack-pr-body-"));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-pr-body-"));
   const bodyPath = path.join(tempDir, "pr-body.md");
   fs.writeFileSync(bodyPath, body, "utf8");
   try {

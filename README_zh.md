@@ -10,7 +10,7 @@
 
 HarnessHub 是一个面向 Agent 运行环境的 harness image 打包标准。
 
-当前实现仍通过 `clawpack` CLI 提供，并且最初从对 OpenClaw Agent 的**标准化导出、导入和验证**出发。它不是容器，也不是虚拟机，而是建立在这些基础设施之上的应用层打包系统。
+当前实现仍通过 `harness` CLI 提供，并且最初从对 OpenClaw Agent 的**标准化导出、导入和验证**出发。它不是容器，也不是虚拟机，而是建立在这些基础设施之上的应用层打包系统。
 
 ## 产品方向
 
@@ -22,7 +22,7 @@ HarnessHub 是一个面向 Agent 运行环境的 harness image 打包标准。
 - `docs/prds/0003-roadmap-mvp-to-v1.md`
 - `docs/architecture/0001-harness-image-architecture.md`
 
-## 为什么需要 ClawPack
+## 为什么需要 HarnessHub
 
 一个 OpenClaw Agent 的可用状态不只是代码或配置，还包括：
 
@@ -47,10 +47,10 @@ HarnessHub 是一个面向 Agent 运行环境的 harness image 打包标准。
 └─────────────────────────────────────────────────────┘
 ```
 
-Docker 能分发运行环境，但无法表达"哪些是模板、哪些是状态、哪些需要重新绑定"。ClawPack 补上了这一层：
+Docker 能分发运行环境，但无法表达"哪些是模板、哪些是状态、哪些需要重新绑定"。HarnessHub 补上了这一层：
 
 ```
-                 Docker                          ClawPack
+                 Docker                          HarnessHub
             ┌─────────────┐               ┌──────────────────┐
             │  OS + 依赖   │               │  模板 vs 状态 vs  │
             │  运行时      │               │  凭证            │
@@ -63,12 +63,12 @@ Docker 能分发运行环境，但无法表达"哪些是模板、哪些是状态
                                           "Agent 是什么"
 ```
 
-ClawPack 已按当前 OpenClaw 目录模型处理 `agents/*`、`workspace-*` 以及配置里声明在 state dir 之外的 workspace。导入时会把 `openclaw.json` 里的 workspace 路径重绑到目标目录，避免多 agent 包迁移后仍指向旧机器路径。
+HarnessHub 已按当前 OpenClaw 目录模型处理 `agents/*`、`workspace-*` 以及配置里声明在 state dir 之外的 workspace。导入时会把 `openclaw.json` 里的 workspace 路径重绑到目标目录，避免多 agent 包迁移后仍指向旧机器路径。
 
 ## 安装
 
 ```bash
-npm install -g clawpack
+npm install -g harnesshub
 ```
 
 要求 Node.js >= 20。
@@ -90,28 +90,28 @@ npm install -g clawpack
 
 ```bash
 # 1. 识别当前 OpenClaw 实例
-clawpack inspect
+harness inspect
 
 # 2. 导出为模板包（可安全分享）
-clawpack export -t template -o my-agent.clawpack
+harness export -t template -o my-agent.clawpack
 
 # 3. 在另一台机器导入
-clawpack import my-agent.clawpack -t ~/.openclaw
+harness import my-agent.clawpack -t ~/.openclaw
 
 # 4. 验证导入结果
-clawpack verify
+harness verify
 ```
 
 ## 命令
 
-### `clawpack inspect`
+### `harness inspect`
 
 扫描 OpenClaw 实例，报告其结构、敏感数据和推荐的导出类型。
 
 ```
  ~/.openclaw/
  ├── config/
- ├── workspace/         clawpack inspect
+ ├── workspace/         harness inspect
  ├── state/          ─────────────────────▶   报告：
  ├── .env                                     - 结构概览
  └── ...                                      - 发现的敏感数据
@@ -119,18 +119,18 @@ clawpack verify
 ```
 
 ```bash
-clawpack inspect                  # 自动检测 ~/.openclaw
-clawpack inspect -p /path/to/dir  # 指定路径
-clawpack inspect -f json          # JSON 格式输出
+harness inspect                  # 自动检测 ~/.openclaw
+harness inspect -p /path/to/dir  # 指定路径
+harness inspect -f json          # JSON 格式输出
 ```
 
-### `clawpack export`
+### `harness export`
 
 将实例导出为 `.clawpack` 包。
 
 ```
  ~/.openclaw/                                my-agent.clawpack
- ├── config/          clawpack export        (gzip 压缩的 tar)
+ ├── config/          harness export        (gzip 压缩的 tar)
  ├── workspace/    ─────────────────────▶    ┌──────────────┐
  ├── state/           -t template            │ manifest.json│
  ├── .env             -o my-agent.clawpack   │ config/      │
@@ -142,19 +142,19 @@ clawpack inspect -f json          # JSON 格式输出
 ```
 
 ```bash
-clawpack export -t template       # 模板包（排除敏感信息）
-clawpack export -t instance       # 实例包（完整迁移）
-clawpack export -o out.clawpack   # 指定输出路径
-clawpack export -p /path/to/dir   # 指定源路径
+harness export -t template       # 模板包（排除敏感信息）
+harness export -t instance       # 实例包（完整迁移）
+harness export -o out.clawpack   # 指定输出路径
+harness export -p /path/to/dir   # 指定源路径
 ```
 
-### `clawpack import`
+### `harness import`
 
 将 `.clawpack` 包导入目标环境。
 
 ```
  my-agent.clawpack                          ~/.openclaw/
- ┌──────────────┐    clawpack import        ├── config/
+ ┌──────────────┐    harness import        ├── config/
  │ manifest.json│  ─────────────────────▶   ├── workspace/
  │ config/      │    -t ~/.openclaw         ├── state/
  │ workspace/   │                           └── ...
@@ -163,17 +163,17 @@ clawpack export -p /path/to/dir   # 指定源路径
 ```
 
 ```bash
-clawpack import my-agent.clawpack              # 还原到 ~/.openclaw
-clawpack import my-agent.clawpack -t ./target  # 指定目标目录
+harness import my-agent.clawpack              # 还原到 ~/.openclaw
+harness import my-agent.clawpack -t ./target  # 指定目标目录
 ```
 
-### `clawpack verify`
+### `harness verify`
 
 检查导入后的实例是否结构完整、基础可读。如果目标目录里存在持久化的导入 manifest，`verify` 还会附带执行 manifest 相关检查。
 
 ```
  ~/.openclaw/
- ├── config/  ✓        clawpack verify
+ ├── config/  ✓        harness verify
  ├── workspace/  ✓   ─────────────────▶   所有检查通过  ✓
  ├── AGENTS.md  ✓                          - 目录存在
  └── state/  ✓                             - 工作区完整
@@ -181,8 +181,8 @@ clawpack import my-agent.clawpack -t ./target  # 指定目标目录
 ```
 
 ```bash
-clawpack verify                  # 验证 ~/.openclaw
-clawpack verify -p /path/to/dir  # 指定路径
+harness verify                  # 验证 ~/.openclaw
+harness verify -p /path/to/dir  # 指定路径
 ```
 
 ## 包类型
@@ -271,7 +271,7 @@ my-agent.clawpack (gzip 压缩的 tar)
 所有命令均支持 `-f text`（默认，人类可读）和 `-f json`（机器可读）两种输出格式。
 
 ```
- clawpack inspect -f text          clawpack inspect -f json
+ harness inspect -f text          harness inspect -f json
  ┌─────────────────────┐           ┌──────────────────────┐
  │  === 扫描报告 ===    │           │ {                    │
  │  路径: ~/.openclaw   │           │   "path": "~/.oc..", │
@@ -283,7 +283,7 @@ my-agent.clawpack (gzip 压缩的 tar)
 ```
 
 ```bash
-clawpack inspect -f json | jq '.riskAssessment'
+harness inspect -f json | jq '.riskAssessment'
 ```
 
 ## 开发

@@ -55,14 +55,14 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "clawpack-cli-integration-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-cli-integration-"));
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
-describe("clawpack CLI integration", () => {
+describe("harness CLI integration", () => {
   it("inspects a valid instance through the CLI", () => {
     const sourceDir = path.join(tmpDir, "source");
     createTemplateSource(sourceDir);

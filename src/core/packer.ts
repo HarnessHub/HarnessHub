@@ -408,7 +408,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
     const manifestPath = path.join(tempDir, "manifest.json");
     if (!fs.existsSync(manifestPath)) {
-      throw new Error("Invalid ClawPack: manifest.json not found");
+      throw new Error("Invalid HarnessHub package: manifest.json not found");
     }
 
     const parsedManifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as Partial<Manifest>;

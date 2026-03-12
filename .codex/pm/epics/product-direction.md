@@ -8,7 +8,7 @@ prd: harness-image-foundation
 
 ## Outcome
 
-ClawPack gains a coherent product definition that connects the current OpenClaw-first implementation to the broader harness image vision.
+HarnessHub gains a coherent product definition that connects the current OpenClaw-first implementation to the broader harness image vision.
 
 
 ## Scope
@@ -26,7 +26,7 @@ ClawPack gains a coherent product definition that connects the current OpenClaw-
 
 ## Child Issues
 
-- #13 define ClawPack product foundation and architecture-aligned MVP/1.0 roadmap
+- #13 define HarnessHub product foundation and architecture-aligned MVP/1.0 roadmap
 
 ## Notes
 

@@ -8,22 +8,22 @@ status: done
 
 ## Summary
 
-Bootstrap the reusable harness core first so later ClawPack harness tasks can use the same issue-task-PR flow.
+Bootstrap the reusable harness core first so later HarnessHub harness tasks can use the same issue-task-PR flow.
 
 ## Validated Facts
 
-- ClawPack had no `.githooks/`, no `scripts/` harness layer, and no local issue-state support.
+- HarnessHub had no `.githooks/`, no `scripts/` harness layer, and no local issue-state support.
 - OpenPrecedent's reusable value is primarily workflow, guardrails, and validation structure rather than product-specific research features.
 - The first harness bootstrap issue is GitHub issue `#3`.
 
 ## Open Questions
 
-- Which future ClawPack-specific harness tasks should become the next child tasks under `repository-harness`?
+- Which future HarnessHub-specific harness tasks should become the next child tasks under `repository-harness`?
 
 ## Next Steps
 
-- use the new local PM flow for the next ClawPack harness issue
-- split follow-up harness work into reusable guardrails vs ClawPack-specific validation tasks
+- use the new local PM flow for the next HarnessHub harness issue
+- split follow-up harness work into reusable guardrails vs HarnessHub-specific validation tasks
 - decide which next issue should harden PR closure sync and merged-branch checks in everyday use
 
 ## Artifacts

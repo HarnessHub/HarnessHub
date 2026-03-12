@@ -9,7 +9,7 @@ let originalCwd: string;
 
 beforeEach(() => {
   originalCwd = process.cwd();
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "clawpack-pm-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-pm-"));
   process.chdir(tmpDir);
 });
 

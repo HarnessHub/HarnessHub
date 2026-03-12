@@ -2,9 +2,9 @@
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
-review_file="${CLAWPACK_REVIEW_FILE:-$repo_root/.codex-review}"
-review_proof_file="${CLAWPACK_REVIEW_PROOF_FILE:-$repo_root/.codex-review-proof}"
-base_ref="${CLAWPACK_BASE_REF:-upstream/main}"
+review_file="${HARNESSHUB_REVIEW_FILE:-${CLAWPACK_REVIEW_FILE:-$repo_root/.codex-review}}"
+review_proof_file="${HARNESSHUB_REVIEW_PROOF_FILE:-${CLAWPACK_REVIEW_PROOF_FILE:-$repo_root/.codex-review-proof}}"
+base_ref="${HARNESSHUB_BASE_REF:-${CLAWPACK_BASE_REF:-upstream/main}}"
 current_branch="$(git branch --show-current)"
 origin_url="$(git remote get-url origin 2>/dev/null || true)"
 upstream_url="$(git remote get-url upstream 2>/dev/null || true)"

@@ -3,7 +3,7 @@ import { exportPack } from "../core/packer.js";
 import type { OutputFormat, PackType } from "../core/types.js";
 
 export const exportCommand = new Command("export")
-  .description("Export an OpenClaw instance as a ClawPack package")
+  .description("Export an OpenClaw instance as a HarnessHub package")
   .option("-p, --path <path>", "Path to OpenClaw state directory")
   .option("-o, --output <path>", "Output file path")
   .option("-t, --type <type>", "Pack type: template or instance", "template")
@@ -42,7 +42,7 @@ export const exportCommand = new Command("export")
         }, null, 2));
       } else {
         console.log("");
-        console.log("=== ClawPack Export ===");
+        console.log("=== HarnessHub Export ===");
         console.log("");
         console.log(`  Pack type:    ${result.manifest.packType}`);
         console.log(`  Pack ID:      ${result.manifest.packId}`);

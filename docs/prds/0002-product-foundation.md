@@ -1,4 +1,4 @@
-# ClawPack Product Foundation
+# HarnessHub Product Foundation
 
 ## Status
 
@@ -8,7 +8,7 @@ The earlier [0001-prd-v0.1](./0001-prd-v0.1.md) remains useful as the original O
 
 ## Product Thesis
 
-ClawPack should be defined as a harness image packaging standard for agent runtime environments.
+HarnessHub should be defined as a harness image packaging standard for agent runtime environments.
 
 OpenClaw is the first production-grade adapter, not the terminal scope of the product.
 
@@ -28,7 +28,7 @@ These environments are still copied ad hoc, rebuilt manually, or hidden inside o
 
 ## Product Goal
 
-ClawPack exists to make harness environments portable, layered, inspectable, and reusable.
+HarnessHub exists to make harness environments portable, layered, inspectable, and reusable.
 
 It should let teams define, package, distribute, compose, and validate agent harness images in the same way container tooling lets teams define and distribute runtime environments.
 
@@ -115,9 +115,9 @@ The missing pieces are:
 - architecture continuity from MVP to 1.0
 - repository harness and runtime harness should align conceptually, but they are not the same artifact
 
-## What ClawPack Is Not
+## What HarnessHub Is Not
 
-ClawPack is not:
+HarnessHub is not:
 
 - a container runtime
 - a VM image builder
