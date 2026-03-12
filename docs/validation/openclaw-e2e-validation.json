@@ -1,0 +1,99 @@
+{
+  "validatedAt": "2026-03-12T06:37:07.412Z",
+  "sourceDir": "~/.openclaw",
+  "artifactPath": ".artifacts/openclaw-e2e/20260312T063701Z/openclaw-template.harness",
+  "artifactSha256": "e15876aa51aef57ba57828481ce457a9adffe95610e3ceeccfdc37707e384cb4",
+  "artifactSizeBytes": 4154926,
+  "inspect": {
+    "detected": true,
+    "product": "openclaw",
+    "configPath": "openclaw.json",
+    "recommendedPackType": "instance",
+    "riskAssessment": "trusted-migration-only",
+    "workspaceDirs": [
+      "workspace"
+    ],
+    "workspaceFileCount": 165,
+    "skillDirCount": 18,
+    "agentIds": [
+      "main"
+    ],
+    "warnings": [
+      "Config contains API keys or tokens",
+      "Agent auth-profiles.json detected (contains API credentials)",
+      "Credentials directory exists"
+    ]
+  },
+  "export": {
+    "success": true,
+    "packId": "64ceb066-b454-46b4-8755-88383a5817ab",
+    "packType": "template",
+    "riskLevel": "internal-only",
+    "fileCount": 343,
+    "totalSize": 7279282
+  },
+  "manifest": {
+    "schemaVersion": "0.5.0",
+    "image": {
+      "imageId": "64ceb066-b454-46b4-8755-88383a5817ab",
+      "adapter": "openclaw"
+    },
+    "lineage": {
+      "parentImage": null,
+      "layerOrder": []
+    },
+    "harness": {
+      "intent": "agent-runtime-environment",
+      "targetProduct": "openclaw",
+      "components": [
+        "workspace",
+        "config",
+        "skills",
+        "agents",
+        "sessions",
+        "cron",
+        "extensions",
+        "browser",
+        "completions"
+      ]
+    },
+    "bindingWorkspaceCount": 1,
+    "source": {
+      "product": "openclaw",
+      "version": "unknown",
+      "configPath": "openclaw.json"
+    }
+  },
+  "import": {
+    "success": true,
+    "targetDir": ".artifacts/openclaw-e2e/20260312T063701Z/imported",
+    "fileCount": 344,
+    "warnings": [
+      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T063701Z/imported; JSON5 formatting/comments were normalized."
+    ]
+  },
+  "verify": {
+    "valid": true,
+    "checkNames": [
+      "directory_exists",
+      "config_exists",
+      "workspace_exists",
+      "workspace_file_agents.md",
+      "config_valid",
+      "agents_present",
+      "manifest_schema",
+      "manifest_pack_type",
+      "manifest_image",
+      "manifest_lineage",
+      "manifest_harness",
+      "workspace_bindings",
+      "binding_semantics",
+      "file_count",
+      "workspace_readable"
+    ],
+    "warnings": [
+      "Agent \"main\" missing agent/ subdirectory"
+    ],
+    "errors": []
+  }
+}
