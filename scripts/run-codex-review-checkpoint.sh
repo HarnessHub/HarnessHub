@@ -14,7 +14,7 @@ upsert_review_line() {
   local key="$1"
   local value="$2"
   if grep -Eq "^${key}:" "$REVIEW_FILE"; then
-    python - "$REVIEW_FILE" "$key" "$value" <<'PY'
+    python3 - "$REVIEW_FILE" "$key" "$value" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -27,7 +27,7 @@ updated = re.sub(rf"^{re.escape(key)}:.*$", f"{key}: {value}", text, count=1, fl
 file_path.write_text(updated, encoding="utf8")
 PY
   else
-    python - "$REVIEW_FILE" "$key" "$value" <<'PY'
+    python3 - "$REVIEW_FILE" "$key" "$value" <<'PY'
 from pathlib import Path
 import sys
 
