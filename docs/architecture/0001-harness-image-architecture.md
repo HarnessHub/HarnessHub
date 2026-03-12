@@ -12,6 +12,16 @@ HarnessHub should adopt a 1.0-oriented harness image architecture now, then impl
 
 This avoids a split where the MVP is a flat OpenClaw snapshot tool but 1.0 needs a different conceptual model.
 
+## Boundary Clarification
+
+HarnessHub is not the agent runtime itself.
+
+The runtime layer is responsible for execution concerns such as process startup, model calls, tool invocation machinery, persistence services, and host integration.
+
+The harness layer is responsible for the reusable application-layer operating environment around the agent, including instructions, skills, configuration, bindings, guardrails, and selected state that must travel with the working environment.
+
+This distinction matters because HarnessHub should package, compose, import, and verify the harness layer while remaining compatible with existing runtimes rather than trying to replace them.
+
 ## 1.0 Architecture
 
 At 1.0, the architecture should be organized around six layers.
@@ -47,6 +57,8 @@ An adapter is responsible for:
 - component classification
 - rebinding rules
 - import materialization rules
+
+An adapter does not redefine the runtime's execution engine. It maps a runtime's concrete layout into HarnessHub's harness-image model.
 
 ### 3. Image Builder Layer
 
@@ -148,5 +160,9 @@ This direction keeps the public CLI simple while changing the internal center of
 - from filesystem snapshot operations
 - toward adapter-driven harness image construction
 
-That is an additive evolution, not a rewrite, provided the internal abstractions are introduced before too much more product surface area accumulates.
+It also keeps the product boundary stable:
 
+- runtimes remain the execution substrate
+- HarnessHub remains the application-layer harness packaging system
+
+That is an additive evolution, not a rewrite, provided the internal abstractions are introduced before too much more product surface area accumulates.
