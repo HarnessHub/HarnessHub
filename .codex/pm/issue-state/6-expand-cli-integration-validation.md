@@ -28,3 +28,7 @@ Expand ClawPack's command-level validation so the public CLI path is tested thro
 ## Artifacts
 
 - `test/cli-integration.test.ts`
+
+## Notes
+
+- 2026-03-12: Resolved the post-merge conflict from PR #10; the only conflict was the local task `state_path`, which now correctly points to issue-state `6`.

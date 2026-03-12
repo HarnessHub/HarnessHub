@@ -7,7 +7,7 @@ status: done
 task_type: implementation
 labels: feature,test
 issue: 6
-state_path: .codex/pm/issue-state/7-expand-cli-integration-validation.md
+state_path: .codex/pm/issue-state/6-expand-cli-integration-validation.md
 ---
 
 ## Context

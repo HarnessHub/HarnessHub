@@ -48,6 +48,7 @@ Harness and workflow support lives in:
 - `.codex/pm/` — local PRD/epic/task/state documents
 - `.githooks/pre-push` — local review/proof/closure guardrail
 - `scripts/` — PM, review checkpoint, preflight, and CLI smoke commands
+- `docs/engineering/repository-governance.md` — contributor-facing daily harness workflow
 
 ## Key Concepts
 
@@ -65,5 +66,9 @@ Harness and workflow support lives in:
 - Archive handling uses the `tar` npm package
 - Import paths in source use `.js` extensions (ESM convention)
 - Use `node scripts/codex-pm.mjs` for repository-local task, issue-state, and PR-body workflows instead of ad hoc notes
+- Keep one issue per branch and one issue per PR
+- Start each issue branch from the latest `upstream/main`
+- Do not keep working on a branch after its PR has merged
 - Before push, prefer `./scripts/run-codex-review-checkpoint.sh` and `./scripts/run-agent-preflight.sh`
+- Run `./scripts/run-cli-smoke.sh` when a change affects the documented command path or import/export/verify behavior
 - Any repeated workflow mistake that should have been blocked locally should be treated as a harness gap and fixed through the local guardrail layer
