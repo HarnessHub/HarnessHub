@@ -37,4 +37,4 @@ Tighten the local harness by ignoring review artifacts in Git and extending guar
 
 ## Implementation Notes
 
-Keep the work in ClawPack's repository-local harness; do not pull in extra OpenPrecedent-specific workflow layers.
+Keep the work in HarnessHub's repository-local harness; do not pull in extra OpenPrecedent-specific workflow layers.

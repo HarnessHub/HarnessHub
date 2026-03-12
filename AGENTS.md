@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, etc
 
 ## What is HarnessHub?
 
-HarnessHub is the project name for the repository's harness image system. The current implementation still ships as the `clawpack` CLI for OpenClaw-oriented packaging flows, using a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
+HarnessHub is the project name for the repository's harness image system. The current implementation still ships as the `harness` CLI for OpenClaw-oriented packaging flows, using a portable `.clawpack` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
 
 The broader product direction is documented in:
 

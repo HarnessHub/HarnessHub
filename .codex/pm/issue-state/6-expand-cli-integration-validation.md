@@ -8,7 +8,7 @@ status: done
 
 ## Summary
 
-Expand ClawPack's command-level validation so the public CLI path is tested through real process execution, not only direct module invocation.
+Expand HarnessHub's command-level validation so the public CLI path is tested through real process execution, not only direct module invocation.
 
 ## Validated Facts
 

@@ -10,7 +10,7 @@
 
 HarnessHub is a harness image packaging standard for agent runtime environments.
 
-The current implementation ships as the `clawpack` CLI and started with standardized export, import, and verification of tuned OpenClaw agents. It's not a container or a VM; it is the application-layer packaging system built on top of those infrastructures.
+The current implementation ships as the `harness` CLI and started with standardized export, import, and verification of tuned OpenClaw agents. It's not a container or a VM; it is the application-layer packaging system built on top of those infrastructures.
 
 ## Product Direction
 
@@ -48,10 +48,10 @@ An OpenClaw agent's usable state is more than just code or config. It includes:
 └─────────────────────────────────────────────────────┘
 ```
 
-Docker can distribute the runtime environment, but it can't express "which parts are templates, which are state, and which need rebinding." ClawPack fills that gap:
+Docker can distribute the runtime environment, but it can't express "which parts are templates, which are state, and which need rebinding." HarnessHub fills that gap:
 
 ```
-                 Docker                          ClawPack
+                 Docker                          HarnessHub
             ┌─────────────┐               ┌──────────────────┐
             │  OS + deps  │               │  template vs     │
             │  runtime    │               │  state vs        │
@@ -65,12 +65,12 @@ Docker can distribute the runtime environment, but it can't express "which parts
                                           "what the agent is"
 ```
 
-ClawPack understands the current OpenClaw layout, including `agents/*`, `workspace-*`, and config-defined workspaces outside the state dir. During import, it rebinds workspace paths in `openclaw.json` to the target directory so multi-agent packs remain runnable after migration.
+HarnessHub understands the current OpenClaw layout, including `agents/*`, `workspace-*`, and config-defined workspaces outside the state dir. During import, it rebinds workspace paths in `openclaw.json` to the target directory so multi-agent packs remain runnable after migration.
 
 ## Install
 
 ```bash
-npm install -g clawpack
+npm install -g harnesshub
 ```
 
 Requires Node.js >= 20.
@@ -92,28 +92,28 @@ The four commands form a linear workflow:
 
 ```bash
 # 1. Inspect an OpenClaw instance
-clawpack inspect
+harness inspect
 
 # 2. Export as a template pack (safe to share)
-clawpack export -t template -o my-agent.clawpack
+harness export -t template -o my-agent.clawpack
 
 # 3. Import on another machine
-clawpack import my-agent.clawpack -t ~/.openclaw
+harness import my-agent.clawpack -t ~/.openclaw
 
 # 4. Verify the import
-clawpack verify
+harness verify
 ```
 
 ## Commands
 
-### `clawpack inspect`
+### `harness inspect`
 
 Scan an OpenClaw instance, report its structure, sensitive data, and recommended export type.
 
 ```
  ~/.openclaw/
  ├── config/
- ├── workspace/         clawpack inspect
+ ├── workspace/         harness inspect
  ├── state/          ─────────────────────▶   Report:
  ├── .env                                     - structure overview
  └── ...                                      - sensitive data found
@@ -121,18 +121,18 @@ Scan an OpenClaw instance, report its structure, sensitive data, and recommended
 ```
 
 ```bash
-clawpack inspect                  # auto-detect ~/.openclaw
-clawpack inspect -p /path/to/dir  # custom path
-clawpack inspect -f json          # JSON output
+harness inspect                  # auto-detect ~/.openclaw
+harness inspect -p /path/to/dir  # custom path
+harness inspect -f json          # JSON output
 ```
 
-### `clawpack export`
+### `harness export`
 
 Export an instance as a `.clawpack` package.
 
 ```
  ~/.openclaw/                                my-agent.clawpack
- ├── config/          clawpack export        (gzipped tar)
+ ├── config/          harness export        (gzipped tar)
  ├── workspace/    ─────────────────────▶    ┌──────────────┐
  ├── state/           -t template            │ manifest.json│
  ├── .env             -o my-agent.clawpack   │ config/      │
@@ -144,19 +144,19 @@ Export an instance as a `.clawpack` package.
 ```
 
 ```bash
-clawpack export -t template       # template pack (excludes secrets)
-clawpack export -t instance       # instance pack (full migration)
-clawpack export -o out.clawpack   # custom output path
-clawpack export -p /path/to/dir   # custom source path
+harness export -t template       # template pack (excludes secrets)
+harness export -t instance       # instance pack (full migration)
+harness export -o out.clawpack   # custom output path
+harness export -p /path/to/dir   # custom source path
 ```
 
-### `clawpack import`
+### `harness import`
 
 Import a `.clawpack` package into a target environment.
 
 ```
  my-agent.clawpack                          ~/.openclaw/
- ┌──────────────┐    clawpack import        ├── config/
+ ┌──────────────┐    harness import        ├── config/
  │ manifest.json│  ─────────────────────▶   ├── workspace/
  │ config/      │    -t ~/.openclaw         ├── state/
  │ workspace/   │                           └── ...
@@ -165,17 +165,17 @@ Import a `.clawpack` package into a target environment.
 ```
 
 ```bash
-clawpack import my-agent.clawpack              # restore to ~/.openclaw
-clawpack import my-agent.clawpack -t ./target  # custom target
+harness import my-agent.clawpack              # restore to ~/.openclaw
+harness import my-agent.clawpack -t ./target  # custom target
 ```
 
-### `clawpack verify`
+### `harness verify`
 
 Verify an imported instance is structurally complete and basically readable. When a persisted import manifest is present, `verify` also checks manifest-related expectations.
 
 ```
  ~/.openclaw/
- ├── config/  ✓        clawpack verify
+ ├── config/  ✓        harness verify
  ├── workspace/  ✓   ─────────────────▶   All checks passed  ✓
  ├── AGENTS.md  ✓                          - directories exist
  └── state/  ✓                             - workspace intact
@@ -183,8 +183,8 @@ Verify an imported instance is structurally complete and basically readable. Whe
 ```
 
 ```bash
-clawpack verify                  # verify ~/.openclaw
-clawpack verify -p /path/to/dir  # custom path
+harness verify                  # verify ~/.openclaw
+harness verify -p /path/to/dir  # custom path
 ```
 
 ## Package Types
@@ -272,7 +272,7 @@ Risk level is assessed from the exported manifest metadata and detected source s
 All commands support `-f text` (default, human-readable) and `-f json` (machine-readable).
 
 ```
- clawpack inspect -f text          clawpack inspect -f json
+ harness inspect -f text          harness inspect -f json
  ┌─────────────────────┐           ┌──────────────────────┐
  │  === Scan Report === │           │ {                    │
  │  Path: ~/.openclaw   │           │   "path": "~/.oc..", │
@@ -284,7 +284,7 @@ All commands support `-f text` (default, human-readable) and `-f json` (machine-
 ```
 
 ```bash
-clawpack inspect -f json | jq '.riskAssessment'
+harness inspect -f json | jq '.riskAssessment'
 ```
 
 ## Development

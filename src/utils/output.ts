@@ -79,7 +79,7 @@ export function printInspectResult(result: Record<string, unknown>, format: Outp
 
   const r = result as any;
   console.log("");
-  console.log("=== ClawPack Inspect ===");
+  console.log("=== HarnessHub Inspect ===");
   console.log("");
   console.log(`  Detected:     ${r.detected ? "yes" : "no"}`);
   console.log(`  State dir:    ${r.stateDir}`);
@@ -149,7 +149,7 @@ export function printVerifyResult(result: Record<string, unknown>, format: Outpu
 
   const r = result as any;
   console.log("");
-  console.log("=== ClawPack Verify ===");
+  console.log("=== HarnessHub Verify ===");
   console.log("");
   console.log(`  Valid: ${r.valid ? "YES" : "NO"}`);
   console.log("");

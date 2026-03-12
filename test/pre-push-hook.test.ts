@@ -13,7 +13,7 @@ function git(cwd: string, ...args: string[]) {
 }
 
 function prepareRepo() {
-  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "clawpack-hook-"));
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-hook-"));
   git(repo, "init", "-b", "main");
   git(repo, "config", "user.name", "Test User");
   git(repo, "config", "user.email", "test@example.com");
@@ -86,7 +86,7 @@ describe("pre-push hook", () => {
         ...process.env,
         PATH: `${binDir}:${process.env.PATH}`,
         BYPASS_BRANCH_FRESHNESS_CHECK: "1",
-        CLAWPACK_BASE_REF: "main",
+        HARNESSHUB_BASE_REF: "main",
       },
       encoding: "utf8",
     });
@@ -105,7 +105,7 @@ describe("pre-push hook", () => {
         ...process.env,
         PATH: `${binDir}:${process.env.PATH}`,
         BYPASS_BRANCH_FRESHNESS_CHECK: "1",
-        CLAWPACK_BASE_REF: "main",
+        HARNESSHUB_BASE_REF: "main",
       },
       encoding: "utf8",
     });
@@ -129,7 +129,7 @@ describe("pre-push hook", () => {
         ...process.env,
         PATH: `${binDir}:${process.env.PATH}`,
         BYPASS_BRANCH_FRESHNESS_CHECK: "1",
-        CLAWPACK_BASE_REF: "main",
+        HARNESSHUB_BASE_REF: "main",
       },
       encoding: "utf8",
     });
@@ -165,7 +165,7 @@ exit 1
         ...process.env,
         PATH: `${binDir}:${process.env.PATH}`,
         BYPASS_BRANCH_FRESHNESS_CHECK: "1",
-        CLAWPACK_BASE_REF: "main",
+        HARNESSHUB_BASE_REF: "main",
       },
       encoding: "utf8",
     });

@@ -12,7 +12,7 @@ state_path: .codex/pm/issue-state/6-expand-cli-integration-validation.md
 
 ## Context
 
-ClawPack now has a basic CLI smoke path, but the command-level validation matrix remains thinner than the public CLI surface.
+HarnessHub now has a basic CLI smoke path, but the command-level validation matrix remains thinner than the public CLI surface.
 
 ## Deliverable
 
@@ -37,4 +37,4 @@ Expand command-level validation for `inspect`, `export`, `import`, and `verify`,
 
 ## Implementation Notes
 
-Focus on the public contract of the shipped `clawpack` CLI.
+Focus on the public contract of the shipped `harness` CLI.

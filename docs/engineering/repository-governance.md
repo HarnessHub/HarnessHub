@@ -2,7 +2,7 @@
 
 ## Purpose
 
-ClawPack uses a repository-local harness so development work stays issue-scoped, reviewable, and repeatable.
+HarnessHub uses a repository-local harness so development work stays issue-scoped, reviewable, and repeatable.
 
 This document explains the normal daily workflow for contributors and coding agents working in this repository.
 

@@ -16,7 +16,7 @@ The repository now has issue-task-PR tooling, hooks, preflight, and smoke valida
 
 ## Deliverable
 
-Add clear repository governance and daily workflow documentation for using the ClawPack harness from issue start to merged PR.
+Add clear repository governance and daily workflow documentation for using the HarnessHub harness from issue start to merged PR.
 
 ## Scope
 
@@ -28,7 +28,7 @@ Add clear repository governance and daily workflow documentation for using the C
 
 - one clear daily harness workflow is documented
 - the guidance matches the repository scripts and hooks
-- the docs stay ClawPack-specific and avoid OpenPrecedent research framing
+- the docs stay HarnessHub-specific and avoid OpenPrecedent research framing
 
 ## Validation
 

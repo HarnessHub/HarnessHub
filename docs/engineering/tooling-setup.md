@@ -56,7 +56,7 @@ A normal issue-scoped path is:
 3. `./scripts/run-agent-preflight.sh`
 4. open the PR generated from the matching local task twin
 
-Set `CLAWPACK_PREFLIGHT_RUN_SMOKE=1` if you also want the CLI smoke path included in the same pass.
+Set `HARNESSHUB_PREFLIGHT_RUN_SMOKE=1` if you also want the CLI smoke path included in the same pass.
 
 ## Issue-Scoped Development State
 

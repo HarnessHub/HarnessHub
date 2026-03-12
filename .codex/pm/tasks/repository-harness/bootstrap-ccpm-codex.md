@@ -12,11 +12,11 @@ state_path: .codex/pm/issue-state/3-bootstrap-ccpm-codex.md
 
 ## Context
 
-ClawPack needs a repository-local PM workflow, issue state, hook guardrails, and smoke validation before broader harness work can proceed safely.
+HarnessHub needs a repository-local PM workflow, issue state, hook guardrails, and smoke validation before broader harness work can proceed safely.
 
 ## Deliverable
 
-Add local PM tooling, hook/preflight scripts, and a standard CLI smoke validation path without making ClawPack depend on OpenPrecedent.
+Add local PM tooling, hook/preflight scripts, and a standard CLI smoke validation path without making HarnessHub depend on OpenPrecedent.
 
 ## Scope
 

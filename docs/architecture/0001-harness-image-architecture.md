@@ -8,7 +8,7 @@ This document describes the 1.0-oriented architecture and the MVP subset that sh
 
 ## Architectural Decision
 
-ClawPack should adopt a 1.0-oriented harness image architecture now, then implement only the MVP subset of that architecture.
+HarnessHub should adopt a 1.0-oriented harness image architecture now, then implement only the MVP subset of that architecture.
 
 This avoids a split where the MVP is a flat OpenClaw snapshot tool but 1.0 needs a different conceptual model.
 

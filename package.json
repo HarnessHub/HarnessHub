@@ -1,11 +1,11 @@
 {
-  "name": "clawpack",
+  "name": "harnesshub",
   "version": "0.1.0",
-  "description": "Harness image packaging standard for agent runtime environments, currently implemented through the clawpack CLI",
+  "description": "Harness image packaging standard for agent runtime environments, currently implemented through the harness CLI",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "clawpack": "dist/cli.js"
+    "harness": "dist/cli.js"
   },
   "files": [
     "dist",

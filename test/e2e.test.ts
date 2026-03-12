@@ -149,7 +149,7 @@ function createMockInstanceWithCustomWorkspaces(dir: string) {
 let tmpDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "clawpack-test-"));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-test-"));
 });
 
 afterEach(() => {

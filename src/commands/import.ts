@@ -3,7 +3,7 @@ import { importPack } from "../core/packer.js";
 import type { OutputFormat } from "../core/types.js";
 
 export const importCommand = new Command("import")
-  .description("Import a ClawPack package into a target environment")
+  .description("Import a HarnessHub package into a target environment")
   .argument("<file>", "Path to the .clawpack file")
   .option("-t, --target <path>", "Target directory (defaults to ~/.openclaw)")
   .option("-f, --format <format>", "Output format: text or json", "text")
@@ -28,7 +28,7 @@ export const importCommand = new Command("import")
         }, null, 2));
       } else {
         console.log("");
-        console.log("=== ClawPack Import ===");
+        console.log("=== HarnessHub Import ===");
         console.log("");
         console.log(`  Pack type:    ${result.manifest.packType}`);
         console.log(`  Pack ID:      ${result.manifest.packId}`);
@@ -45,7 +45,7 @@ export const importCommand = new Command("import")
         }
 
         console.log("");
-        console.log("Import complete. Run `clawpack verify` to check the result.");
+        console.log("Import complete. Run `harness verify` to check the result.");
         console.log("");
       }
     } catch (err) {

@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-REVIEW_FILE="${CLAWPACK_REVIEW_FILE:-$ROOT_DIR/.codex-review}"
-REVIEW_PROOF_FILE="${CLAWPACK_REVIEW_PROOF_FILE:-$ROOT_DIR/.codex-review-proof}"
-BASE_REF="${CLAWPACK_REVIEW_BASE_REF:-upstream/main}"
+REVIEW_FILE="${HARNESSHUB_REVIEW_FILE:-${CLAWPACK_REVIEW_FILE:-$ROOT_DIR/.codex-review}}"
+REVIEW_PROOF_FILE="${HARNESSHUB_REVIEW_PROOF_FILE:-${CLAWPACK_REVIEW_PROOF_FILE:-$ROOT_DIR/.codex-review-proof}}"
+BASE_REF="${HARNESSHUB_REVIEW_BASE_REF:-${CLAWPACK_REVIEW_BASE_REF:-upstream/main}}"
 BRANCH_NAME="$(git branch --show-current)"
 HEAD_SHA="$(git rev-parse HEAD)"
 

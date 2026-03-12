@@ -1,4 +1,4 @@
-# ClawPack Roadmap: MVP To 1.0
+# HarnessHub Roadmap: MVP To 1.0
 
 ## Status
 
@@ -14,7 +14,7 @@ The repository's original `v0.1` should now be treated as a historical seed rele
 
 ## MVP Goal
 
-The MVP should prove that ClawPack can package and restore a reusable harness image with a stable, extensible format.
+The MVP should prove that HarnessHub can package and restore a reusable harness image with a stable, extensible format.
 
 The MVP is intentionally narrow, but it must already reflect the eventual 1.0 architecture direction.
 
@@ -60,7 +60,7 @@ The MVP should not require:
 
 ## 1.0 Goal
 
-Version 1.0 should establish ClawPack as the standard image system for agent harness environments, with a stable layered image model and at least one fully mature adapter.
+Version 1.0 should establish HarnessHub as the standard image system for agent harness environments, with a stable layered image model and at least one fully mature adapter.
 
 ## 1.0 Scope
 

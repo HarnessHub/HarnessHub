@@ -2,13 +2,13 @@
 type: issue_state
 issue: 13
 task: .codex/pm/tasks/product-direction/define-product-foundation-roadmap.md
-title: Define ClawPack product foundation and architecture-aligned MVP/1.0 roadmap
+title: Define HarnessHub product foundation and architecture-aligned MVP/1.0 roadmap
 status: in_progress
 ---
 
 ## Summary
 
-Capture the product-definition work that reframes ClawPack from an OpenClaw-first packaging CLI into a broader harness image system with an architecture-consistent MVP and 1.0 path.
+Capture the product-definition work that reframes HarnessHub from an OpenClaw-first packaging CLI into a broader harness image system with an architecture-consistent MVP and 1.0 path.
 
 ## Validated Facts
 

@@ -8,11 +8,11 @@ status: done
 
 ## Summary
 
-Consolidate the daily ClawPack harness workflow into a clear contributor-facing governance path and record the execution plan for issues `#6`, `#7`, and `#8`.
+Consolidate the daily HarnessHub harness workflow into a clear contributor-facing governance path and record the execution plan for issues `#6`, `#7`, and `#8`.
 
 ## Validated Facts
 
-- ClawPack now has local PM workflow, hook, preflight, and CLI smoke scripts, but the daily usage rules are still spread across multiple files.
+- HarnessHub now has local PM workflow, hook, preflight, and CLI smoke scripts, but the daily usage rules are still spread across multiple files.
 - The local task twins for GitHub issues `#6` and `#7` were initially swapped and have been corrected before implementation continued.
 
 ## Open Questions

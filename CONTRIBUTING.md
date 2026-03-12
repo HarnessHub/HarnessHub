@@ -25,10 +25,10 @@ src/
     packer.ts          # Export and import logic (tar.gz packing)
     verifier.ts        # Post-import structural verification
   commands/
-    inspect.ts         # `clawpack inspect` command
-    export.ts          # `clawpack export` command
-    import.ts          # `clawpack import` command
-    verify.ts          # `clawpack verify` command
+    inspect.ts         # `harness inspect` command
+    export.ts          # `harness export` command
+    import.ts          # `harness import` command
+    verify.ts          # `harness verify` command
   utils/
     output.ts          # Text/JSON output formatting
 test/

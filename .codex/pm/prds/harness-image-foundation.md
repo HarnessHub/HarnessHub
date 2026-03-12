@@ -1,13 +1,13 @@
 ---
 type: prd
 slug: harness-image-foundation
-title: ClawPack Harness Image Product Foundation
+title: HarnessHub Harness Image Product Foundation
 status: draft
 ---
 
 ## Summary
 
-Define ClawPack as a harness image system for agent runtime environments, with OpenClaw as the first production adapter.
+Define HarnessHub as a harness image system for agent runtime environments, with OpenClaw as the first production adapter.
 
 
 ## Problem
