@@ -697,7 +697,12 @@ function createPr(document, { issue, tests, title, baseRepo, baseBranch, headOwn
       "--body-file", bodyPath,
     ], { encoding: "utf8" });
     if (result.status !== 0) {
-      throw new Error((result.stderr || result.stdout || "gh pr create failed").trim());
+      const failureOutput = (result.stderr || result.stdout || "gh pr create failed").trim();
+      const existingPrUrl = failureOutput.match(/https:\/\/github\.com\/[^\s]+\/pull\/\d+/)?.[0];
+      if (existingPrUrl) {
+        return existingPrUrl;
+      }
+      throw new Error(failureOutput);
     }
     return result.stdout.trim();
   } finally {

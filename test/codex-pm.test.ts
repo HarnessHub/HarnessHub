@@ -262,6 +262,79 @@ exit 1
     expect(git(tmpDir, "status", "--short", "--untracked-files=no")).toBe("");
   });
 
+  it("reuses an existing pr when gh create reports it already exists", () => {
+    git(tmpDir, "init", "-b", "main");
+    git(tmpDir, "config", "user.name", "Test User");
+    git(tmpDir, "config", "user.email", "test@example.com");
+    git(tmpDir, "remote", "add", "origin", "git@github.com:test/HarnessHub.git");
+    git(tmpDir, "remote", "add", "upstream", "https://github.com/HarnessHub/HarnessHub.git");
+    fs.writeFileSync(path.join(tmpDir, "README.md"), "base\n", "utf8");
+    git(tmpDir, "add", "README.md");
+    git(tmpDir, "commit", "-m", "base");
+    git(tmpDir, "checkout", "-b", "issue-42-bootstrap");
+
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "done"])).toBe(0);
+
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+    fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "pr" && "$2" == "list" ]]; then
+  echo '[]'
+  exit 0
+fi
+if [[ "$1" == "pr" && "$2" == "create" ]]; then
+  echo 'a pull request for branch "test:issue-42-bootstrap" into branch "main" already exists:
+https://github.com/HarnessHub/HarnessHub/pull/456' >&2
+  exit 1
+fi
+echo "unexpected gh invocation: $*" >&2
+exit 1
+`, "utf8");
+    fs.chmodSync(path.join(binDir, "gh"), 0o755);
+
+    const originalPath = process.env.PATH ?? "";
+    process.env.PATH = `${binDir}:${originalPath}`;
+    try {
+      expect(main([
+        "issue-deliver",
+        taskPath,
+        "--issue",
+        "42",
+        "--review-command",
+        "true",
+        "--preflight-command",
+        "true",
+        "--push-command",
+        "true",
+        "--head-owner",
+        "test",
+        "--base-repo",
+        "HarnessHub/HarnessHub",
+      ])).toBe(0);
+    } finally {
+      process.env.PATH = originalPath;
+    }
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "42-bootstrap.md");
+    const stateDocument = fs.readFileSync(statePath, "utf8");
+    expect(stateDocument).toContain("delivery_stage: pr_opened");
+    expect(stateDocument).toContain("pr_url: https://github.com/HarnessHub/HarnessHub/pull/456");
+    expect(git(tmpDir, "status", "--short", "--untracked-files=no")).toBe("");
+  });
+
   it("fails issue-state check and closure sync when linked issue-state status drifts", () => {
     expect(main(["init"])).toBe(0);
     expect(main([
