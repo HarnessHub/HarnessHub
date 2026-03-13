@@ -9,6 +9,7 @@ The repository now includes:
 - `scripts/run-agent-preflight.sh` for the standard local pre-push confidence checks
 - `scripts/run-cli-smoke.sh` for the standard CLI smoke validation path
 - `node scripts/codex-pm.mjs issue-state-init <task-path>` for preserving issue-scoped state across longer work
+- `node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"` for the default push-and-PR finish path
 
 For the full daily workflow and repository rules, see:
 
@@ -55,7 +56,7 @@ A normal issue-scoped path is:
 1. `./scripts/run-codex-review-checkpoint.sh`
 2. update `.codex-review` with real findings and keep `head reviewed:` aligned with the current commit
 3. `./scripts/run-agent-preflight.sh`
-4. open the PR generated from the matching local task twin
+4. `node scripts/codex-pm.mjs issue-deliver .codex/pm/tasks/<epic>/<task>.md --issue <n> --tests "npm test"`
 
 Set `HARNESSHUB_PREFLIGHT_RUN_SMOKE=1` if you also want the CLI smoke path included in the same pass.
 
@@ -67,7 +68,7 @@ For longer-running issues, initialize a local state document from the matching t
 node scripts/codex-pm.mjs issue-state-init .codex/pm/tasks/<epic>/<task>.md
 ```
 
-Use it to keep validated facts, open questions, next steps, and key artifacts in one stable place as the work evolves across sessions.
+Use it to keep validated facts, open questions, next steps, and key artifacts in one stable place as the work evolves across sessions. The issue-state metadata also records `delivery_stage` and `pr_url` so a fresh session can tell whether the issue is still being implemented, is ready to deliver, or already has an open PR.
 
 ## CLI Smoke Validation
 

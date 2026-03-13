@@ -53,6 +53,8 @@ export function main(argv = process.argv.slice(2), io = console) {
         return prBody(args, io);
       case "pr-create":
         return prCreate(args, io);
+      case "issue-deliver":
+        return issueDeliver(args, io);
       case "verify-pr-closure-sync":
         return verifyPrClosureSync(args, io);
       default:
@@ -309,6 +311,60 @@ function prCreate(args, io) {
   return 0;
 }
 
+function issueDeliver(args, io) {
+  const { positional, options } = parseArgs(args);
+  const [filePath] = positional;
+  requireValue(filePath, "path is required");
+  const document = readDocument(filePath);
+  if ((document.metadata.type ?? "") !== "task") {
+    throw new Error(`issue delivery requires a task document: ${filePath}`);
+  }
+  const issue = options.issue ? Number(options.issue) : parseIssueNumber(document.metadata.issue ?? "");
+  if (issue === null) {
+    throw new Error("issue delivery requires a numeric issue reference on the task or via --issue");
+  }
+  if ((document.metadata.task_type ?? "implementation") === "umbrella") {
+    throw new Error("issue delivery does not support task_type=umbrella");
+  }
+  if ((document.metadata.status ?? "") !== "done") {
+    throw new Error(`issue delivery requires the task to be status=done: ${document.path}`);
+  }
+  const branch = options["head-branch"] ?? currentBranch();
+  if (!branch) throw new Error("issue delivery requires a current branch");
+  const branchIssue = parseIssueFromBranch(branch);
+  if (branchIssue !== null && branchIssue !== issue) {
+    throw new Error(`issue delivery branch mismatch: branch ${branch} targets issue #${branchIssue}, task is issue #${issue}`);
+  }
+
+  runShellCommand(options["review-command"] ?? "npm run review:checkpoint", "review checkpoint");
+  markDeliveryStage(document, "review_checkpointed");
+  runShellCommand(options["preflight-command"] ?? "./scripts/run-agent-preflight.sh", "agent preflight");
+  markDeliveryStage(document, "preflight_passed");
+  runShellCommand(options["push-command"] ?? `git push -u origin ${branch}`, "push");
+  markDeliveryStage(document, "pushed");
+
+  const tests = asArray(options.tests);
+  const baseRepo = options["base-repo"] ?? inferBaseRepo() ?? "HarnessHub/HarnessHub";
+  const baseBranch = options["base-branch"] ?? "main";
+  const headOwner = options["head-owner"];
+  const prUrl = findOpenPrForBranch({
+    baseRepo,
+    headOwner,
+    headBranch: branch,
+  }) ?? createPr(document, {
+    issue,
+    tests,
+    title: options.title,
+    baseRepo,
+    baseBranch,
+    headOwner,
+    headBranch: branch,
+  });
+  markDeliveryStage(document, "pr_opened", { prUrl });
+  io.log(prUrl);
+  return 0;
+}
+
 function verifyPrClosureSync(args, io) {
   const { options } = parseArgs(args);
   const prBody = resolvePrBody(options);
@@ -444,6 +500,8 @@ export function docToDict(document) {
     epic: document.metadata.epic ?? "",
     issue: document.metadata.issue ?? undefined,
     state_path: document.metadata.state_path ?? undefined,
+    delivery_stage: document.metadata.delivery_stage ?? undefined,
+    pr_url: document.metadata.pr_url ?? undefined,
     task_type: document.metadata.task_type ?? "implementation",
     labels: (document.metadata.labels ?? "").split(",").map((item) => item.trim()).filter(Boolean),
   };
@@ -476,6 +534,7 @@ export function initIssueState(taskDocument) {
       task: taskDocument.path,
       title: taskDocument.metadata.title ?? "",
       status: taskDocument.metadata.status ?? "",
+      delivery_stage: defaultDeliveryStage(taskDocument),
     }, buildIssueStateSections(taskDocument));
   }
   taskDocument.metadata.state_path = filePath;
@@ -502,6 +561,21 @@ function syncLinkedIssueStateStatus(taskDocument) {
   const stateDocument = loadIssueState(taskDocument);
   if (!stateDocument) return;
   stateDocument.metadata.status = taskDocument.metadata.status ?? "";
+  stateDocument.metadata.delivery_stage = defaultDeliveryStage(taskDocument);
+  delete stateDocument.metadata.pr_url;
+  persistDocument(stateDocument);
+}
+
+function markDeliveryStage(taskDocument, stage, { prUrl } = {}) {
+  const stateDocument = loadIssueState(taskDocument);
+  if (!stateDocument) return;
+  stateDocument.metadata.status = taskDocument.metadata.status ?? "";
+  stateDocument.metadata.delivery_stage = stage;
+  if (prUrl) {
+    stateDocument.metadata.pr_url = prUrl;
+  } else if (stage !== "pr_opened") {
+    delete stateDocument.metadata.pr_url;
+  }
   persistDocument(stateDocument);
 }
 
@@ -616,6 +690,28 @@ function createPr(document, { issue, tests, title, baseRepo, baseBranch, headOwn
   }
 }
 
+function findOpenPrForBranch({ baseRepo, headOwner, headBranch }) {
+  const branch = headBranch ?? currentBranch();
+  if (!branch) return null;
+  const originUrl = gitOutput(["remote", "get-url", "origin"]);
+  const derivedOwner = headOwner ?? parseGithubRemote(originUrl)?.owner;
+  if (!derivedOwner) return null;
+  const result = spawnSync("gh", [
+    "pr", "list",
+    "--repo", baseRepo,
+    "--head", `${derivedOwner}:${branch}`,
+    "--state", "open",
+    "--json", "url",
+  ], { encoding: "utf8" });
+  if (result.status !== 0) return null;
+  try {
+    const pulls = JSON.parse(result.stdout);
+    return Array.isArray(pulls) && pulls.length > 0 ? pulls[0].url ?? null : null;
+  } catch {
+    return null;
+  }
+}
+
 export function verifyClosureSync(prBody, changedFiles) {
   const closingIssues = [...prBody.matchAll(CLOSING_ISSUE_PATTERN)].map((match) => Number.parseInt(match[1], 10));
   if (closingIssues.length === 0) return [];
@@ -671,6 +767,20 @@ function buildIssueStateSections(taskDocument) {
     "Next Steps": asBulletList(taskDocument.sections.Scope),
     Artifacts: "- ",
   };
+}
+
+function defaultDeliveryStage(taskDocument) {
+  switch (taskDocument.metadata.status ?? "backlog") {
+    case "done":
+      return "ready_to_deliver";
+    case "blocked":
+      return "blocked";
+    case "in_progress":
+      return "implementing";
+    case "backlog":
+    default:
+      return "backlog";
+  }
 }
 
 function resolvePrBody(options) {
@@ -744,6 +854,14 @@ function asBulletList(value) {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return "- ";
   return trimmed;
+}
+
+function runShellCommand(command, label) {
+  const result = spawnSync("bash", ["-lc", command], { encoding: "utf8" });
+  if (result.status !== 0) {
+    const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+    throw new Error(`${label} failed${output ? `: ${output}` : ""}`);
+  }
 }
 
 function currentBranch() {
