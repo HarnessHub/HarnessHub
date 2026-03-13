@@ -3,7 +3,7 @@ type: issue_state
 issue: 60
 task: .codex/pm/tasks/product-direction/define-mvp-exit-criteria-and-release-checklist.md
 title: Define MVP exit criteria and release checklist
-status: in_progress
+status: done
 ---
 
 ## Summary
@@ -20,14 +20,13 @@ HarnessHub now has the core image lifecycle and contract in place, but there is 
 
 ## Open Questions
 
--
+- 
 
 ## Next Steps
 
-- add one MVP exit document with concrete release gates
-- define the required local validation commands and expected outcomes
-- record the known acceptable MVP limitations so 1.0 work does not block MVP release
+- use the checklist as the release gate for future MVP acceptance review
 
 ## Artifacts
 
--
+- docs/releases/0001-mvp-exit-criteria.md
+- merged in PR #63

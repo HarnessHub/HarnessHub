@@ -25,6 +25,7 @@ function prepareRepo() {
 
   fs.mkdirSync(path.join(repo, ".githooks"), { recursive: true });
   fs.mkdirSync(path.join(repo, "scripts"), { recursive: true });
+  fs.mkdirSync(path.join(repo, ".codex", "pm", "issue-state"), { recursive: true });
   fs.copyFileSync(path.join(sourceRoot, ".githooks", "pre-push"), path.join(repo, ".githooks", "pre-push"));
   fs.copyFileSync(path.join(sourceRoot, "scripts", "codex-pm.mjs"), path.join(repo, "scripts", "codex-pm.mjs"));
   fs.chmodSync(path.join(repo, ".githooks", "pre-push"), 0o755);
@@ -203,6 +204,61 @@ exit 1
 
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("already has a merged PR");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("blocks closure sync when linked issue-state status drifts", () => {
+    const { repo, binDir } = prepareRepo();
+    const taskPath = path.join(repo, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+    const statePath = path.join(repo, ".codex", "pm", "issue-state", "42-bootstrap.md");
+
+    fs.writeFileSync(statePath, `---
+type: issue_state
+issue: 42
+task: .codex/pm/tasks/repository-harness/bootstrap.md
+title: Bootstrap harness
+status: backlog
+---
+
+## Summary
+
+Test state.
+
+## Validated Facts
+
+- local task and issue-state drift
+
+## Open Questions
+
+- 
+
+## Next Steps
+
+- sync status
+
+## Artifacts
+
+- 
+`, "utf8");
+
+    const taskText = fs.readFileSync(taskPath, "utf8")
+      .replace("status: in_progress", "status: done")
+      .replace("issue: 42", "issue: 42\nstate_path: .codex/pm/issue-state/42-bootstrap.md");
+    fs.writeFileSync(taskPath, taskText, "utf8");
+
+    const result = spawnSync(path.join(repo, ".githooks", "pre-push"), [], {
+      cwd: repo,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        BYPASS_BRANCH_FRESHNESS_CHECK: "1",
+        HARNESSHUB_BASE_REF: "main",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("linked issue-state status does not match task status");
     fs.rmSync(repo, { recursive: true, force: true });
   });
 });

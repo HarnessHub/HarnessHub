@@ -186,13 +186,7 @@ function setStatus(args, io) {
   requireValue(status, "status is required");
   validateEnum(status, VALID_STATUSES, "status");
   const document = readDocument(filePath);
-  document.metadata.status = status;
-  if (options.reason) {
-    document.metadata.status_reason = options.reason;
-  } else {
-    delete document.metadata.status_reason;
-  }
-  persistDocument(document);
+  updateDocumentStatus(document, status, options.reason);
   io.log(document.path);
   return 0;
 }
@@ -203,9 +197,7 @@ function blocked(args, io) {
   requireValue(filePath, "path is required");
   requireValue(options.reason, "--reason is required");
   const document = readDocument(filePath);
-  document.metadata.status = "blocked";
-  document.metadata.status_reason = options.reason;
-  persistDocument(document);
+  updateDocumentStatus(document, "blocked", options.reason);
   io.log(document.path);
   return 0;
 }
@@ -457,6 +449,17 @@ export function docToDict(document) {
   };
 }
 
+function updateDocumentStatus(document, status, reason) {
+  document.metadata.status = status;
+  if (reason) {
+    document.metadata.status_reason = reason;
+  } else {
+    delete document.metadata.status_reason;
+  }
+  persistDocument(document);
+  syncLinkedIssueStateStatus(document);
+}
+
 function issueStatePath(document) {
   const issue = parseIssueNumber(document.metadata.issue ?? "");
   if (issue === null) throw new Error(`task has no numeric issue reference: ${document.path}`);
@@ -494,6 +497,14 @@ function loadIssueState(taskDocument) {
   return null;
 }
 
+function syncLinkedIssueStateStatus(taskDocument) {
+  if ((taskDocument.metadata.type ?? "") !== "task") return;
+  const stateDocument = loadIssueState(taskDocument);
+  if (!stateDocument) return;
+  stateDocument.metadata.status = taskDocument.metadata.status ?? "";
+  persistDocument(stateDocument);
+}
+
 function checkIssueState(branch) {
   const issue = parseIssueFromBranch(branch);
   if (issue === null) return null;
@@ -509,6 +520,12 @@ function checkIssueState(branch) {
     return {
       ok: false,
       message: `Issue state check failed: in-progress issue has no state document. Run \`node scripts/codex-pm.mjs issue-state-init ${task.path}\`.`,
+    };
+  }
+  if ((stateDocument.metadata.status ?? "") !== (task.metadata.status ?? "")) {
+    return {
+      ok: false,
+      message: `Issue state check failed: task and issue-state status differ for issue #${issue}. Task=${task.metadata.status ?? ""} issue-state=${stateDocument.metadata.status ?? ""}.`,
     };
   }
   return { ok: true, message: `Issue state check passed: ${stateDocument.path}` };
@@ -619,6 +636,14 @@ export function verifyClosureSync(prBody, changedFiles) {
     }
     if (!matching.some((document) => document.metadata.status === "done")) {
       errors.push(`PR closes #${issue} but matching task file is not marked done: ${matching.map((doc) => doc.path).join(", ")}`);
+      continue;
+    }
+    for (const document of matching) {
+      const stateDocument = loadIssueState(document);
+      if (!stateDocument) continue;
+      if ((stateDocument.metadata.status ?? "") !== (document.metadata.status ?? "")) {
+        errors.push(`PR closes #${issue} but linked issue-state status does not match task status: ${stateDocument.path} is ${stateDocument.metadata.status ?? ""}, task is ${document.metadata.status ?? ""}.`);
+      }
     }
   }
   return errors;
