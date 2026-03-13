@@ -36,10 +36,11 @@ node scripts/codex-pm.mjs init
 node scripts/codex-pm.mjs task-new <epic> <slug> --title "<title>" --issue <n>
 node scripts/codex-pm.mjs set-status <task-path> in_progress
 node scripts/codex-pm.mjs issue-state-init <task-path>
+node scripts/codex-pm.mjs set-status <task-path> done
 node scripts/codex-pm.mjs pr-body <task-path> --issue <n>
 ```
 
-The task file is the local twin of the GitHub issue. For longer work, the issue-state file holds validated facts, open questions, next steps, and artifacts so later sessions do not need to reconstruct them.
+The task file is the local twin of the GitHub issue. For longer work, the issue-state file holds validated facts, open questions, next steps, and artifacts so later sessions do not need to reconstruct them. When a task already has an issue-state document, `set-status` keeps the linked issue-state status in sync so closure checks cannot land with stale local state.
 
 ## Review And Preflight
 
@@ -61,7 +62,7 @@ Preflight checks:
 
 - branch freshness against `upstream/main`
 - review note and proof coherence
-- issue-state readiness
+- issue-state readiness and task/status coherence
 - build and test execution
 - local PR closure sync when the current PR body is available through `gh`
 

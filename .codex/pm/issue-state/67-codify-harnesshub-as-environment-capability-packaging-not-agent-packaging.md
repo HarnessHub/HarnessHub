@@ -3,7 +3,7 @@ type: issue_state
 issue: 67
 task: .codex/pm/tasks/product-direction/codify-harnesshub-as-environment-capability-packaging-not-agent-packaging.md
 title: Codify HarnessHub as environment capability packaging, not agent packaging
-status: backlog
+status: done
 ---
 
 ## Summary
@@ -20,14 +20,13 @@ Current docs define harness versus runtime, but they do not yet explicitly answe
 
 ## Open Questions
 
--
+- 
 
 ## Next Steps
 
-- add one direction memo under docs/architecture/
-- explain the decision with concrete OpenClaw, Codex, and Claude Code examples
-- document direct implications for harness identity, layering, and runtime adapters
+- cite the memo as the canonical product-boundary reference in future architecture and roadmap work
 
 ## Artifacts
 
--
+- docs/architecture/0002-harness-capability-packaging.md
+- merged in PR #68

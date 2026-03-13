@@ -3,7 +3,7 @@ type: issue_state
 issue: 62
 task: .codex/pm/tasks/product-direction/cut-the-first-harnesshub-mvp-release-candidate.md
 title: Cut the first HarnessHub MVP release candidate
-status: backlog
+status: done
 ---
 
 ## Summary
@@ -20,14 +20,13 @@ The repository is close to MVP-complete in capability, but there is not yet a co
 
 ## Open Questions
 
--
+- 
 
 ## Next Steps
 
-- define the first MVP release candidate version framing
-- add release notes or release-candidate documentation scoped to the current MVP
-- document one clean acceptance path for a fresh operator
+- use the release-candidate framing as the baseline for fresh-operator acceptance and follow-on release work
 
 ## Artifacts
 
--
+- docs/releases/0002-mvp-release-candidate.md
+- merged in PR #66

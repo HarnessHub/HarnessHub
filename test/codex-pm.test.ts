@@ -84,6 +84,73 @@ describe("codex-pm", () => {
     ])).toBe(0);
   });
 
+  it("syncs linked issue-state status when task status changes", () => {
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "in_progress"])).toBe(0);
+    expect(main(["set-status", taskPath, "done"])).toBe(0);
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "42-bootstrap.md");
+    const stateDocument = fs.readFileSync(statePath, "utf8");
+    expect(stateDocument).toContain("status: done");
+  });
+
+  it("fails issue-state check and closure sync when linked issue-state status drifts", () => {
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "in_progress"])).toBe(0);
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "42-bootstrap.md");
+    const driftedState = fs.readFileSync(statePath, "utf8").replace("status: in_progress", "status: backlog");
+    fs.writeFileSync(statePath, driftedState, "utf8");
+
+    const errors: string[] = [];
+    expect(main(["issue-state-check", "--branch", "issue-42-bootstrap"], {
+      log: () => undefined,
+      error: (value: string) => errors.push(value),
+    } as Console)).toBe(1);
+    expect(errors.join("\n")).toContain("task and issue-state status differ");
+
+    expect(main(["set-status", taskPath, "done"])).toBe(0);
+    const redriftedState = fs.readFileSync(statePath, "utf8").replace("status: done", "status: backlog");
+    fs.writeFileSync(statePath, redriftedState, "utf8");
+
+    const closureErrors: string[] = [];
+    expect(main([
+      "verify-pr-closure-sync",
+      "--pr-body",
+      "Closes #42",
+      "--changed-file",
+      path.relative(tmpDir, taskPath),
+    ], {
+      log: () => undefined,
+      error: (value: string) => closureErrors.push(value),
+    } as Console)).toBe(1);
+    expect(closureErrors.join("\n")).toContain("linked issue-state status does not match task status");
+  });
+
   it("hydrates task twins and issue state from issue intent", () => {
     expect(main(["init"])).toBe(0);
     const issueBodyPath = path.join(tmpDir, "issue-body.md");
