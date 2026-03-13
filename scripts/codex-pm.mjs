@@ -53,6 +53,8 @@ export function main(argv = process.argv.slice(2), io = console) {
         return prBody(args, io);
       case "pr-create":
         return prCreate(args, io);
+      case "issue-deliver":
+        return issueDeliver(args, io);
       case "verify-pr-closure-sync":
         return verifyPrClosureSync(args, io);
       default:
@@ -309,6 +311,60 @@ function prCreate(args, io) {
   return 0;
 }
 
+function issueDeliver(args, io) {
+  const { positional, options } = parseArgs(args);
+  const [filePath] = positional;
+  requireValue(filePath, "path is required");
+  const document = readDocument(filePath);
+  if ((document.metadata.type ?? "") !== "task") {
+    throw new Error(`issue delivery requires a task document: ${filePath}`);
+  }
+  const issue = options.issue ? Number(options.issue) : parseIssueNumber(document.metadata.issue ?? "");
+  if (issue === null) {
+    throw new Error("issue delivery requires a numeric issue reference on the task or via --issue");
+  }
+  if ((document.metadata.task_type ?? "implementation") === "umbrella") {
+    throw new Error("issue delivery does not support task_type=umbrella");
+  }
+  if ((document.metadata.status ?? "") !== "done") {
+    throw new Error(`issue delivery requires the task to be status=done: ${document.path}`);
+  }
+  const branch = options["head-branch"] ?? currentBranch();
+  if (!branch) throw new Error("issue delivery requires a current branch");
+  const branchIssue = parseIssueFromBranch(branch);
+  if (branchIssue !== null && branchIssue !== issue) {
+    throw new Error(`issue delivery branch mismatch: branch ${branch} targets issue #${branchIssue}, task is issue #${issue}`);
+  }
+
+  const pushCommand = options["push-command"] ?? `git push -u origin ${branch}`;
+  runShellCommand(options["review-command"] ?? "npm run review:checkpoint", "review checkpoint");
+  runShellCommand(options["preflight-command"] ?? "./scripts/run-agent-preflight.sh", "agent preflight");
+  runShellCommand(pushCommand, "push");
+
+  const tests = asArray(options.tests);
+  const baseRepo = options["base-repo"] ?? inferBaseRepo() ?? "HarnessHub/HarnessHub";
+  const baseBranch = options["base-branch"] ?? "main";
+  const headOwner = options["head-owner"];
+  const prUrl = findOpenPrForBranch({
+    baseRepo,
+    headOwner,
+    headBranch: branch,
+  }) ?? createPr(document, {
+    issue,
+    tests,
+    title: options.title,
+    baseRepo,
+    baseBranch,
+    headOwner,
+    headBranch: branch,
+  });
+  markDeliveryStage(document, "pr_opened", { prUrl });
+  commitDeliveryState(document, `Record PR-opened delivery state for issue #${issue}`);
+  runShellCommand(pushCommand, "push");
+  io.log(prUrl);
+  return 0;
+}
+
 function verifyPrClosureSync(args, io) {
   const { options } = parseArgs(args);
   const prBody = resolvePrBody(options);
@@ -444,6 +500,8 @@ export function docToDict(document) {
     epic: document.metadata.epic ?? "",
     issue: document.metadata.issue ?? undefined,
     state_path: document.metadata.state_path ?? undefined,
+    delivery_stage: document.metadata.delivery_stage ?? undefined,
+    pr_url: document.metadata.pr_url ?? undefined,
     task_type: document.metadata.task_type ?? "implementation",
     labels: (document.metadata.labels ?? "").split(",").map((item) => item.trim()).filter(Boolean),
   };
@@ -476,6 +534,7 @@ export function initIssueState(taskDocument) {
       task: taskDocument.path,
       title: taskDocument.metadata.title ?? "",
       status: taskDocument.metadata.status ?? "",
+      delivery_stage: defaultDeliveryStage(taskDocument),
     }, buildIssueStateSections(taskDocument));
   }
   taskDocument.metadata.state_path = filePath;
@@ -502,7 +561,37 @@ function syncLinkedIssueStateStatus(taskDocument) {
   const stateDocument = loadIssueState(taskDocument);
   if (!stateDocument) return;
   stateDocument.metadata.status = taskDocument.metadata.status ?? "";
+  stateDocument.metadata.delivery_stage = defaultDeliveryStage(taskDocument);
+  delete stateDocument.metadata.pr_url;
   persistDocument(stateDocument);
+}
+
+function markDeliveryStage(taskDocument, stage, { prUrl } = {}) {
+  const stateDocument = loadIssueState(taskDocument);
+  if (!stateDocument) return;
+  stateDocument.metadata.status = taskDocument.metadata.status ?? "";
+  stateDocument.metadata.delivery_stage = stage;
+  if (prUrl) {
+    stateDocument.metadata.pr_url = prUrl;
+  } else if (stage !== "pr_opened") {
+    delete stateDocument.metadata.pr_url;
+  }
+  persistDocument(stateDocument);
+}
+
+function commitDeliveryState(taskDocument, message) {
+  const stateDocument = loadIssueState(taskDocument);
+  if (!stateDocument) return;
+  const diff = spawnSync("git", ["diff", "--quiet", "--", stateDocument.path], { encoding: "utf8" });
+  if (diff.status === 0) return;
+  const addResult = spawnSync("git", ["add", stateDocument.path], { encoding: "utf8" });
+  if (addResult.status !== 0) {
+    throw new Error((addResult.stderr || addResult.stdout || `git add failed for ${stateDocument.path}`).trim());
+  }
+  const commitResult = spawnSync("git", ["commit", "-m", message], { encoding: "utf8" });
+  if (commitResult.status !== 0) {
+    throw new Error((commitResult.stderr || commitResult.stdout || "git commit failed").trim());
+  }
 }
 
 function checkIssueState(branch) {
@@ -608,11 +697,38 @@ function createPr(document, { issue, tests, title, baseRepo, baseBranch, headOwn
       "--body-file", bodyPath,
     ], { encoding: "utf8" });
     if (result.status !== 0) {
-      throw new Error((result.stderr || result.stdout || "gh pr create failed").trim());
+      const failureOutput = (result.stderr || result.stdout || "gh pr create failed").trim();
+      const existingPrUrl = failureOutput.match(/https:\/\/github\.com\/[^\s]+\/pull\/\d+/)?.[0];
+      if (existingPrUrl) {
+        return existingPrUrl;
+      }
+      throw new Error(failureOutput);
     }
     return result.stdout.trim();
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function findOpenPrForBranch({ baseRepo, headOwner, headBranch }) {
+  const branch = headBranch ?? currentBranch();
+  if (!branch) return null;
+  const originUrl = gitOutput(["remote", "get-url", "origin"]);
+  const derivedOwner = headOwner ?? parseGithubRemote(originUrl)?.owner;
+  if (!derivedOwner) return null;
+  const result = spawnSync("gh", [
+    "pr", "list",
+    "--repo", baseRepo,
+    "--head", `${derivedOwner}:${branch}`,
+    "--state", "open",
+    "--json", "url",
+  ], { encoding: "utf8" });
+  if (result.status !== 0) return null;
+  try {
+    const pulls = JSON.parse(result.stdout);
+    return Array.isArray(pulls) && pulls.length > 0 ? pulls[0].url ?? null : null;
+  } catch {
+    return null;
   }
 }
 
@@ -671,6 +787,20 @@ function buildIssueStateSections(taskDocument) {
     "Next Steps": asBulletList(taskDocument.sections.Scope),
     Artifacts: "- ",
   };
+}
+
+function defaultDeliveryStage(taskDocument) {
+  switch (taskDocument.metadata.status ?? "backlog") {
+    case "done":
+      return "ready_to_deliver";
+    case "blocked":
+      return "blocked";
+    case "in_progress":
+      return "implementing";
+    case "backlog":
+    default:
+      return "backlog";
+  }
 }
 
 function resolvePrBody(options) {
@@ -744,6 +874,14 @@ function asBulletList(value) {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return "- ";
   return trimmed;
+}
+
+function runShellCommand(command, label) {
+  const result = spawnSync("bash", ["-lc", command], { encoding: "utf8" });
+  if (result.status !== 0) {
+    const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+    throw new Error(`${label} failed${output ? `: ${output}` : ""}`);
+  }
 }
 
 function currentBranch() {

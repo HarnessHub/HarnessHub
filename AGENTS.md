@@ -78,5 +78,6 @@ Harness and workflow support lives in:
 - Start each issue branch from the latest `upstream/main`
 - Do not keep working on a branch after its PR has merged
 - Before push, prefer `./scripts/run-codex-review-checkpoint.sh` and `./scripts/run-agent-preflight.sh`
+- Unless the user explicitly asks to stop earlier, issue-scoped work should continue through `node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"` so the branch is pushed and the PR is opened
 - Run `./scripts/run-cli-smoke.sh` when a change affects the documented command path or import/export/verify behavior
 - Any repeated workflow mistake that should have been blocked locally should be treated as a harness gap and fixed through the local guardrail layer

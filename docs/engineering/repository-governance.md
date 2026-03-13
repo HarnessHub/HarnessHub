@@ -25,7 +25,7 @@ This document explains the normal daily workflow for contributors and coding age
 7. Run the local review checkpoint.
 8. Update `.codex-review` with real findings and remaining risks.
 9. Run local preflight.
-10. Open one pull request that closes the matching issue.
+10. Use the repo-local delivery path to push the branch and open one pull request that closes the matching issue.
 
 ## Local PM Workflow
 
@@ -37,10 +37,11 @@ node scripts/codex-pm.mjs task-new <epic> <slug> --title "<title>" --issue <n>
 node scripts/codex-pm.mjs set-status <task-path> in_progress
 node scripts/codex-pm.mjs issue-state-init <task-path>
 node scripts/codex-pm.mjs set-status <task-path> done
+node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"
 node scripts/codex-pm.mjs pr-body <task-path> --issue <n>
 ```
 
-The task file is the local twin of the GitHub issue. For longer work, the issue-state file holds validated facts, open questions, next steps, and artifacts so later sessions do not need to reconstruct them. When a task already has an issue-state document, `set-status` keeps the linked issue-state status in sync so closure checks cannot land with stale local state.
+The task file is the local twin of the GitHub issue. For longer work, the issue-state file holds validated facts, open questions, next steps, and artifacts so later sessions do not need to reconstruct them. When a task already has an issue-state document, `set-status` keeps the linked issue-state status in sync so closure checks cannot land with stale local state. `issue-deliver` is the default last-mile path once the task is `done`: it refreshes the review checkpoint, relies on a real review note, runs preflight, pushes the branch, and opens or reuses the PR.
 
 ## Review And Preflight
 

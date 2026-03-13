@@ -27,10 +27,9 @@ Keep issue execution fast without relying on memory for repository workflow deta
 9. Refresh the review checkpoint:
    - `npm run review:checkpoint`
 10. Update `.codex-review` with real findings and make sure `head reviewed:` still matches the current HEAD.
-11. Run local preflight:
-   - `./scripts/run-agent-preflight.sh`
-12. Push the branch.
-13. Open one PR that closes that issue only.
+11. Run the repo-local delivery path:
+   - `node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"`
+12. Push the branch and open one PR that closes that issue only unless the user explicitly asks to stop earlier.
 14. Merge the PR.
 15. Stop using that branch after merge.
 
@@ -39,6 +38,7 @@ Keep issue execution fast without relying on memory for repository workflow deta
 - Do not refresh `.codex-review-proof` before the issue commit exists.
 - Do not run preflight until `.codex-review` has real review content and `head reviewed:` matches the current HEAD.
 - Do not create the PR before the branch has been pushed and is visible on the remote.
+- Do not stop at commit or local test success unless the user explicitly asks to stop before push/PR.
 
 ## Branch Rules
 
@@ -52,11 +52,12 @@ Keep issue execution fast without relying on memory for repository workflow deta
 - Keep the local task twin aligned with the remote issue.
 - Keep issue-state useful for handoff: validated facts, open questions, next steps, artifacts.
 - Mark the task `done` only when the issue branch is ready to land.
+- Treat issue delivery as incomplete until the branch has been pushed and the PR exists or is explicitly blocked.
 
 ## Validation Rules
 
 - Use `./scripts/run-cli-smoke.sh` when the issue changes documented command paths or import/export/verify behavior.
-- Keep preflight as the final local gate before PR creation or push.
+- Keep preflight inside the default delivery path before push and PR creation.
 
 ## Not This Skill
 
