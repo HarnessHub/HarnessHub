@@ -187,6 +187,7 @@ exit 1
     const stateDocument = fs.readFileSync(statePath, "utf8");
     expect(stateDocument).toContain("delivery_stage: pr_opened");
     expect(stateDocument).toContain("pr_url: https://github.com/HarnessHub/HarnessHub/pull/999");
+    expect(git(tmpDir, "status", "--short", "--untracked-files=no")).toBe("");
   });
 
   it("reuses an existing open pr during issue delivery", () => {
@@ -258,6 +259,7 @@ exit 1
     const stateDocument = fs.readFileSync(statePath, "utf8");
     expect(stateDocument).toContain("delivery_stage: pr_opened");
     expect(stateDocument).toContain("pr_url: https://github.com/HarnessHub/HarnessHub/pull/123");
+    expect(git(tmpDir, "status", "--short", "--untracked-files=no")).toBe("");
   });
 
   it("fails issue-state check and closure sync when linked issue-state status drifts", () => {

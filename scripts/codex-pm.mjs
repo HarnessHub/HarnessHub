@@ -336,12 +336,10 @@ function issueDeliver(args, io) {
     throw new Error(`issue delivery branch mismatch: branch ${branch} targets issue #${branchIssue}, task is issue #${issue}`);
   }
 
+  const pushCommand = options["push-command"] ?? `git push -u origin ${branch}`;
   runShellCommand(options["review-command"] ?? "npm run review:checkpoint", "review checkpoint");
-  markDeliveryStage(document, "review_checkpointed");
   runShellCommand(options["preflight-command"] ?? "./scripts/run-agent-preflight.sh", "agent preflight");
-  markDeliveryStage(document, "preflight_passed");
-  runShellCommand(options["push-command"] ?? `git push -u origin ${branch}`, "push");
-  markDeliveryStage(document, "pushed");
+  runShellCommand(pushCommand, "push");
 
   const tests = asArray(options.tests);
   const baseRepo = options["base-repo"] ?? inferBaseRepo() ?? "HarnessHub/HarnessHub";
@@ -361,6 +359,8 @@ function issueDeliver(args, io) {
     headBranch: branch,
   });
   markDeliveryStage(document, "pr_opened", { prUrl });
+  commitDeliveryState(document, `Record PR-opened delivery state for issue #${issue}`);
+  runShellCommand(pushCommand, "push");
   io.log(prUrl);
   return 0;
 }
@@ -577,6 +577,21 @@ function markDeliveryStage(taskDocument, stage, { prUrl } = {}) {
     delete stateDocument.metadata.pr_url;
   }
   persistDocument(stateDocument);
+}
+
+function commitDeliveryState(taskDocument, message) {
+  const stateDocument = loadIssueState(taskDocument);
+  if (!stateDocument) return;
+  const diff = spawnSync("git", ["diff", "--quiet", "--", stateDocument.path], { encoding: "utf8" });
+  if (diff.status === 0) return;
+  const addResult = spawnSync("git", ["add", stateDocument.path], { encoding: "utf8" });
+  if (addResult.status !== 0) {
+    throw new Error((addResult.stderr || addResult.stdout || `git add failed for ${stateDocument.path}`).trim());
+  }
+  const commitResult = spawnSync("git", ["commit", "-m", message], { encoding: "utf8" });
+  if (commitResult.status !== 0) {
+    throw new Error((commitResult.stderr || commitResult.stdout || "git commit failed").trim());
+  }
 }
 
 function checkIssueState(branch) {

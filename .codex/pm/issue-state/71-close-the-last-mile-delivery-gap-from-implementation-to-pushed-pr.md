@@ -4,7 +4,8 @@ issue: 71
 task: .codex/pm/tasks/repository-harness/close-the-last-mile-delivery-gap-from-implementation-to-pushed-pr.md
 title: Close the last-mile delivery gap from implementation to pushed PR
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/72
 ---
 
 ## Summary
