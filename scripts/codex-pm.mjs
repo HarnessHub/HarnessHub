@@ -45,6 +45,8 @@ export function main(argv = process.argv.slice(2), io = console) {
         return issueStateShow(args, io);
       case "issue-state-check":
         return issueStateCheck(args, io);
+      case "delivery-state-check":
+        return deliveryStateCheck(args, io);
       case "standup":
         return standup(args, io);
       case "issue-body":
@@ -246,6 +248,23 @@ function issueStateCheck(args, io) {
   return 1;
 }
 
+function deliveryStateCheck(args, io) {
+  const { options } = parseArgs(args);
+  const branch = options.branch ?? currentBranch();
+  const allowReadyToDeliver = options["allow-ready-to-deliver"] === true;
+  const result = checkDeliveryState(branch, { allowReadyToDeliver });
+  if (result === null) {
+    io.log("Delivery state check skipped: current branch is not issue-scoped.");
+    return 0;
+  }
+  if (result.ok) {
+    io.log(result.message);
+    return 0;
+  }
+  io.error(result.message);
+  return 1;
+}
+
 function standup(args, io) {
   const { options } = parseArgs(args);
   const summary = {
@@ -338,7 +357,7 @@ function issueDeliver(args, io) {
 
   const pushCommand = options["push-command"] ?? `git push -u origin ${branch}`;
   runShellCommand(options["review-command"] ?? "npm run review:checkpoint", "review checkpoint");
-  runShellCommand(options["preflight-command"] ?? "./scripts/run-agent-preflight.sh", "agent preflight");
+  runShellCommand(options["preflight-command"] ?? "HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER=1 ./scripts/run-agent-preflight.sh", "agent preflight");
   runShellCommand(pushCommand, "push");
 
   const tests = asArray(options.tests);
@@ -618,6 +637,43 @@ function checkIssueState(branch) {
     };
   }
   return { ok: true, message: `Issue state check passed: ${stateDocument.path}` };
+}
+
+function checkDeliveryState(branch, { allowReadyToDeliver = false } = {}) {
+  const issue = parseIssueFromBranch(branch);
+  if (issue === null) return null;
+  const task = findTaskByIssue(issue);
+  if (!task) {
+    return { ok: false, message: `Delivery state check failed: no task twin found for issue #${issue}.` };
+  }
+  if ((task.metadata.status ?? "backlog") !== "done") {
+    return { ok: true, message: `Delivery state check skipped: task for issue #${issue} is not done.` };
+  }
+  const stateDocument = loadIssueState(task);
+  const statePath = stateDocument?.path ?? task.metadata.state_path ?? issueStatePath(task);
+  const stage = stateDocument?.metadata.delivery_stage ?? defaultDeliveryStage(task);
+  if (stage === "pr_opened") {
+    return { ok: true, message: `Delivery state check passed: issue #${issue} is already at pr_opened.` };
+  }
+  const openPrUrl = findOpenPrForBranch({
+    baseRepo: inferBaseRepo() ?? "HarnessHub/HarnessHub",
+    headBranch: branch,
+  });
+  if (openPrUrl) {
+    if (stateDocument && (stateDocument.metadata.pr_url ?? "") !== openPrUrl) {
+      stateDocument.metadata.pr_url = openPrUrl;
+      stateDocument.metadata.delivery_stage = "pr_opened";
+      persistDocument(stateDocument);
+    }
+    return { ok: true, message: `Delivery state check passed: issue #${issue} already has an open PR.` };
+  }
+  if (allowReadyToDeliver) {
+    return { ok: true, message: `Delivery state check allowed: issue #${issue} is ready_to_deliver without an open PR because the current flow is about to create one.` };
+  }
+  return {
+    ok: false,
+    message: `Delivery state check failed: issue #${issue} is done but still has no open PR. Current delivery stage is ${stage} (${statePath}). Use \`node scripts/codex-pm.mjs issue-deliver ${task.path} --issue ${issue} --tests "npm test"\`.`,
+  };
 }
 
 function findTaskByIssue(issue) {
