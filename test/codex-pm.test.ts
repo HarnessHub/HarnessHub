@@ -335,6 +335,55 @@ exit 1
     expect(git(tmpDir, "status", "--short", "--untracked-files=no")).toBe("");
   });
 
+  it("fails delivery-state check when a done issue branch still has no open pr", () => {
+    git(tmpDir, "init", "-b", "main");
+    git(tmpDir, "config", "user.name", "Test User");
+    git(tmpDir, "config", "user.email", "test@example.com");
+    git(tmpDir, "remote", "add", "origin", "git@github.com:test/HarnessHub.git");
+    git(tmpDir, "remote", "add", "upstream", "https://github.com/HarnessHub/HarnessHub.git");
+    git(tmpDir, "checkout", "-b", "issue-42-bootstrap");
+
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "done"])).toBe(0);
+
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+    fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "pr" && "$2" == "list" ]]; then
+  echo '[]'
+  exit 0
+fi
+echo "unexpected gh invocation: $*" >&2
+exit 1
+`, "utf8");
+    fs.chmodSync(path.join(binDir, "gh"), 0o755);
+
+    const originalPath = process.env.PATH ?? "";
+    process.env.PATH = `${binDir}:${originalPath}`;
+    const errors: string[] = [];
+    try {
+      expect(main(["delivery-state-check", "--branch", "issue-42-bootstrap"], {
+        log: () => undefined,
+        error: (value: string) => errors.push(value),
+      } as Console)).toBe(1);
+    } finally {
+      process.env.PATH = originalPath;
+    }
+    expect(errors.join("\n")).toContain("done but still has no open PR");
+  });
+
   it("fails issue-state check and closure sync when linked issue-state status drifts", () => {
     expect(main(["init"])).toBe(0);
     expect(main([

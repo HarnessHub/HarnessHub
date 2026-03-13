@@ -16,6 +16,7 @@ REVIEW_PROOF_FILE="${HARNESSHUB_REVIEW_PROOF_FILE:-${CLAWPACK_REVIEW_PROOF_FILE:
 BASE_REF="${HARNESSHUB_PREFLIGHT_BASE_REF:-${CLAWPACK_PREFLIGHT_BASE_REF:-upstream/main}}"
 RUN_SMOKE="${HARNESSHUB_PREFLIGHT_RUN_SMOKE:-${CLAWPACK_PREFLIGHT_RUN_SMOKE:-0}}"
 ENFORCE_ISSUE_STATE="${HARNESSHUB_PREFLIGHT_ENFORCE_ISSUE_STATE:-${CLAWPACK_PREFLIGHT_ENFORCE_ISSUE_STATE:-0}}"
+ALLOW_READY_TO_DELIVER="${HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER:-${CLAWPACK_PREFLIGHT_ALLOW_READY_TO_DELIVER:-0}}"
 BUILD_COMMAND="${HARNESSHUB_PREFLIGHT_BUILD_COMMAND:-${CLAWPACK_PREFLIGHT_BUILD_COMMAND:-npm run build}}"
 TEST_COMMAND="${HARNESSHUB_PREFLIGHT_TEST_COMMAND:-${CLAWPACK_PREFLIGHT_TEST_COMMAND:-npm test}}"
 SMOKE_COMMAND="${HARNESSHUB_PREFLIGHT_SMOKE_COMMAND:-${CLAWPACK_PREFLIGHT_SMOKE_COMMAND:-./scripts/run-cli-smoke.sh}}"
@@ -146,6 +147,26 @@ check_issue_state() {
   echo "Continuing without enforced issue-state check. Set HARNESSHUB_PREFLIGHT_ENFORCE_ISSUE_STATE=1 to require it."
 }
 
+check_delivery_state() {
+  local output status args=()
+  if [[ "$ALLOW_READY_TO_DELIVER" == "1" ]]; then
+    args+=("--allow-ready-to-deliver")
+  fi
+
+  set +e
+  output="$(node "$ROOT_DIR/scripts/codex-pm.mjs" delivery-state-check "${args[@]}" 2>&1)"
+  status=$?
+  set -e
+
+  if [[ $status -eq 0 ]]; then
+    echo "$output"
+    return 0
+  fi
+
+  echo "$output"
+  exit 1
+}
+
 check_merged_pr_branch_reuse() {
   local current_branch owner base_repo merged_pr_json
   current_branch="$(git branch --show-current)"
@@ -219,6 +240,7 @@ check_merged_pr_branch_reuse
 check_review_note
 check_review_proof
 check_issue_state
+check_delivery_state
 
 echo "Running build"
 bash -lc "$BUILD_COMMAND"

@@ -39,6 +39,7 @@ Keep issue execution fast without relying on memory for repository workflow deta
 - Do not run preflight until `.codex-review` has real review content and `head reviewed:` matches the current HEAD.
 - Do not create the PR before the branch has been pushed and is visible on the remote.
 - Do not stop at commit or local test success unless the user explicitly asks to stop before push/PR.
+- Treat `status: done` without an open PR as an incomplete delivery state that preflight should surface.
 
 ## Branch Rules
 

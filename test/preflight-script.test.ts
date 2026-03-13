@@ -42,6 +42,7 @@ describe("run-agent-preflight.sh", () => {
         HARNESSHUB_REVIEW_FILE: path.join(tmpDir, ".codex-review"),
         HARNESSHUB_REVIEW_PROOF_FILE: path.join(tmpDir, ".codex-review-proof"),
         HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER: "1",
         HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_ACTIVE: "0",
@@ -76,6 +77,7 @@ describe("run-agent-preflight.sh", () => {
         HARNESSHUB_REVIEW_FILE: reviewPath,
         HARNESSHUB_REVIEW_PROOF_FILE: proofPath,
         HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER: "1",
         HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_ACTIVE: "0",
@@ -116,6 +118,7 @@ exit 1
         HARNESSHUB_REVIEW_FILE: path.join(tmpDir, ".codex-review"),
         HARNESSHUB_REVIEW_PROOF_FILE: path.join(tmpDir, ".codex-review-proof"),
         HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER: "0",
         HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_ACTIVE: "0",
@@ -126,5 +129,121 @@ exit 1
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("already has a merged PR");
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("fails when a done issue branch still has no open pr", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-preflight-"));
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-preflight-fixture-"));
+    const git = (...args: string[]) => {
+      const result = spawnSync("git", args, { cwd: fixture, encoding: "utf8" });
+      if (result.status !== 0) {
+        throw new Error(result.stderr || result.stdout);
+      }
+      return result.stdout.trim();
+    };
+
+    git("init", "-b", "main");
+    git("config", "user.name", "Test User");
+    git("config", "user.email", "test@example.com");
+    git("remote", "add", "origin", "git@github.com:test/HarnessHub.git");
+    git("remote", "add", "upstream", "https://github.com/HarnessHub/HarnessHub.git");
+    fs.mkdirSync(path.join(fixture, "scripts"), { recursive: true });
+    fs.mkdirSync(path.join(fixture, ".codex", "pm", "tasks", "repository-harness"), { recursive: true });
+    fs.mkdirSync(path.join(fixture, ".codex", "pm", "issue-state"), { recursive: true });
+    fs.copyFileSync(path.join(repoRoot, "scripts", "codex-pm.mjs"), path.join(fixture, "scripts", "codex-pm.mjs"));
+    fs.copyFileSync(path.join(repoRoot, "scripts", "run-agent-preflight.sh"), path.join(fixture, "scripts", "run-agent-preflight.sh"));
+    fs.chmodSync(path.join(fixture, "scripts", "run-agent-preflight.sh"), 0o755);
+    fs.writeFileSync(path.join(fixture, "README.md"), "base\n", "utf8");
+    git("add", "README.md");
+    git("commit", "-m", "base");
+    git("checkout", "-b", "issue-42-bootstrap");
+
+    fs.writeFileSync(path.join(fixture, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md"), `---
+type: task
+epic: repository-harness
+slug: bootstrap
+title: Bootstrap harness
+status: done
+task_type: implementation
+issue: 42
+state_path: .codex/pm/issue-state/42-bootstrap.md
+---
+
+## Context
+
+Test task.
+`, "utf8");
+
+    fs.writeFileSync(path.join(fixture, ".codex", "pm", "issue-state", "42-bootstrap.md"), `---
+type: issue_state
+issue: 42
+task: .codex/pm/tasks/repository-harness/bootstrap.md
+title: Bootstrap harness
+status: done
+delivery_stage: ready_to_deliver
+---
+
+## Summary
+
+Test state.
+
+## Validated Facts
+
+- ready to deliver
+
+## Open Questions
+
+- 
+
+## Next Steps
+
+- open a PR
+
+## Artifacts
+
+- 
+`, "utf8");
+
+    git("add", ".codex", "scripts");
+    git("commit", "-m", "fixture");
+
+    const branch = git("branch", "--show-current");
+    const headSha = git("rev-parse", "HEAD");
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+    fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "pr" && "$2" == "list" ]]; then
+  echo '[]'
+  exit 0
+fi
+echo "unexpected gh invocation: $*" >&2
+exit 1
+`, "utf8");
+    fs.chmodSync(path.join(binDir, "gh"), 0o755);
+
+    fs.writeFileSync(path.join(tmpDir, ".codex-review-proof"), `branch=${branch}\nhead_sha=${headSha}\nbase_ref=HEAD\ngenerated_at=2026-03-12T00:00:00Z\n`, "utf8");
+    fs.writeFileSync(path.join(tmpDir, ".codex-review"), `scope reviewed: preflight\nhead reviewed: ${headSha}\nfindings: no findings\nremaining risks: smoke skipped\n`, "utf8");
+
+    const result = spawnSync(path.join(fixture, "scripts", "run-agent-preflight.sh"), [], {
+      cwd: fixture,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        HARNESSHUB_REVIEW_FILE: path.join(tmpDir, ".codex-review"),
+        HARNESSHUB_REVIEW_PROOF_FILE: path.join(tmpDir, ".codex-review-proof"),
+        HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER: "0",
+        HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
+        HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
+        HARNESSHUB_PREFLIGHT_ACTIVE: "0",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("done but still has no open PR");
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(fixture, { recursive: true, force: true });
   });
 });

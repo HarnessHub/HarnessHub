@@ -64,6 +64,7 @@ Preflight checks:
 - branch freshness against `upstream/main`
 - review note and proof coherence
 - issue-state readiness and task/status coherence
+- delivery completeness for done issue branches that still have no open PR
 - build and test execution
 - local PR closure sync when the current PR body is available through `gh`
 
