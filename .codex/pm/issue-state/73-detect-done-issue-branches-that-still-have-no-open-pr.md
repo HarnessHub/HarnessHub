@@ -4,7 +4,8 @@ issue: 73
 task: .codex/pm/tasks/repository-harness/detect-done-issue-branches-that-still-have-no-open-pr.md
 title: Detect done issue branches that still have no open PR
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/74
 ---
 
 ## Summary
