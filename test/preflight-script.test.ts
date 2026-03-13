@@ -233,6 +233,7 @@ exit 1
         HARNESSHUB_REVIEW_FILE: path.join(tmpDir, ".codex-review"),
         HARNESSHUB_REVIEW_PROOF_FILE: path.join(tmpDir, ".codex-review-proof"),
         HARNESSHUB_PREFLIGHT_BASE_REF: "HEAD",
+        HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER: "0",
         HARNESSHUB_PREFLIGHT_BUILD_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_TEST_COMMAND: "true",
         HARNESSHUB_PREFLIGHT_ACTIVE: "0",
