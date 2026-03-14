@@ -3,7 +3,7 @@ type: task
 epic: repository-harness
 slug: add-test-coverage-reporting-to-github
 title: Add test coverage reporting and surface it clearly on GitHub
-status: in_progress
+status: done
 task_type: implementation
 labels: test,quality,ci
 issue: 77
