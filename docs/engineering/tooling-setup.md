@@ -8,6 +8,8 @@ The repository now includes:
 - `scripts/run-codex-review-checkpoint.sh` as the local checkpoint for invoking native Codex `/review`
 - `scripts/run-agent-preflight.sh` for the standard local pre-push confidence checks
 - `scripts/run-cli-smoke.sh` for the standard CLI smoke validation path
+- `npm run test:coverage` for local coverage generation
+- `.github/workflows/coverage.yml` for GitHub-visible coverage summaries, artifacts, and PR comments
 - `node scripts/codex-pm.mjs issue-state-init <task-path>` for preserving issue-scoped state across longer work
 - `node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"` for the default push-and-PR finish path
 
@@ -79,3 +81,26 @@ For a standard documented-user-path validation, run:
 ```
 
 This validates the public `inspect -> export -> import -> verify` path against a temporary OpenClaw-style fixture and requires `verify` to load the persisted imported manifest.
+
+## Coverage Reporting
+
+For a local coverage pass, run:
+
+```bash
+npm run test:coverage
+```
+
+That command writes the standard coverage outputs under `coverage/`, including:
+
+- terminal coverage text
+- `coverage/coverage-summary.json`
+- `coverage/index.html`
+- `coverage/lcov.info`
+
+To render the repository-local Markdown summary used by GitHub, run:
+
+```bash
+npm run coverage:summary
+```
+
+On GitHub, `.github/workflows/coverage.yml` publishes the same summary into the workflow run, uploads the HTML report as an artifact, and updates a sticky pull-request comment when possible.
