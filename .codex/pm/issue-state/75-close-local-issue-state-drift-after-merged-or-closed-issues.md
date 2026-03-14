@@ -4,7 +4,8 @@ issue: 75
 task: .codex/pm/tasks/repository-harness/close-local-issue-state-drift-after-merged-or-closed-issues.md
 title: Close local issue-state drift after merged or closed issues
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/76
 ---
 
 ## Summary
