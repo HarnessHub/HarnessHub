@@ -21,6 +21,8 @@
     "preflight": "./scripts/run-agent-preflight.sh",
     "smoke": "./scripts/run-cli-smoke.sh",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage:summary": "node scripts/render-coverage-summary.mjs coverage/coverage-summary.json",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build && npm test"
   },
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "typescript": "^5.7.3",
     "vitest": "^3.0.0"
   }

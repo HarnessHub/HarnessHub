@@ -68,6 +68,8 @@ Preflight checks:
 - build and test execution
 - local PR closure sync when the current PR body is available through `gh`
 
+Coverage reporting is tracked separately from preflight. Use `npm run test:coverage` when you need a local coverage readout, and rely on the GitHub coverage workflow for the PR-visible summary and uploaded HTML report.
+
 ## When To Run Smoke Validation
 
 Run:
