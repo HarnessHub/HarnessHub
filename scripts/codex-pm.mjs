@@ -45,6 +45,8 @@ export function main(argv = process.argv.slice(2), io = console) {
         return issueStateShow(args, io);
       case "issue-state-check":
         return issueStateCheck(args, io);
+      case "issue-state-reconcile":
+        return issueStateReconcile(args, io);
       case "delivery-state-check":
         return deliveryStateCheck(args, io);
       case "standup":
@@ -637,6 +639,77 @@ function checkIssueState(branch) {
     };
   }
   return { ok: true, message: `Issue state check passed: ${stateDocument.path}` };
+}
+
+function issueStateReconcile(args, io) {
+  const { options } = parseArgs(args);
+  const tasks = loadTasks({ epic: options.epic });
+  const repo = options.repo ?? inferBaseRepo();
+  const remoteIssueStates = new Map();
+  const updated = [];
+  for (const taskDocument of tasks) {
+    const issue = parseIssueNumber(taskDocument.metadata.issue ?? "");
+    if (
+      issue !== null &&
+      repo &&
+      githubIssueState(issue, repo, remoteIssueStates) === "CLOSED" &&
+      (taskDocument.metadata.status ?? "backlog") !== "done"
+    ) {
+      updateDocumentStatus(taskDocument, "done");
+      updated.push(taskDocument.path);
+    }
+    const stateDocument = loadIssueState(taskDocument);
+    if (!stateDocument) continue;
+    let changed = false;
+    const expectedStatus = taskDocument.metadata.status ?? "";
+    if ((stateDocument.metadata.status ?? "") !== expectedStatus) {
+      stateDocument.metadata.status = expectedStatus;
+      changed = true;
+    }
+    const expectedStage = defaultDeliveryStage(taskDocument);
+    const currentStage = stateDocument.metadata.delivery_stage ?? "";
+    if (currentStage !== "pr_opened" && currentStage !== expectedStage) {
+      stateDocument.metadata.delivery_stage = expectedStage;
+      delete stateDocument.metadata.pr_url;
+      changed = true;
+    }
+    if (!changed) continue;
+    persistDocument(stateDocument);
+    updated.push(stateDocument.path);
+  }
+  if (updated.length === 0) {
+    io.log("Issue-state reconcile found no drift.");
+    return 0;
+  }
+  for (const statePath of updated) {
+    io.log(statePath);
+  }
+  return 0;
+}
+
+function githubIssueState(issue, repo, cache) {
+  if (cache.has(issue)) return cache.get(issue);
+  if (!repo) {
+    cache.set(issue, null);
+    return null;
+  }
+  const result = spawnSync("gh", [
+    "issue", "view", String(issue),
+    "--repo", repo,
+    "--json", "state",
+  ], { encoding: "utf8" });
+  if (result.status !== 0) {
+    cache.set(issue, null);
+    return null;
+  }
+  try {
+    const state = JSON.parse(result.stdout).state ?? null;
+    cache.set(issue, state);
+    return state;
+  } catch {
+    cache.set(issue, null);
+    return null;
+  }
 }
 
 function checkDeliveryState(branch, { allowReadyToDeliver = false } = {}) {

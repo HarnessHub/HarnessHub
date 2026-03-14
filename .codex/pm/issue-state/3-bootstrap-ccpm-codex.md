@@ -4,6 +4,7 @@ issue: 3
 task: .codex/pm/tasks/repository-harness/bootstrap-ccpm-codex.md
 title: Bootstrap local ccpm-codex and harness guardrails
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

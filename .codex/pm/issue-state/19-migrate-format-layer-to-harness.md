@@ -4,6 +4,7 @@ issue: 19
 task: .codex/pm/tasks/product-direction/migrate-format-layer-to-harness.md
 title: Migrate package format naming from .clawpack to .harness
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

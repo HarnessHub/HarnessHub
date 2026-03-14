@@ -4,6 +4,7 @@ issue: 5
 task: .codex/pm/tasks/repository-harness/harden-local-guardrails.md
 title: Harden local harness guardrails for everyday use
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

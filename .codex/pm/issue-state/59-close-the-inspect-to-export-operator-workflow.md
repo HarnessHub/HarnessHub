@@ -3,7 +3,8 @@ type: issue_state
 issue: 59
 task: .codex/pm/tasks/product-direction/close-the-inspect-to-export-operator-workflow.md
 title: Close the inspect-to-export operator workflow
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

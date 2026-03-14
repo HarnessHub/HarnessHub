@@ -4,6 +4,7 @@ issue: 39
 task: .codex/pm/tasks/product-direction/validate-openclaw-end-to-end-packaging-flow-with-a-real-harness-artifact.md
 title: Validate OpenClaw end-to-end packaging flow with a real harness artifact
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

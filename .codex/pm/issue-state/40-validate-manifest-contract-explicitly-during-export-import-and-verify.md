@@ -4,6 +4,7 @@ issue: 40
 task: .codex/pm/tasks/product-direction/validate-manifest-contract-explicitly-during-export-import-and-verify.md
 title: Validate manifest contract explicitly during export, import, and verify
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

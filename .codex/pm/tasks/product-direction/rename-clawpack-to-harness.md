@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: rename-clawpack-to-harness
 title: Rename codebase branding and CLI from clawpack to harness
-status: in_progress
+status: done
 task_type: implementation
 labels: feature,docs,test
 issue: 17
@@ -14,11 +14,9 @@ state_path: .codex/pm/issue-state/17-rename-clawpack-to-harness.md
 
 The repository has already moved to the HarnessHub identity at the repository layer, but the shipped package, CLI command, and user-facing codebase strings still use the old ClawPack naming.
 
-
 ## Deliverable
 
 Rename the shipped package and CLI surface to the HarnessHub naming model, with `harness` as the primary command.
-
 
 ## Scope
 

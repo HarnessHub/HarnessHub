@@ -4,6 +4,7 @@ issue: 38
 task: .codex/pm/tasks/repository-harness/block-continued-work-on-branches-whose-pr-has-already-merged.md
 title: Block continued work on branches whose PR has already merged
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

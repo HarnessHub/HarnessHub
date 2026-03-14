@@ -4,6 +4,7 @@ issue: 6
 task: .codex/pm/tasks/repository-harness/expand-cli-integration-validation.md
 title: Expand CLI integration validation for the pack lifecycle
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

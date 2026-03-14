@@ -4,6 +4,7 @@ issue: 25
 task: .codex/pm/tasks/product-direction/introduce-explicit-openclaw-adapter-boundary.md
 title: Introduce explicit OpenClaw adapter boundary
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

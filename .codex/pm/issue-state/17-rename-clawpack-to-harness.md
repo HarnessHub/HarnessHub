@@ -3,7 +3,8 @@ type: issue_state
 issue: 17
 task: .codex/pm/tasks/product-direction/rename-clawpack-to-harness.md
 title: Rename codebase branding and CLI from clawpack to harness
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

@@ -4,6 +4,7 @@ issue: 47
 task: .codex/pm/tasks/product-direction/define-explicit-template-vs-instance-image-contract.md
 title: Define explicit template vs instance image contract
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

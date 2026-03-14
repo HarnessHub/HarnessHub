@@ -4,6 +4,7 @@ issue: 69
 task: .codex/pm/tasks/repository-harness/close-local-issue-state-drift-when-issue-tasks-are-marked-done.md
 title: Close local issue-state drift when issue tasks are marked done
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

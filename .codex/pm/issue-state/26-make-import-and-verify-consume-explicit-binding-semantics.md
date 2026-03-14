@@ -4,6 +4,7 @@ issue: 26
 task: .codex/pm/tasks/product-direction/make-import-and-verify-consume-explicit-binding-semantics.md
 title: Make import and verify consume explicit binding semantics
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

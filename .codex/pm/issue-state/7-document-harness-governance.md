@@ -4,6 +4,7 @@ issue: 7
 task: .codex/pm/tasks/repository-harness/document-harness-governance.md
 title: Document repository harness governance and daily workflow
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

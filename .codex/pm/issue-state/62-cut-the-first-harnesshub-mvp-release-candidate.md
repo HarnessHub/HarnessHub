@@ -4,6 +4,7 @@ issue: 62
 task: .codex/pm/tasks/product-direction/cut-the-first-harnesshub-mvp-release-candidate.md
 title: Cut the first HarnessHub MVP release candidate
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
@@ -20,7 +21,7 @@ The repository is close to MVP-complete in capability, but there is not yet a co
 
 ## Open Questions
 
-- 
+-
 
 ## Next Steps
 

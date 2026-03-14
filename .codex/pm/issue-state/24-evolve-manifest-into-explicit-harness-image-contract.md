@@ -4,6 +4,7 @@ issue: 24
 task: .codex/pm/tasks/product-direction/evolve-manifest-into-explicit-harness-image-contract.md
 title: Evolve manifest into explicit Harness image contract
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

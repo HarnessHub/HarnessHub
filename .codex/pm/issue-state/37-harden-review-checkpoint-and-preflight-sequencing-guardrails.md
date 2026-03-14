@@ -4,6 +4,7 @@ issue: 37
 task: .codex/pm/tasks/repository-harness/harden-review-checkpoint-and-preflight-sequencing-guardrails.md
 title: Harden review checkpoint and preflight sequencing guardrails
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
