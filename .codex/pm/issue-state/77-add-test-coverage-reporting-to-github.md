@@ -3,8 +3,9 @@ type: issue_state
 issue: 77
 task: .codex/pm/tasks/repository-harness/add-test-coverage-reporting-to-github.md
 title: Add test coverage reporting and surface it clearly on GitHub
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/78
 ---
 
 ## Summary
