@@ -4,6 +4,7 @@ issue: 67
 task: .codex/pm/tasks/product-direction/codify-harnesshub-as-environment-capability-packaging-not-agent-packaging.md
 title: Codify HarnessHub as environment capability packaging, not agent packaging
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
@@ -20,7 +21,7 @@ Current docs define harness versus runtime, but they do not yet explicitly answe
 
 ## Open Questions
 
-- 
+-
 
 ## Next Steps
 

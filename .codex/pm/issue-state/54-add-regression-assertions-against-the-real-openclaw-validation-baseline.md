@@ -3,7 +3,8 @@ type: issue_state
 issue: 54
 task: .codex/pm/tasks/product-direction/add-regression-assertions-against-the-real-openclaw-validation-baseline.md
 title: Add regression assertions against the real OpenClaw validation baseline
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

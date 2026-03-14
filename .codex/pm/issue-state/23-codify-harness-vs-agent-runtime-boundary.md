@@ -4,6 +4,7 @@ issue: 23
 task: .codex/pm/tasks/product-direction/codify-harness-vs-agent-runtime-boundary.md
 title: Codify harness vs agent runtime boundary in core docs
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

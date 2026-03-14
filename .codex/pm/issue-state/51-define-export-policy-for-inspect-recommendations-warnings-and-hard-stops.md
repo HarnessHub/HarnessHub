@@ -3,7 +3,8 @@ type: issue_state
 issue: 51
 task: .codex/pm/tasks/product-direction/define-export-policy-for-inspect-recommendations-warnings-and-hard-stops.md
 title: Define export policy for inspect recommendations, warnings, and hard stops
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

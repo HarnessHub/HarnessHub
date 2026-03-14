@@ -4,6 +4,7 @@ issue: 61
 task: .codex/pm/tasks/product-direction/add-remediation-guidance-to-verify-readiness-output.md
 title: Add remediation guidance to verify readiness output
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
@@ -20,7 +21,7 @@ HarnessHub now reports explicit readiness classes, but operators still need to i
 
 ## Open Questions
 
-- 
+-
 
 ## Next Steps
 

@@ -4,6 +4,7 @@ issue: 60
 task: .codex/pm/tasks/product-direction/define-mvp-exit-criteria-and-release-checklist.md
 title: Define MVP exit criteria and release checklist
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
@@ -20,7 +21,7 @@ HarnessHub now has the core image lifecycle and contract in place, but there is 
 
 ## Open Questions
 
-- 
+-
 
 ## Next Steps
 

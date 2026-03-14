@@ -4,6 +4,7 @@ issue: 45
 task: .codex/pm/tasks/product-direction/separate-structural-restore-from-runtime-ready-verification.md
 title: Separate structural restore from runtime-ready verification
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

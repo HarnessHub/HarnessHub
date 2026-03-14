@@ -4,6 +4,7 @@ issue: 15
 task: .codex/pm/tasks/product-direction/update-harnesshub-metadata.md
 title: Update repository metadata and remotes after HarnessHub migration
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

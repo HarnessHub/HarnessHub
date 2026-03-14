@@ -4,6 +4,7 @@ issue: 31
 task: .codex/pm/tasks/repository-harness/add-repo-local-skill-for-multi-issue-delivery-sessions.md
 title: Add repo-local skill for multi-issue delivery sessions
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

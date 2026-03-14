@@ -429,6 +429,86 @@ exit 1
     expect(closureErrors.join("\n")).toContain("linked issue-state status does not match task status");
   });
 
+  it("reconciles stale issue-state files back to their linked task status", () => {
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "done"])).toBe(0);
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "42-bootstrap.md");
+    const driftedState = fs.readFileSync(statePath, "utf8")
+      .replace("status: done", "status: in_progress")
+      .replace("delivery_stage: ready_to_deliver", "delivery_stage: implementing");
+    fs.writeFileSync(statePath, driftedState, "utf8");
+
+    const logs: string[] = [];
+    expect(main(["issue-state-reconcile"], {
+      log: (value: string) => logs.push(value),
+      error: () => undefined,
+    } as Console)).toBe(0);
+    expect(logs.join("\n")).toContain("42-bootstrap.md");
+
+    const reconciledState = fs.readFileSync(statePath, "utf8");
+    expect(reconciledState).toContain("status: done");
+    expect(reconciledState).toContain("delivery_stage: ready_to_deliver");
+  });
+
+  it("marks local task and issue-state done when the linked GitHub issue is already closed", () => {
+    expect(main(["init"])).toBe(0);
+    expect(main([
+      "task-new",
+      "repository-harness",
+      "bootstrap",
+      "--title",
+      "Bootstrap harness",
+      "--issue",
+      "42",
+    ])).toBe(0);
+    const taskPath = path.join(tmpDir, ".codex", "pm", "tasks", "repository-harness", "bootstrap.md");
+
+    expect(main(["issue-state-init", taskPath])).toBe(0);
+    expect(main(["set-status", taskPath, "in_progress"])).toBe(0);
+
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+    fs.writeFileSync(path.join(binDir, "gh"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "issue" && "$2" == "view" ]]; then
+  echo '{"state":"CLOSED"}'
+  exit 0
+fi
+echo "unexpected gh invocation: $*" >&2
+exit 1
+`, "utf8");
+    fs.chmodSync(path.join(binDir, "gh"), 0o755);
+
+    const originalPath = process.env.PATH ?? "";
+    process.env.PATH = `${binDir}:${originalPath}`;
+    try {
+      expect(main(["issue-state-reconcile", "--repo", "HarnessHub/HarnessHub"])).toBe(0);
+    } finally {
+      process.env.PATH = originalPath;
+    }
+
+    const taskText = fs.readFileSync(taskPath, "utf8");
+    expect(taskText).toContain("status: done");
+
+    const statePath = path.join(tmpDir, ".codex", "pm", "issue-state", "42-bootstrap.md");
+    const stateText = fs.readFileSync(statePath, "utf8");
+    expect(stateText).toContain("status: done");
+    expect(stateText).toContain("delivery_stage: ready_to_deliver");
+  });
+
   it("hydrates task twins and issue state from issue intent", () => {
     expect(main(["init"])).toBe(0);
     const issueBodyPath = path.join(tmpDir, "issue-body.md");

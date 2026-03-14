@@ -3,7 +3,8 @@ type: issue_state
 issue: 53
 task: .codex/pm/tasks/product-direction/refine-verification-into-explicit-readiness-classes.md
 title: Refine verification into explicit readiness classes
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

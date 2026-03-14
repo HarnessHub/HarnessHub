@@ -4,6 +4,7 @@ issue: 32
 task: .codex/pm/tasks/repository-harness/improve-local-pm-twin-hydration-for-issue-scoped-work.md
 title: Improve local PM twin hydration for issue-scoped work
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

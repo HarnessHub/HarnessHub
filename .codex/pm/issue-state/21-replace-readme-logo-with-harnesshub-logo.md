@@ -4,6 +4,7 @@ issue: 21
 task: .codex/pm/tasks/product-direction/replace-readme-logo-with-harnesshub-logo.md
 title: Replace legacy README logo with HarnessHub logo
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

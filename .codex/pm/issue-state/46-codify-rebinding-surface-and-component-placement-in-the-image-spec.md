@@ -4,6 +4,7 @@ issue: 46
 task: .codex/pm/tasks/product-direction/codify-rebinding-surface-and-component-placement-in-the-image-spec.md
 title: Codify rebinding surface and component placement in the image spec
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

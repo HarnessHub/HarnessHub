@@ -3,7 +3,8 @@ type: issue_state
 issue: 52
 task: .codex/pm/tasks/product-direction/publish-a-formal-mvp-harness-image-specification.md
 title: Publish a formal MVP Harness image specification
-status: in_progress
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

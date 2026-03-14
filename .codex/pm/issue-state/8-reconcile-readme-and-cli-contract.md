@@ -4,6 +4,7 @@ issue: 8
 task: .codex/pm/tasks/repository-harness/reconcile-readme-and-cli-contract.md
 title: Reconcile README guarantees with actual CLI behavior
 status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
