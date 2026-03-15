@@ -12,9 +12,22 @@ ensure_vitest() {
   [[ -x node_modules/.bin/vitest ]]
 }
 
+attempt_ci_install() {
+  if ! run_npm ci "${INSTALL_FLAGS[@]}"; then
+    return 1
+  fi
+
+  if ! ensure_vitest; then
+    echo "npm ci reported success but vitest is unavailable." >&2
+    return 1
+  fi
+
+  return 0
+}
+
 ci_ok=0
 for attempt in 1 2; do
-  if run_npm ci "${INSTALL_FLAGS[@]}"; then
+  if attempt_ci_install; then
     ci_ok=1
     break
   fi
