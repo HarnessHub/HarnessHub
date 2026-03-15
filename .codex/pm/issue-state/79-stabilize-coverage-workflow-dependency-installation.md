@@ -3,8 +3,9 @@ type: issue_state
 issue: 79
 task: .codex/pm/tasks/repository-harness/stabilize-coverage-workflow-dependency-installation.md
 title: Stabilize coverage workflow dependency installation
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/80
 ---
 
 ## Summary
