@@ -3,7 +3,7 @@ type: task
 epic: repository-harness
 slug: stabilize-coverage-workflow-dependency-installation
 title: Stabilize coverage workflow dependency installation
-status: in_progress
+status: done
 task_type: implementation
 labels: ci,quality,test
 issue: 79
