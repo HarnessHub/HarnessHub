@@ -38,6 +38,19 @@ attempt_ci_install() {
   return 0
 }
 
+attempt_install_fallback() {
+  if ! run_install_step install "${INSTALL_FLAGS[@]}"; then
+    return 1
+  fi
+
+  if ! ensure_vitest; then
+    echo "npm install reported success but vitest is unavailable." >&2
+    return 1
+  fi
+
+  return 0
+}
+
 ci_ok=0
 for attempt in 1 2; do
   if attempt_ci_install; then
@@ -49,7 +62,10 @@ done
 
 if [[ "$ci_ok" != "1" ]]; then
   echo "npm ci failed twice; falling back to npm install." >&2
-  run_install_step install "${INSTALL_FLAGS[@]}"
+  if ! attempt_install_fallback; then
+    echo "npm install fallback failed." >&2
+    exit 1
+  fi
 fi
 
 if ! ensure_vitest; then

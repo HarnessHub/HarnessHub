@@ -157,4 +157,32 @@ echo "$*" > npm-install.log
     expect(fs.readFileSync(path.join(tmpDir, "npm-install.log"), "utf8")).toContain("install --no-audit --no-fund");
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  it("fails clearly when fallback npm install also leaves vitest unavailable", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-ci-install-"));
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+
+    writeExecutable(path.join(binDir, "npm"), `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "ci" ]]; then
+  exit 1
+fi
+exit 0
+`);
+
+    const result = spawnSync(path.join(repoRoot, "scripts", "install-ci-deps.sh"), [], {
+      cwd: tmpDir,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("npm install reported success but vitest is unavailable.");
+    expect(result.stderr).toContain("npm install fallback failed.");
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
 });
