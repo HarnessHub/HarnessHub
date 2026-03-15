@@ -117,4 +117,44 @@ echo "$*" > npm-install.log
     expect(fs.readFileSync(path.join(tmpDir, "npm-install.log"), "utf8")).toContain("install --no-audit --no-fund");
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  it("falls back when npm ci times out", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-ci-install-"));
+    const binDir = path.join(tmpDir, "bin");
+    fs.mkdirSync(binDir);
+
+    writeExecutable(path.join(binDir, "timeout"), `#!/usr/bin/env bash
+set -euo pipefail
+duration="$1"
+shift
+if [[ "$2" == "ci" ]]; then
+  exit 124
+fi
+"$@"
+`);
+
+    writeExecutable(path.join(binDir, "npm"), `#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p node_modules/.bin
+touch node_modules/.bin/vitest
+chmod +x node_modules/.bin/vitest
+echo "$*" > npm-install.log
+`);
+
+    const result = spawnSync(path.join(repoRoot, "scripts", "install-ci-deps.sh"), [], {
+      cwd: tmpDir,
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        HARNESSHUB_CI_INSTALL_TIMEOUT_SECONDS: "1",
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain("npm ci attempt 1 failed.");
+    expect(result.stderr).toContain("npm ci failed twice; falling back to npm install.");
+    expect(fs.readFileSync(path.join(tmpDir, "npm-install.log"), "utf8")).toContain("install --no-audit --no-fund");
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
 });
