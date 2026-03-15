@@ -169,7 +169,7 @@ check_delivery_state() {
 
 check_merged_pr_branch_reuse() {
   local current_branch owner base_repo merged_pr_json
-  current_branch="$(git branch --show-current)"
+  current_branch="${HARNESSHUB_PREFLIGHT_CURRENT_BRANCH:-$(git branch --show-current)}"
 
   if [[ -z "$current_branch" ]]; then
     return 0
