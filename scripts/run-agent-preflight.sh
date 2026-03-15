@@ -20,8 +20,8 @@ ALLOW_READY_TO_DELIVER="${HARNESSHUB_PREFLIGHT_ALLOW_READY_TO_DELIVER:-${CLAWPAC
 BUILD_COMMAND="${HARNESSHUB_PREFLIGHT_BUILD_COMMAND:-${CLAWPACK_PREFLIGHT_BUILD_COMMAND:-npm run build}}"
 TEST_COMMAND="${HARNESSHUB_PREFLIGHT_TEST_COMMAND:-${CLAWPACK_PREFLIGHT_TEST_COMMAND:-npm test}}"
 SMOKE_COMMAND="${HARNESSHUB_PREFLIGHT_SMOKE_COMMAND:-${CLAWPACK_PREFLIGHT_SMOKE_COMMAND:-./scripts/run-cli-smoke.sh}}"
-ORIGIN_URL="$(git remote get-url origin 2>/dev/null || true)"
-UPSTREAM_URL="$(git remote get-url upstream 2>/dev/null || true)"
+ORIGIN_URL="${HARNESSHUB_PREFLIGHT_ORIGIN_URL:-$(git remote get-url origin 2>/dev/null || true)}"
+UPSTREAM_URL="${HARNESSHUB_PREFLIGHT_UPSTREAM_URL:-$(git remote get-url upstream 2>/dev/null || true)}"
 
 extract_repo() {
   local remote_url="$1"
