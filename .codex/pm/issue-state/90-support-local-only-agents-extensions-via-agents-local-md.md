@@ -4,7 +4,8 @@ issue: 90
 task: .codex/pm/tasks/repository-harness/support-local-only-agents-extensions-via-agents-local-md.md
 title: Support local-only AGENTS extensions via .agents.local.md
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/91
 ---
 
 ## Summary
