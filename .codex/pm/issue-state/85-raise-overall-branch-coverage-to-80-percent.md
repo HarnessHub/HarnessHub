@@ -4,7 +4,8 @@ issue: 85
 task: /workspace/02-projects/active/HarnessHub-issue-85/.codex/pm/tasks/repository-harness/raise-overall-branch-coverage-to-80-percent.md
 title: Raise overall branch coverage to 80 percent
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/86
 ---
 
 ## Summary
