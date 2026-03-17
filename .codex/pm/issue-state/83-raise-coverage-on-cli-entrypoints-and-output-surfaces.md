@@ -3,8 +3,9 @@ type: issue_state
 issue: 83
 task: .codex/pm/tasks/repository-harness/raise-coverage-on-cli-entrypoints-and-output-surfaces.md
 title: Raise coverage on CLI entrypoints and command/output surfaces
-status: in_progress
-delivery_stage: in_progress
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/84
 ---
 
 ## Summary
