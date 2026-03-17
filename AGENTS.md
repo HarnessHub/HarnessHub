@@ -2,6 +2,8 @@
 
 This file provides guidance to AI coding agents (Claude Code, Codex, Cursor, etc.) when working with code in this repository.
 
+If a local-only `.agents.local.md` file exists in the repository root, agents should also apply those instructions for the current clone. Treat that file as contributor-private overlay guidance rather than part of the shared repository contract.
+
 ## What is HarnessHub?
 
 HarnessHub is the project name for the repository's harness image system. The current implementation ships as the `harness` CLI for OpenClaw-oriented packaging flows, using a portable `.harness` archive (gzipped tar containing `manifest.json`, `config/`, `workspace/`, `state/`, `reports/`).
