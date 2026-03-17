@@ -286,6 +286,88 @@ my-agent.harness (gzip 压缩的 tar)
 harness inspect -f json | jq '.riskAssessment'
 ```
 
+## 如何理解命令结果
+
+这四个命令不只是告诉你“有没有执行成功”。它们合起来回答的是：源实例更适合分享还是迁移、`.harness` 产物有没有真的生成、产物有没有被真正落到新的目标目录，以及导入结果是否已经达到可运行状态。
+
+### `inspect`：判断你面对的是哪种源实例
+
+最值得关注的字段是：
+
+- `recommendedPackType`：系统建议你导出成 `template` 还是 `instance`
+- `riskAssessment`：在导出之前，源实例被判断为哪种风险级别
+- `warnings`：为什么它被视为敏感或偏迁移用途
+- `workflow.recommendedExportCommand`：下一步建议直接执行的导出命令
+
+实际含义：
+
+- 推荐 `template`，表示这个源实例更适合做分享型 artifact
+- 推荐 `instance`，表示它包含运行态或凭证，更适合作为迁移包
+
+### `export`：确认产物到底是什么
+
+最值得关注的字段是：
+
+- `success`：`.harness` 产物是否真的生成成功
+- `outputFile`：产物写到了哪里
+- `packType`：这个产物是 `template` 还是 `instance`
+- `riskLevel`：导出后写入 manifest 的风险级别
+- `warnings` 和 `policyWarnings`：为什么这个包需要谨慎处理，或者为什么当前导出方式偏离了 inspect 建议
+
+实际含义：
+
+- 成功的 `template` 导出，证明你得到的是一个可分享、可复用的 harness image
+- 成功的 `instance` 导出，证明你得到的是一个面向可信环境迁移的 harness image，它可以携带运行态和凭证
+
+### `import`：确认目标端实际发生了什么
+
+最值得关注的字段是：
+
+- `success`：产物是否真的恢复到了目标目录
+- `targetDir`：导入落到了哪里
+- `warnings`：尤其是 rebinding 相关提示，它描述了导入时对配置做了哪些重写
+
+实际含义：
+
+- import 不只是“把 tar 解开”
+- 如果导入结果提示 workspace rebinding，说明 HarnessHub 已把 OpenClaw 配置里的路径改写到了新目录，而不是继续指向旧机器路径
+
+### `verify`：判断导入结果是不是已经可用
+
+最值得关注的字段是：
+
+- `valid`：是否通过结构合法性校验
+- `runtimeReady`：是否已经达到可运行状态
+- `readinessClass`：`runtime_ready`、`manual_steps_required` 或 `structurally_invalid`
+- `checks`：逐项列出的 manifest、placement、rebinding、workspace 等检查结果
+
+实际含义：
+
+- `valid=true` 表示导入结果满足结构合约
+- `runtimeReady=true` 且 `readinessClass=runtime_ready` 表示它不只是“文件在那”，而是按当前 MVP 合约已经可视为可运行 harness
+
+## 如何亲自验证迁移价值
+
+如果你想直接验证这个 MVP 的价值，可以自己跑一遍完整的 OpenClaw 流程：
+
+```bash
+npm run build
+
+node dist/cli.js inspect -p ~/.openclaw -f json
+node dist/cli.js export -p ~/.openclaw -t instance -o /tmp/openclaw-instance.harness -f json
+node dist/cli.js import /tmp/openclaw-instance.harness -t /tmp/openclaw-imported -f json
+node dist/cli.js verify -p /tmp/openclaw-imported -f json
+```
+
+成功标志是：
+
+- `inspect` 对真实 OpenClaw 源实例推荐 `instance`
+- `export` 返回 `success=true`，并生成 `.harness`
+- `import` 返回 `success=true`，通常还会提示 `openclaw.json` 的 workspace rebinding
+- `verify` 返回 `valid=true`、`runtimeReady=true`、`readinessClass=runtime_ready`
+
+当这四步连续成立时，就说明这个产物已经证明了真实迁移价值：它把一个真实 OpenClaw harness 打成了可传输的 artifact，把它恢复到新的目标路径，对环境相关路径做了重绑定，并在导入后通过了基于 manifest 语义的可运行校验。
+
 ## 开发
 
 ```bash
