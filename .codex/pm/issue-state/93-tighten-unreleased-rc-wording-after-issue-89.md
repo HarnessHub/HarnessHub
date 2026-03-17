@@ -4,7 +4,8 @@ issue: 93
 task: .codex/pm/tasks/product-direction/tighten-unreleased-rc-wording-after-issue-89.md
 title: Tighten unreleased RC wording after issue 89
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/94
 ---
 
 ## Summary
