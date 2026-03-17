@@ -4,7 +4,8 @@ issue: 89
 task: .codex/pm/tasks/product-direction/unify-repository-versioning-on-0-1-0-rc-1.md
 title: Unify repository versioning on 0.1.0-rc.1
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/92
 ---
 
 ## Summary
