@@ -4,7 +4,8 @@ issue: 87
 task: .codex/pm/tasks/product-direction/reframe-mvp-release-line-as-0-1-0-with-an-rc-1-pre-release.md
 title: Reframe MVP release line as 0.1.0 with an rc.1 pre-release
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/88
 ---
 
 ## Summary
