@@ -8,8 +8,8 @@ Current roadmap and version framing document.
 
 The repository's MVP line remains the `v0.1.x` line:
 
-- `v0.1.0` is the MVP release version
-- `v0.1.0-rc.1` is the current pre-release candidate that should be used for release-closeout work
+- `v0.1.0-rc.1` is the current repository and CLI version for release-closeout work
+- `v0.1.0` remains the intended MVP general-availability release version
 - the move to `v1.0` should happen only after post-MVP capabilities such as layering and lineage-aware import/verify are complete
 
 ## MVP Goal
