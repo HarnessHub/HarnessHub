@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: document-artifact-output-meaning-in-user-docs
 title: Document how to interpret harness CLI artifact outputs
-status: in_progress
+status: done
 task_type: implementation
 labels: docs
 issue: 81
