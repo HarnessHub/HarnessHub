@@ -21,10 +21,10 @@ The biggest gap is not in core image logic, which is already well-covered, but i
 
 ## Validated Facts
 
-- overall coverage now measures `80.3%` lines/statements, `91.2%` functions, and `65.6%` branches
+- overall coverage now measures `82.2%` lines/statements, `91.89%` functions, and `69.14%` branches
 - `src/cli.ts` now has direct coverage at `92.59%` lines and `66.66%` branches
-- `src/utils/output.ts` now has direct coverage at `92.97%` lines and `61.53%` branches
-- `src/commands/*` are no longer effectively uncovered: `inspect.ts` `85.1%`, `verify.ts` `76.92%`, `import.ts` `69.81%`, `export.ts` `56.57%` line coverage
+- `src/utils/output.ts` now has direct coverage at `97.83%` lines and `89.83%` branches
+- `src/commands/*` now has strong direct coverage: `inspect.ts` `95.74%`, `verify.ts` `94.87%`, `import.ts` `96.22%`, `export.ts` `90.78%` line coverage
 - targeted command/output tests complement rather than replace the existing smoke and e2e paths
 
 ## Open Questions

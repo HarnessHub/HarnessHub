@@ -56,5 +56,5 @@ The biggest gap is not in core image logic, which is already well-covered, but i
 
 ## Implementation Notes
 
-- coverage after the change: Lines `80.3%`, Statements `80.3%`, Functions `91.2%`, Branches `65.6%`
-- direct source coverage now includes `src/cli.ts` (`92.59%` lines), `src/utils/output.ts` (`92.97%` lines), and non-zero coverage across `src/commands/*`
+- coverage after the change: Lines `82.2%`, Statements `82.2%`, Functions `91.89%`, Branches `69.14%`
+- direct source coverage now includes `src/cli.ts` (`92.59%` lines), `src/utils/output.ts` (`97.83%` lines / `89.83%` branches), and strong direct coverage across `src/commands/*` (`93.95%` lines / `70.96%` branches)
