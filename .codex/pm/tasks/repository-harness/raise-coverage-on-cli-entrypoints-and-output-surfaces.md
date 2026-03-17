@@ -3,7 +3,7 @@ type: task
 epic: repository-harness
 slug: raise-coverage-on-cli-entrypoints-and-output-surfaces
 title: Raise coverage on CLI entrypoints and command/output surfaces
-status: in_progress
+status: done
 task_type: implementation
 labels: test
 issue: 83
