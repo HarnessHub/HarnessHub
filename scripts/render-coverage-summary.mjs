@@ -38,7 +38,7 @@ export function renderCoverageSummary(summary) {
   return `${lines.join("\n")}\n`;
 }
 
-function main(argv = process.argv.slice(2)) {
+export function main(argv = process.argv.slice(2)) {
   const [summaryPath] = argv;
   if (!summaryPath) {
     console.error("Usage: node scripts/render-coverage-summary.mjs <coverage-summary.json>");
