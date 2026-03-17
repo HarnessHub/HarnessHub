@@ -294,6 +294,88 @@ All commands support `-f text` (default, human-readable) and `-f json` (machine-
 harness inspect -f json | jq '.riskAssessment'
 ```
 
+## How To Interpret Command Results
+
+The four commands do not just report progress. Together they explain whether the source harness is share-oriented or migration-oriented, whether a `.harness` artifact was created successfully, whether it was materialized into a new target, and whether the imported result is actually runnable.
+
+### `inspect`: what kind of source you have
+
+The most important fields are:
+
+- `recommendedPackType`: whether the source should normally be exported as `template` or `instance`
+- `riskAssessment`: how sensitive the detected source appears before export
+- `warnings`: why the source is considered sensitive or migration-oriented
+- `workflow.recommendedExportCommand`: the exact next export command the operator should run
+
+Practical meaning:
+
+- `template` recommendation means the source is suitable for a share-oriented artifact
+- `instance` recommendation means the source contains runtime state or credentials and should be treated as a migration pack
+
+### `export`: what artifact was produced
+
+The most important fields are:
+
+- `success`: whether the `.harness` artifact was actually produced
+- `outputFile`: where the artifact was written
+- `packType`: whether the artifact is a `template` or `instance`
+- `riskLevel`: the export-time risk classification recorded in the manifest
+- `warnings` and `policyWarnings`: why the artifact should be handled carefully or why the chosen export diverged from inspect guidance
+
+Practical meaning:
+
+- a successful `template` export proves you produced a reusable share-oriented harness image
+- a successful `instance` export proves you produced a migration-oriented harness image that can carry runtime state and credentials into a trusted target environment
+
+### `import`: what changed at the target
+
+The most important fields are:
+
+- `success`: whether the artifact was restored into the target directory
+- `targetDir`: where the imported harness was materialized
+- `warnings`: especially rebinding warnings that describe config rewriting performed at import time
+
+Practical meaning:
+
+- import is not only archive extraction
+- if import reports workspace rebinding, HarnessHub has rewritten OpenClaw config paths so the imported harness points at the new target directory instead of the old machine path
+
+### `verify`: whether the imported harness is actually usable
+
+The most important fields are:
+
+- `valid`: whether the import passed the structural verification gate
+- `runtimeReady`: whether the imported harness is considered runnable without further manual repair
+- `readinessClass`: one of `runtime_ready`, `manual_steps_required`, or `structurally_invalid`
+- `checks`: the individual manifest, placement, rebinding, and workspace checks that explain the result
+
+Practical meaning:
+
+- `valid=true` means the imported result satisfies the structural contract
+- `runtimeReady=true` and `readinessClass=runtime_ready` mean the imported harness is not only present on disk, but is treated as ready to run under the current MVP contract
+
+## How To Prove Migration Value Yourself
+
+If you want to verify the MVP value directly, run the full OpenClaw flow yourself:
+
+```bash
+npm run build
+
+node dist/cli.js inspect -p ~/.openclaw -f json
+node dist/cli.js export -p ~/.openclaw -t instance -o /tmp/openclaw-instance.harness -f json
+node dist/cli.js import /tmp/openclaw-instance.harness -t /tmp/openclaw-imported -f json
+node dist/cli.js verify -p /tmp/openclaw-imported -f json
+```
+
+What success looks like:
+
+- `inspect` recommends `instance` for a real OpenClaw with credentials or sessions
+- `export` returns `success=true` and writes a `.harness` file
+- `import` returns `success=true` and usually reports workspace rebinding in `openclaw.json`
+- `verify` returns `valid=true`, `runtimeReady=true`, and `readinessClass=runtime_ready`
+
+When those four things happen in sequence, the artifact has demonstrated real migration value: it captured a real OpenClaw harness, restored it into a new target path, rebound environment-specific config, and passed manifest-aware readiness checks after import.
+
 ## Development
 
 ```bash
