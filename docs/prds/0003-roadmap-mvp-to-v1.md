@@ -6,11 +6,11 @@ Current roadmap and version framing document.
 
 ## Version Framing
 
-The repository's original `v0.1` should now be treated as a historical seed release:
+The repository's MVP line remains the `v0.1.x` line:
 
-- it proves the narrow OpenClaw packaging loop can work
-- it is not yet the full product definition
-- it should inform the MVP rather than define the final product shape
+- `v0.1.0` is the MVP release version
+- `v0.1.0-rc.1` is the current pre-release candidate that should be used for release-closeout work
+- the move to `v1.0` should happen only after post-MVP capabilities such as layering and lineage-aware import/verify are complete
 
 ## MVP Goal
 
