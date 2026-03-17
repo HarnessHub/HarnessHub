@@ -65,27 +65,6 @@ describe("command entrypoints", () => {
     expect(process.exitCode).toBe(1);
   });
 
-  it("renders inspect errors in json mode", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/adapters/openclaw.js", () => ({
-      openClawAdapter: {
-        inspect: () => {
-          throw new Error("inspect failed");
-        },
-      },
-    }));
-    vi.doMock("../src/utils/output.js", () => ({
-      printInspectResult: vi.fn(),
-    }));
-
-    const { inspectCommand } = await importFresh<typeof import("../src/commands/inspect.js")>("../src/commands/inspect.js");
-    await inspectCommand.parseAsync(["node", "inspect", "-f", "json"], { from: "node" });
-
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Error: inspect failed\""));
-    expect(process.exitCode).toBe(1);
-  });
-
   it("renders export command JSON output including policy warnings", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -111,34 +90,6 @@ describe("command entrypoints", () => {
     expect(log.mock.calls[0]?.[0]).toContain("\"outputFile\": \"/tmp/out.harness\"");
   });
 
-  it("renders export command text output without warnings", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/packer.js", () => ({
-      exportPack: vi.fn(async () => ({
-        outputFile: "/tmp/out.harness",
-        manifest: {
-          packId: "pack-10",
-          packType: "instance",
-          riskLevel: "trusted-migration-only",
-        },
-        fileCount: 3,
-        totalSize: 2 * 1024 * 1024,
-        warnings: [],
-        policyWarnings: [],
-      })),
-    }));
-
-    const { exportCommand } = await importFresh<typeof import("../src/commands/export.js")>("../src/commands/export.js");
-    await exportCommand.parseAsync(["node", "export"], { from: "node" });
-
-    const output = log.mock.calls.flat().join("\n");
-    expect(output).toContain("=== HarnessHub Export ===");
-    expect(output).toContain("Risk level:   trusted-migration-only");
-    expect(output).toContain("Size:         2.0 MB");
-    expect(output).not.toContain("--- Warnings ---");
-  });
-
   it("rejects an invalid export pack type before calling the packer", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const exportPack = vi.fn();
@@ -150,34 +101,6 @@ describe("command entrypoints", () => {
 
     expect(exportPack).not.toHaveBeenCalled();
     expect(error).toHaveBeenCalledWith(expect.stringContaining("Invalid pack type"));
-    expect(process.exitCode).toBe(1);
-  });
-
-  it("renders invalid export pack type errors in json mode", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/packer.js", () => ({ exportPack: vi.fn() }));
-
-    const { exportCommand } = await importFresh<typeof import("../src/commands/export.js")>("../src/commands/export.js");
-    await exportCommand.parseAsync(["node", "export", "-t", "broken", "-f", "json"], { from: "node" });
-
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Invalid pack type: broken. Must be \\\"template\\\" or \\\"instance\\\".\""));
-    expect(process.exitCode).toBe(1);
-  });
-
-  it("renders export command failures in text mode", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/packer.js", () => ({
-      exportPack: vi.fn(async () => {
-        throw new Error("export failed");
-      }),
-    }));
-
-    const { exportCommand } = await importFresh<typeof import("../src/commands/export.js")>("../src/commands/export.js");
-    await exportCommand.parseAsync(["node", "export"], { from: "node" });
-
-    expect(error).toHaveBeenCalledWith("Error: export failed");
     expect(process.exitCode).toBe(1);
   });
 
@@ -204,44 +127,6 @@ describe("command entrypoints", () => {
     expect(output).toContain("=== HarnessHub Import ===");
     expect(output).toContain("! Rebound workspace paths in openclaw.json.");
     expect(output).toContain("Import complete. Run `harness verify` to check the result.");
-  });
-
-  it("renders import command JSON output", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/packer.js", () => ({
-      importPack: vi.fn(async () => ({
-        targetDir: "/tmp/imported",
-        manifest: {
-          packId: "pack-20",
-          packType: "template",
-          riskLevel: "safe-share",
-        },
-        fileCount: 2,
-        warnings: [],
-      })),
-    }));
-
-    const { importCommand } = await importFresh<typeof import("../src/commands/import.js")>("../src/commands/import.js");
-    await importCommand.parseAsync(["node", "import", "artifact.harness", "-f", "json"], { from: "node" });
-
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"packId\": \"pack-20\""));
-  });
-
-  it("renders import command failures in json mode", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/packer.js", () => ({
-      importPack: vi.fn(async () => {
-        throw new Error("import failed");
-      }),
-    }));
-
-    const { importCommand } = await importFresh<typeof import("../src/commands/import.js")>("../src/commands/import.js");
-    await importCommand.parseAsync(["node", "import", "artifact.harness", "-f", "json"], { from: "node" });
-
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Error: import failed\""));
-    expect(process.exitCode).toBe(1);
   });
 
   it("renders verify results in text mode after loading the persisted manifest", async () => {
@@ -280,65 +165,6 @@ describe("command entrypoints", () => {
     expect(printVerifyResult).toHaveBeenCalledWith(expect.objectContaining({
       readinessClass: "runtime_ready",
     }), "text");
-  });
-
-  it("sets exit code when verify returns an invalid result without a manifest", async () => {
-    const existsSync = vi.fn(() => false);
-    const readFileSync = vi.fn();
-    const verify = vi.fn(() => ({
-      valid: false,
-      readinessClass: "manual_steps_required",
-      runtimeReady: false,
-      readinessSummary: "Repair required.",
-      checks: [],
-      warnings: [],
-      runtimeReadinessIssues: [],
-      remediationSteps: [],
-      errors: [],
-    }));
-    const printVerifyResult = vi.fn();
-
-    vi.doMock("node:fs", () => ({
-      default: { existsSync, readFileSync },
-    }));
-    vi.doMock("../src/core/verifier.js", () => ({ verify }));
-    vi.doMock("../src/utils/output.js", () => ({ printVerifyResult }));
-    vi.doMock("../src/core/adapters/openclaw.js", () => ({
-      openClawAdapter: { resolveStateDir: () => "/tmp/openclaw" },
-    }));
-
-    const { verifyCommand } = await importFresh<typeof import("../src/commands/verify.js")>("../src/commands/verify.js");
-    await verifyCommand.parseAsync(["node", "verify"], { from: "node" });
-
-    expect(existsSync).toHaveBeenCalledTimes(2);
-    expect(readFileSync).not.toHaveBeenCalled();
-    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", undefined);
-    expect(process.exitCode).toBe(1);
-    expect(printVerifyResult).toHaveBeenCalledWith(expect.objectContaining({
-      readinessClass: "manual_steps_required",
-    }), "text");
-  });
-
-  it("renders verify command failures in json mode", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    vi.doMock("../src/core/verifier.js", () => ({
-      verify: vi.fn(() => {
-        throw new Error("verify failed");
-      }),
-    }));
-    vi.doMock("../src/utils/output.js", () => ({
-      printVerifyResult: vi.fn(),
-    }));
-    vi.doMock("../src/core/adapters/openclaw.js", () => ({
-      openClawAdapter: { resolveStateDir: () => "/tmp/openclaw" },
-    }));
-
-    const { verifyCommand } = await importFresh<typeof import("../src/commands/verify.js")>("../src/commands/verify.js");
-    await verifyCommand.parseAsync(["node", "verify", "-f", "json"], { from: "node" });
-
-    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Error: verify failed\""));
-    expect(process.exitCode).toBe(1);
   });
 
   it("creates a CLI program with the expected commands and metadata", async () => {

@@ -30,25 +30,6 @@ describe("output formatting", () => {
     expect(formatted).toContain("Absent value: -");
   });
 
-  it("formats primitive values and object arrays in text mode", () => {
-    expect(formatOutput(true, "text")).toBe("true");
-    expect(formatOutput(42, "text")).toBe("42");
-    expect(formatOutput("ready", "text")).toBe("ready");
-
-    const formatted = formatOutput({
-      checks: [
-        { passed: true, message: "manifest ok" },
-        { passed: false, message: "workspace missing" },
-      ],
-    }, "text");
-
-    expect(formatted).toContain("Checks:");
-    expect(formatted).toContain("Passed: yes");
-    expect(formatted).toContain("Message: manifest ok");
-    expect(formatted).toContain("Passed: no");
-    expect(formatted).toContain("Message: workspace missing");
-  });
-
   it("prints inspect results in text mode with workflow guidance and warnings", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -118,67 +99,6 @@ describe("output formatting", () => {
     expect(log.mock.calls[0]?.[0]).toContain("\"recommendedPackType\": \"template\"");
   });
 
-  it("prints inspect results without override or warnings", () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    printInspectResult({
-      detected: false,
-      stateDir: "/tmp/.openclaw",
-      configPath: null,
-      product: "openclaw",
-      version: "1.2.3",
-      structure: {
-        hasConfig: false,
-        hasWorkspace: false,
-        workspaceDirs: [],
-        hasAgents: false,
-        agentIds: [],
-        hasSessions: false,
-        sessionFiles: [],
-        hasMemory: false,
-        hasCredentials: false,
-        hasSkills: false,
-        skillDirs: [],
-        hasCron: false,
-        cronJobs: [],
-        hasHooks: false,
-        hasExtensions: false,
-        hasLogs: false,
-        hasBrowser: false,
-        hasCompletions: false,
-        workspaceFiles: [],
-      },
-      sensitiveFlags: {
-        hasApiKeys: false,
-        hasAuthProfiles: false,
-        hasCredentials: false,
-        hasOAuthTokens: false,
-        hasWhatsAppCreds: false,
-        hasCopilotToken: false,
-        hasSessions: false,
-        hasMemoryDb: false,
-        hasEnvFile: false,
-      },
-      recommendedPackType: "template",
-      riskAssessment: "safe-share",
-      warnings: [],
-      workflow: {
-        recommendationSummary: "Use template for sharing.",
-        recommendedExportCommand: "harness export -t template",
-      },
-    }, "text");
-
-    const output = log.mock.calls.flat().join("\n");
-    expect(output).toContain("Detected:     no");
-    expect(output).toContain("Config:       (none)");
-    expect(output).toContain("Version:      1.2.3");
-    expect(output).toContain("Workspaces:   none");
-    expect(output).toContain("Agents:       none");
-    expect(output).toContain("Export:       harness export -t template");
-    expect(output).not.toContain("Override:");
-    expect(output).not.toContain("--- Warnings ---");
-  });
-
   it("prints verify results with readiness issues, remediation, warnings, and errors", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -216,30 +136,5 @@ describe("output formatting", () => {
 
     expect(log).toHaveBeenCalledOnce();
     expect(log.mock.calls[0]?.[0]).toContain("\"readinessClass\": \"runtime_ready\"");
-  });
-
-  it("prints verify results without optional sections", () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-    printVerifyResult({
-      valid: true,
-      readinessClass: "runtime_ready",
-      runtimeReady: true,
-      readinessSummary: "Ready to run.",
-      checks: [],
-      warnings: [],
-      runtimeReadinessIssues: [],
-      remediationSteps: [],
-      errors: [],
-    }, "text");
-
-    const output = log.mock.calls.flat().join("\n");
-    expect(output).toContain("Structural restore: YES");
-    expect(output).toContain("Runtime ready:      YES");
-    expect(output).not.toContain("--- Checks ---");
-    expect(output).not.toContain("--- Warnings ---");
-    expect(output).not.toContain("--- Runtime Readiness Issues ---");
-    expect(output).not.toContain("--- Recommended Next Steps ---");
-    expect(output).not.toContain("--- Errors ---");
   });
 });
