@@ -3,8 +3,9 @@ type: issue_state
 issue: 81
 task: ./.codex/pm/tasks/product-direction/document-artifact-output-meaning-in-user-docs.md
 title: Document how to interpret harness CLI artifact outputs
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/82
 ---
 
 ## Summary
