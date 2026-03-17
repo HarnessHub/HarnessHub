@@ -10,12 +10,12 @@ This document packages the current OpenClaw-first MVP into one concrete release 
 
 The first HarnessHub MVP release candidate is framed as:
 
-- current repository/package version: `v0.1.0-rc.1`
+- current unreleased repository/CLI version: `v0.1.0-rc.1`
 - intended MVP general-availability target: `v0.1.0`
 - release shape: local CLI plus documented image contract
 - first production-grade adapter: OpenClaw
 
-This framing keeps the currently shipped repository state on an explicit release candidate while preserving `v0.1.0` as the intended MVP final cut.
+This framing keeps the repository's next release-candidate version explicit without implying that `v0.1.0-rc.1` has already been externally published, while preserving `v0.1.0` as the intended MVP final cut.
 
 ## What This Release Candidate Includes
 
@@ -87,7 +87,7 @@ These commands jointly validate:
 
 ## Release Notes Summary
 
-This MVP release candidate marks the point where HarnessHub is no longer just an OpenClaw packaging experiment.
+This MVP release candidate framing marks the point where HarnessHub is no longer just an OpenClaw packaging experiment.
 
 It now has:
 
@@ -97,7 +97,7 @@ It now has:
 - explicit readiness semantics
 - a real validation artifact and regression baseline
 
-That is enough to treat the current build as a release candidate for the OpenClaw-first MVP.
+That is enough to treat the current repository build as the unreleased release-candidate baseline for the OpenClaw-first MVP.
 
 ## References
 
