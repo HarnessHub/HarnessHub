@@ -2,14 +2,15 @@
 
 This record validates the documented operator flow through an isolated package install rather than through the repository working tree directly.
 
-- Validated at: `2026-03-18T06:38:00.718Z`
+- Validated at: `2026-03-18T07:39:35.766Z`
 - Package spec: `harnesshub@0.1.0-rc.1`
-- npx version check: `0.1.0-rc.1`
+- Fresh-directory version check: `0.1.0-rc.1`
+- Fresh-directory command: `npx harnesshub@0.1.0-rc.1 --version`
 - Installed version: `0.1.0-rc.1`
 - Source directory: `~/.openclaw`
-- Artifact path: `.artifacts/fresh-operator/20260318T063757Z/openclaw-template.harness`
-- Artifact sha256: `662a852cbda8a681419ba0bb0a63a46e78ecffb299c413533711431ffcc6e746`
-- Artifact size: `4716866` bytes
+- Artifact path: `.artifacts/fresh-operator/20260318T073931Z/openclaw-template.harness`
+- Artifact sha256: `65593caba240959bcb12411ddd27d77a43629f6360a05d5a07fe948fbf161588`
+- Artifact size: `4716834` bytes
 
 ## Inspect
 
@@ -37,7 +38,7 @@ This record validates the documented operator flow through an isolated package i
 - Inspect: Config contains API keys or tokens
 - Inspect: Agent auth-profiles.json detected (contains API credentials)
 - Inspect: Credentials directory exists
-- Import: Rebound workspace paths in openclaw.json to ./.artifacts/fresh-operator/20260318T063757Z/imported; JSON5 formatting/comments were normalized.
+- Import: Rebound workspace paths in openclaw.json to ./.artifacts/fresh-operator/20260318T073931Z/imported; JSON5 formatting/comments were normalized.
 - Verify: none
 
 This validation intentionally exercises the packaged CLI path instead of the repository-local `dist/` entrypoint.

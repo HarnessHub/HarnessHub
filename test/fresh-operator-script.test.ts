@@ -26,7 +26,7 @@ function createOpenClawFixture(dir: string) {
 }
 
 describe("run-fresh-operator-validation.sh", () => {
-  it("validates the packaged CLI path and records the npx version check", () => {
+  it("validates the packaged CLI path and records the fresh-directory version check", () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-fresh-operator-"));
     const sourceDir = path.join(tmpDir, "source");
     const runDir = path.join(tmpDir, "run");
@@ -53,14 +53,16 @@ describe("run-fresh-operator-validation.sh", () => {
 
     const report = JSON.parse(fs.readFileSync(reportJson, "utf8"));
     expect(report.packageSpec).toContain("harnesshub-0.1.0-rc.1.tgz");
-    expect(report.npxVersion).toBe(report.installedVersion);
+    expect(report.freshVersion).toBe(report.installedVersion);
+    expect(report.freshVersionCommand).toBe("temp install harness --version");
     expect(report.export.success).toBe(true);
     expect(report.manifest.image.adapter).toBe("openclaw");
     expect(report.verify.valid).toBe(true);
     expect(report.verify.readinessClass).toBe("runtime_ready");
 
     const markdown = fs.readFileSync(reportMd, "utf8");
-    expect(markdown).toContain("npx version check:");
+    expect(markdown).toContain("Fresh-directory version check:");
+    expect(markdown).toContain("Fresh-directory command:");
     expect(markdown).toContain("Installed version:");
     expect(markdown).toContain("Readiness class: `runtime_ready`");
 

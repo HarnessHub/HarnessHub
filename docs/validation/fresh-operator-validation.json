@@ -1,12 +1,13 @@
 {
-  "validatedAt": "2026-03-18T06:38:00.718Z",
+  "validatedAt": "2026-03-18T07:39:35.766Z",
   "packageSpec": "harnesshub@0.1.0-rc.1",
-  "npxVersion": "0.1.0-rc.1",
+  "freshVersionCommand": "npx harnesshub@0.1.0-rc.1 --version",
+  "freshVersion": "0.1.0-rc.1",
   "installedVersion": "0.1.0-rc.1",
   "sourceDir": "~/.openclaw",
-  "artifactPath": ".artifacts/fresh-operator/20260318T063757Z/openclaw-template.harness",
-  "artifactSha256": "662a852cbda8a681419ba0bb0a63a46e78ecffb299c413533711431ffcc6e746",
-  "artifactSizeBytes": 4716866,
+  "artifactPath": ".artifacts/fresh-operator/20260318T073931Z/openclaw-template.harness",
+  "artifactSha256": "65593caba240959bcb12411ddd27d77a43629f6360a05d5a07fe948fbf161588",
+  "artifactSizeBytes": 4716834,
   "inspect": {
     "detected": true,
     "product": "openclaw",
@@ -29,7 +30,7 @@
   "manifest": {
     "schemaVersion": "0.5.0",
     "image": {
-      "imageId": "406e4145-b1e6-41f6-a83d-5fe0a4bab414",
+      "imageId": "8a5b2e20-5695-4eb4-ac7e-e36adf8be967",
       "adapter": "openclaw"
     },
     "harness": {
@@ -48,7 +49,7 @@
   "import": {
     "success": true,
     "warnings": [
-      "Rebound workspace paths in openclaw.json to ./.artifacts/fresh-operator/20260318T063757Z/imported; JSON5 formatting/comments were normalized."
+      "Rebound workspace paths in openclaw.json to ./.artifacts/fresh-operator/20260318T073931Z/imported; JSON5 formatting/comments were normalized."
     ]
   },
   "verify": {

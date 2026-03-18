@@ -32,22 +32,27 @@ if [[ -z "$PACKAGE_SPEC" ]]; then
 fi
 
 NPX_CHECK_DIR="$(mktemp -d)"
+FRESH_VERSION_COMMAND=""
+if [[ "$PACKAGE_SPEC" == *.tgz || "$PACKAGE_SPEC" == /* ]]; then
+  FRESH_VERSION_COMMAND="temp install harness --version"
+else
+  FRESH_VERSION_COMMAND="npx $PACKAGE_SPEC --version"
+fi
+
 (
   cd "$NPX_CHECK_DIR"
   if [[ "$PACKAGE_SPEC" == *.tgz || "$PACKAGE_SPEC" == /* ]]; then
-    env -i \
-      HOME="$HOME" \
-      PATH="$PATH" \
-      npm_config_cache="${npm_config_cache:-$HOME/.npm}" \
-      npx --yes --package "$PACKAGE_SPEC" harness --version >"$RUN_DIR/npx-version.txt"
+    npm install --prefix "$NPX_CHECK_DIR/install-root" "$PACKAGE_SPEC" >/dev/null
+    "$NPX_CHECK_DIR/install-root/node_modules/.bin/harness" --version >"$RUN_DIR/fresh-version.txt"
   else
     env -i \
       HOME="$HOME" \
       PATH="$PATH" \
       npm_config_cache="${npm_config_cache:-$HOME/.npm}" \
-      npx --yes "$PACKAGE_SPEC" --version >"$RUN_DIR/npx-version.txt"
+      npx --yes "$PACKAGE_SPEC" --version >"$RUN_DIR/fresh-version.txt"
   fi
 )
+printf '%s\n' "$FRESH_VERSION_COMMAND" >"$RUN_DIR/fresh-version-command.txt"
 rm -rf "$NPX_CHECK_DIR"
 
 npm install --prefix "$INSTALL_ROOT" "$PACKAGE_SPEC" >/dev/null
@@ -71,7 +76,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const [rootDir, sourceDir, runDir, reportJsonPath, reportMdPath, packageSpec] = process.argv.slice(2);
-const npxVersion = fs.readFileSync(path.join(runDir, "npx-version.txt"), "utf8").trim();
+const freshVersionCommand = fs.readFileSync(path.join(runDir, "fresh-version-command.txt"), "utf8").trim();
+const freshVersion = fs.readFileSync(path.join(runDir, "fresh-version.txt"), "utf8").trim();
 const version = fs.readFileSync(path.join(runDir, "version.txt"), "utf8").trim();
 const inspect = JSON.parse(fs.readFileSync(path.join(runDir, "inspect.json"), "utf8"));
 const exported = JSON.parse(fs.readFileSync(path.join(runDir, "export.json"), "utf8"));
@@ -96,7 +102,8 @@ const normalizedPackageSpec = packageSpec.startsWith(rootDir)
 const summary = {
   validatedAt: new Date().toISOString(),
   packageSpec: normalizedPackageSpec,
-  npxVersion,
+  freshVersionCommand,
+  freshVersion,
   installedVersion: version,
   sourceDir: readableSourceDir,
   artifactPath: path.join(relativeRunDir, "openclaw-template.harness"),
@@ -143,7 +150,8 @@ const md = [
   "",
   `- Validated at: \`${summary.validatedAt}\``,
   `- Package spec: \`${summary.packageSpec}\``,
-  `- npx version check: \`${summary.npxVersion}\``,
+  `- Fresh-directory version check: \`${summary.freshVersion}\``,
+  `- Fresh-directory command: \`${summary.freshVersionCommand}\``,
   `- Installed version: \`${summary.installedVersion}\``,
   `- Source directory: \`${summary.sourceDir}\``,
   `- Artifact path: \`${summary.artifactPath}\``,
