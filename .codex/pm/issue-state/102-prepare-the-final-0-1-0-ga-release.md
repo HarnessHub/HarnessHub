@@ -4,7 +4,8 @@ issue: 102
 task: .codex/pm/tasks/product-direction/prepare-the-final-0-1-0-ga-release.md
 title: Prepare the final HarnessHub 0.1.0 GA release
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/103
 ---
 
 ## Summary
