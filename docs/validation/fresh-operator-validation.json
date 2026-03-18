@@ -1,0 +1,61 @@
+{
+  "validatedAt": "2026-03-18T02:10:04.985Z",
+  "packageSpec": "./.artifacts/fresh-operator/20260318T020958Z/harnesshub-0.1.0-rc.1.tgz",
+  "installedVersion": "0.1.0-rc.1",
+  "sourceDir": "~/.openclaw",
+  "artifactPath": ".artifacts/fresh-operator/20260318T020958Z/openclaw-template.harness",
+  "artifactSha256": "258ad1c6c6ad99b3f34cf2d47634c9a1463a8ca1599c5fcacf7ff0c7bd3b7803",
+  "artifactSizeBytes": 4716863,
+  "inspect": {
+    "detected": true,
+    "product": "openclaw",
+    "recommendedPackType": "instance",
+    "riskAssessment": "trusted-migration-only",
+    "warnings": [
+      "Config contains API keys or tokens",
+      "Agent auth-profiles.json detected (contains API credentials)",
+      "Credentials directory exists"
+    ]
+  },
+  "export": {
+    "success": true,
+    "packType": "template",
+    "riskLevel": "internal-only",
+    "policyWarnings": [
+      "Inspect recommended instance; exporting template diverges from the recommended pack type."
+    ]
+  },
+  "manifest": {
+    "schemaVersion": "0.5.0",
+    "image": {
+      "imageId": "9ceaff8a-8d09-4b44-9feb-5ec2bd35dff1",
+      "adapter": "openclaw"
+    },
+    "harness": {
+      "intent": "agent-runtime-environment",
+      "targetProduct": "openclaw",
+      "components": [
+        "workspace",
+        "config",
+        "skills",
+        "cron",
+        "extensions",
+        "completions"
+      ]
+    }
+  },
+  "import": {
+    "success": true,
+    "warnings": [
+      "Rebound workspace paths in openclaw.json to ./.artifacts/fresh-operator/20260318T020958Z/imported; JSON5 formatting/comments were normalized."
+    ]
+  },
+  "verify": {
+    "valid": true,
+    "readinessClass": "runtime_ready",
+    "readinessSummary": "Imported harness is structurally valid and ready to run without additional manual steps.",
+    "runtimeReady": true,
+    "warnings": [],
+    "errors": []
+  }
+}

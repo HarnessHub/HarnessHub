@@ -1,9 +1,9 @@
 {
-  "validatedAt": "2026-03-12T07:51:35.298Z",
+  "validatedAt": "2026-03-18T02:10:05.553Z",
   "sourceDir": "~/.openclaw",
-  "artifactPath": ".artifacts/openclaw-e2e/20260312T075132Z/openclaw-template.harness",
-  "artifactSha256": "9dbcdb3878de3a12c25c14e9499a55f862f26afdab869616f007be3ce0360015",
-  "artifactSizeBytes": 4071021,
+  "artifactPath": ".artifacts/openclaw-e2e/20260318T020957Z/openclaw-template.harness",
+  "artifactSha256": "9c94dbbb9e7715144f1bbc1799a572d225c0361c7eb8285c55ac8cd82ffaff2c",
+  "artifactSizeBytes": 4716857,
   "inspect": {
     "detected": true,
     "product": "openclaw",
@@ -13,7 +13,7 @@
     "workspaceDirs": [
       "workspace"
     ],
-    "workspaceFileCount": 165,
+    "workspaceFileCount": 166,
     "skillDirCount": 18,
     "agentIds": [
       "main"
@@ -26,11 +26,11 @@
   },
   "export": {
     "success": true,
-    "packId": "b0e14d8c-2781-4364-9ed1-4c07084d0a28",
+    "packId": "e1a3c842-8a53-455e-a211-a80ada21e59a",
     "packType": "template",
     "riskLevel": "internal-only",
-    "fileCount": 321,
-    "totalSize": 7011102,
+    "fileCount": 322,
+    "totalSize": 7655990,
     "policyWarnings": [
       "Inspect recommended instance; exporting template diverges from the recommended pack type."
     ]
@@ -38,7 +38,7 @@
   "manifest": {
     "schemaVersion": "0.5.0",
     "image": {
-      "imageId": "b0e14d8c-2781-4364-9ed1-4c07084d0a28",
+      "imageId": "e1a3c842-8a53-455e-a211-a80ada21e59a",
       "adapter": "openclaw"
     },
     "lineage": {
@@ -66,10 +66,10 @@
   },
   "import": {
     "success": true,
-    "targetDir": ".artifacts/openclaw-e2e/20260312T075132Z/imported",
-    "fileCount": 322,
+    "targetDir": ".artifacts/openclaw-e2e/20260318T020957Z/imported",
+    "fileCount": 323,
     "warnings": [
-      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T075132Z/imported; JSON5 formatting/comments were normalized."
+      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T020957Z/imported; JSON5 formatting/comments were normalized."
     ]
   },
   "verify": {

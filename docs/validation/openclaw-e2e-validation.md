@@ -2,11 +2,11 @@
 
 This record comes from a real local `~/.openclaw` validation run using the current `harness` CLI path.
 
-- Validated at: `2026-03-12T07:51:35.298Z`
+- Validated at: `2026-03-18T02:10:05.553Z`
 - Source directory: `~/.openclaw`
-- Artifact path: `.artifacts/openclaw-e2e/20260312T075132Z/openclaw-template.harness`
-- Artifact sha256: `9dbcdb3878de3a12c25c14e9499a55f862f26afdab869616f007be3ce0360015`
-- Artifact size: `4071021` bytes
+- Artifact path: `.artifacts/openclaw-e2e/20260318T020957Z/openclaw-template.harness`
+- Artifact sha256: `9c94dbbb9e7715144f1bbc1799a572d225c0361c7eb8285c55ac8cd82ffaff2c`
+- Artifact size: `4716857` bytes
 
 ## Inspect
 
@@ -16,18 +16,18 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 - Recommended pack type: `instance`
 - Risk assessment: `trusted-migration-only`
 - Workspace dirs: `workspace`
-- Workspace file count: `165`
+- Workspace file count: `166`
 - Skill dir count: `18`
 - Agent ids: `main`
 
 ## Export
 
 - Success: `true`
-- Pack ID: `b0e14d8c-2781-4364-9ed1-4c07084d0a28`
+- Pack ID: `e1a3c842-8a53-455e-a211-a80ada21e59a`
 - Pack type: `template`
 - Risk level: `internal-only`
-- File count: `321`
-- Total size: `7011102` bytes
+- File count: `322`
+- Total size: `7655990` bytes
 
 ## Export Policy
 
@@ -37,7 +37,7 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 
 - Schema version: `0.5.0`
 - Adapter: `openclaw`
-- Image ID: `b0e14d8c-2781-4364-9ed1-4c07084d0a28`
+- Image ID: `e1a3c842-8a53-455e-a211-a80ada21e59a`
 - Binding workspace count: `1`
 - Harness intent: `agent-runtime-environment`
 - Harness target product: `openclaw`
@@ -46,8 +46,8 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 ## Import And Verify
 
 - Import success: `true`
-- Imported target: `.artifacts/openclaw-e2e/20260312T075132Z/imported`
-- Imported file count: `322`
+- Imported target: `.artifacts/openclaw-e2e/20260318T020957Z/imported`
+- Imported file count: `323`
 - Verify valid: `true`
 - Readiness class: `runtime_ready`
 - Runtime ready: `true`
@@ -59,7 +59,7 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 - Inspect: Config contains API keys or tokens
 - Inspect: Agent auth-profiles.json detected (contains API credentials)
 - Inspect: Credentials directory exists
-- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260312T075132Z/imported; JSON5 formatting/comments were normalized.
+- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T020957Z/imported; JSON5 formatting/comments were normalized.
 - Verify: none
 
 The `.harness` artifact itself is retained only in the local `.artifacts/` directory and is intentionally not committed.
