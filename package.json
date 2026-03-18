@@ -22,7 +22,7 @@
     "smoke": "./scripts/run-cli-smoke.sh",
     "fresh-operator": "./scripts/run-fresh-operator-validation.sh",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --no-file-parallelism",
     "coverage:summary": "node scripts/render-coverage-summary.mjs coverage/coverage-summary.json",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build && npm test"

@@ -15,7 +15,7 @@ The first HarnessHub MVP release candidate is framed as:
 - release shape: local CLI plus documented image contract
 - first production-grade adapter: OpenClaw
 
-This framing keeps the repository's next release-candidate version explicit without implying that `v0.1.0-rc.1` has already been externally published, while preserving `v0.1.0` as the intended MVP final cut.
+This framing keeps the repository's next release-candidate version explicit while preserving `v0.1.0` as the intended MVP final cut.
 
 ## What This Release Candidate Includes
 
@@ -41,11 +41,11 @@ Those remain post-MVP or 1.0 concerns and must not block this release candidate.
 
 ## Fresh Operator Acceptance Path
 
-A fresh operator should be able to validate the current release candidate with this path:
+A fresh operator should be able to validate the published release candidate with this path:
 
 ```bash
-npm install
-npm run build
+npx harnesshub@0.1.0-rc.1 --version
+npm install -g harnesshub@0.1.0-rc.1
 
 harness inspect -p /path/to/openclaw
 harness export -p /path/to/openclaw -t template -o my-agent.harness
