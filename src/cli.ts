@@ -15,7 +15,7 @@ export function createProgram(): Command {
   program
     .name("harness")
     .description("HarnessHub CLI for packaging OpenClaw-style agent runtimes")
-    .version("0.1.0-rc.1");
+    .version("0.1.0");
 
   program.addCommand(inspectCommand);
   program.addCommand(exportCommand);

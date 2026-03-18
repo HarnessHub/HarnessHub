@@ -52,7 +52,7 @@ describe("run-fresh-operator-validation.sh", () => {
     expect(fs.existsSync(path.join(runDir, "openclaw-template.harness"))).toBe(true);
 
     const report = JSON.parse(fs.readFileSync(reportJson, "utf8"));
-    expect(report.packageSpec).toContain("harnesshub-0.1.0-rc.1.tgz");
+    expect(report.packageSpec).toContain("harnesshub-0.1.0.tgz");
     expect(report.freshVersion).toBe(report.installedVersion);
     expect(report.freshVersionCommand).toBe("temp install harness --version");
     expect(report.export.success).toBe(true);

@@ -2,7 +2,7 @@
 
 ## Status
 
-Current post-RC decision gate for promoting HarnessHub from `v0.1.0-rc.1` to `v0.1.0`.
+Current post-RC decision gate for promoting HarnessHub from the published `v0.1.0-rc.1` baseline to `v0.1.0`.
 
 This document exists because the MVP gate and the RC publish runbook answer different questions:
 
@@ -87,12 +87,12 @@ Current validated evidence in the repository:
 Current open items:
 
 - `#97` is the umbrella post-RC closeout issue
-- `#99` is this documentation issue for the GA gate itself
+- `#102` is the execution issue for the final `0.1.0` release closeout
 
 Current classification:
 
 - `#97` is coordination work, not by itself a GA blocker
-- `#99` is documentation debt until this gate is written, then it stops being a blocker
+- `#102` is release execution work, not by itself evidence that another RC is required
 - no separate known product or packaging bug is currently recorded as a GA blocker
 
 ## Decision Rule: `0.1.0` vs `0.1.0-rc.2`
@@ -135,5 +135,7 @@ When the team makes the final go/no-go call:
 - [0002-mvp-release-candidate.md](./0002-mvp-release-candidate.md)
 - [0003-v0-1-0-rc-1-runbook.md](./0003-v0-1-0-rc-1-runbook.md)
 - [0004-v0-1-0-rc-1-notes.md](./0004-v0-1-0-rc-1-notes.md)
+- [0006-v0-1-0-ga-runbook.md](./0006-v0-1-0-ga-runbook.md)
+- [0007-v0-1-0-notes.md](./0007-v0-1-0-notes.md)
 - `docs/validation/fresh-operator-validation.md`
 - `docs/validation/openclaw-e2e-validation.md`

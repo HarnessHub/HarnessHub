@@ -2,20 +2,20 @@
 
 ## Status
 
-Current release-candidate framing for the first HarnessHub MVP cut.
+Historical release-candidate framing for the first HarnessHub MVP cut.
 
-This document packages the current OpenClaw-first MVP into one concrete release candidate instead of leaving release readiness implicit across multiple docs.
+This document captures the OpenClaw-first MVP as one concrete release-candidate baseline instead of leaving release readiness implicit across multiple docs.
 
 ## Version Framing
 
-The first HarnessHub MVP release candidate is framed as:
+The first HarnessHub MVP release candidate was framed as:
 
-- current unreleased repository/CLI version: `v0.1.0-rc.1`
+- published release-candidate version: `v0.1.0-rc.1`
 - intended MVP general-availability target: `v0.1.0`
 - release shape: local CLI plus documented image contract
 - first production-grade adapter: OpenClaw
 
-This framing keeps the repository's next release-candidate version explicit while preserving `v0.1.0` as the intended MVP final cut.
+This framing preserved `v0.1.0` as the intended MVP final cut while the RC gathered post-publish evidence.
 
 ## What This Release Candidate Includes
 
@@ -97,7 +97,7 @@ It now has:
 - explicit readiness semantics
 - a real validation artifact and regression baseline
 
-That is enough to treat the current repository build as the unreleased release-candidate baseline for the OpenClaw-first MVP.
+That was enough to treat the repository build at the time as the release-candidate baseline for the OpenClaw-first MVP.
 
 ## References
 
@@ -105,6 +105,8 @@ That is enough to treat the current repository build as the unreleased release-c
 - `docs/releases/0005-v0-1-0-ga-go-no-go-gate.md`
 - `docs/releases/0003-v0-1-0-rc-1-runbook.md`
 - `docs/releases/0004-v0-1-0-rc-1-notes.md`
+- `docs/releases/0006-v0-1-0-ga-runbook.md`
+- `docs/releases/0007-v0-1-0-notes.md`
 - `docs/specs/0001-mvp-harness-image-specification.md`
 - `docs/validation/fresh-operator-validation.md`
 - `docs/validation/openclaw-e2e-validation.md`
