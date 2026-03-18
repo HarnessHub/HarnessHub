@@ -3,8 +3,9 @@ type: issue_state
 issue: 99
 task: .codex/pm/tasks/product-direction/define-the-0-1-0-ga-go-no-go-gate-after-0-1-0-rc-1.md
 title: Define the 0.1.0 GA go/no-go gate after 0.1.0-rc.1
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/101
 ---
 
 ## Summary
