@@ -20,6 +20,7 @@
     "review:checkpoint": "./scripts/run-codex-review-checkpoint.sh",
     "preflight": "./scripts/run-agent-preflight.sh",
     "smoke": "./scripts/run-cli-smoke.sh",
+    "fresh-operator": "./scripts/run-fresh-operator-validation.sh",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "coverage:summary": "node scripts/render-coverage-summary.mjs coverage/coverage-summary.json",

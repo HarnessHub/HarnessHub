@@ -102,5 +102,8 @@ That is enough to treat the current repository build as the unreleased release-c
 ## References
 
 - `docs/releases/0001-mvp-exit-criteria.md`
+- `docs/releases/0003-v0-1-0-rc-1-runbook.md`
+- `docs/releases/0004-v0-1-0-rc-1-notes.md`
 - `docs/specs/0001-mvp-harness-image-specification.md`
+- `docs/validation/fresh-operator-validation.md`
 - `docs/validation/openclaw-e2e-validation.md`

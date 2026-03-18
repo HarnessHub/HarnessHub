@@ -158,6 +158,19 @@ describe("harness CLI integration", () => {
     expect(data.error).toContain("Pack file not found");
   });
 
+  it("executes correctly through a symlinked CLI path", () => {
+    const symlinkPath = path.join(tmpDir, "harness");
+    fs.symlinkSync(cliPath, symlinkPath);
+
+    const result = spawnSync("node", [symlinkPath, "--version"], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe("0.1.0-rc.1");
+  });
+
   it("returns a failing verify result for a missing target path", () => {
     const result = runCli(["verify", "-p", path.join(tmpDir, "missing-target"), "-f", "json"]);
     expect(result.status).toBe(1);

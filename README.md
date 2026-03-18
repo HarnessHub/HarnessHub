@@ -72,10 +72,12 @@ HarnessHub understands the current OpenClaw layout, including `agents/*`, `works
 ## Install
 
 ```bash
-npm install -g harnesshub
+npm install -g harnesshub@0.1.0-rc.1
 ```
 
 Requires Node.js >= 20.
+
+The current published install path is pinned to the active release candidate until `0.1.0` GA is cut.
 
 ## Quick Start
 

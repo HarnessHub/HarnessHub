@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
@@ -28,8 +29,17 @@ export async function run(argv = process.argv): Promise<void> {
   await createProgram().parseAsync(argv);
 }
 
+function resolveExecutablePath(filePath: string | undefined): string | undefined {
+  if (!filePath) return undefined;
+  try {
+    return fs.realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
+}
+
 const isDirectExecution = process.argv[1] !== undefined
-  && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  && resolveExecutablePath(process.argv[1]) === resolveExecutablePath(fileURLToPath(import.meta.url));
 
 if (isDirectExecution) {
   void run();
