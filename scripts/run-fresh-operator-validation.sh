@@ -31,6 +31,25 @@ if [[ -z "$PACKAGE_SPEC" ]]; then
   exit 1
 fi
 
+NPX_CHECK_DIR="$(mktemp -d)"
+(
+  cd "$NPX_CHECK_DIR"
+  if [[ "$PACKAGE_SPEC" == *.tgz || "$PACKAGE_SPEC" == /* ]]; then
+    env -i \
+      HOME="$HOME" \
+      PATH="$PATH" \
+      npm_config_cache="${npm_config_cache:-$HOME/.npm}" \
+      npx --yes --package "$PACKAGE_SPEC" harness --version >"$RUN_DIR/npx-version.txt"
+  else
+    env -i \
+      HOME="$HOME" \
+      PATH="$PATH" \
+      npm_config_cache="${npm_config_cache:-$HOME/.npm}" \
+      npx --yes "$PACKAGE_SPEC" --version >"$RUN_DIR/npx-version.txt"
+  fi
+)
+rm -rf "$NPX_CHECK_DIR"
+
 npm install --prefix "$INSTALL_ROOT" "$PACKAGE_SPEC" >/dev/null
 
 BIN_PATH="$INSTALL_ROOT/node_modules/.bin/harness"
@@ -52,6 +71,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const [rootDir, sourceDir, runDir, reportJsonPath, reportMdPath, packageSpec] = process.argv.slice(2);
+const npxVersion = fs.readFileSync(path.join(runDir, "npx-version.txt"), "utf8").trim();
 const version = fs.readFileSync(path.join(runDir, "version.txt"), "utf8").trim();
 const inspect = JSON.parse(fs.readFileSync(path.join(runDir, "inspect.json"), "utf8"));
 const exported = JSON.parse(fs.readFileSync(path.join(runDir, "export.json"), "utf8"));
@@ -76,6 +96,7 @@ const normalizedPackageSpec = packageSpec.startsWith(rootDir)
 const summary = {
   validatedAt: new Date().toISOString(),
   packageSpec: normalizedPackageSpec,
+  npxVersion,
   installedVersion: version,
   sourceDir: readableSourceDir,
   artifactPath: path.join(relativeRunDir, "openclaw-template.harness"),
@@ -122,6 +143,7 @@ const md = [
   "",
   `- Validated at: \`${summary.validatedAt}\``,
   `- Package spec: \`${summary.packageSpec}\``,
+  `- npx version check: \`${summary.npxVersion}\``,
   `- Installed version: \`${summary.installedVersion}\``,
   `- Source directory: \`${summary.sourceDir}\``,
   `- Artifact path: \`${summary.artifactPath}\``,
