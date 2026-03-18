@@ -3,8 +3,8 @@ type: issue_state
 issue: 102
 task: .codex/pm/tasks/product-direction/prepare-the-final-0-1-0-ga-release.md
 title: Prepare the final HarnessHub 0.1.0 GA release
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

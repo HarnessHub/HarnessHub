@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: prepare-the-final-0-1-0-ga-release
 title: Prepare the final HarnessHub 0.1.0 GA release
-status: in_progress
+status: done
 task_type: implementation
 labels: release,ga
 issue: 102
