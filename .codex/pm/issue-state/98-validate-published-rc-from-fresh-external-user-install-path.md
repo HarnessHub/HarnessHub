@@ -4,7 +4,8 @@ issue: 98
 task: .codex/pm/tasks/product-direction/validate-published-rc-from-fresh-external-user-install-path.md
 title: Validate published 0.1.0-rc.1 from a fresh external-user install path
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/100
 ---
 
 ## Summary
