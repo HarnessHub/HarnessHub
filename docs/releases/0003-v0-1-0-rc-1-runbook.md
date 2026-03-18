@@ -94,3 +94,4 @@ After publish succeeds:
 - keep `README.md` and `README_zh.md` pinned to the RC install command until `0.1.0` GA exists
 - use the recorded validation artifacts as the baseline for the RC announcement
 - treat any follow-up fixes as post-RC issues, not silent mutation of the published tag
+- use `docs/releases/0005-v0-1-0-ga-go-no-go-gate.md` to decide whether the next step is direct GA or `v0.1.0-rc.2`
