@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: validate-published-rc-from-fresh-external-user-install-path
 title: Validate published 0.1.0-rc.1 from a fresh external-user install path
-status: in_progress
+status: done
 task_type: implementation
 labels: release,validation
 issue: 98

@@ -3,8 +3,8 @@ type: issue_state
 issue: 98
 task: .codex/pm/tasks/product-direction/validate-published-rc-from-fresh-external-user-install-path.md
 title: Validate published 0.1.0-rc.1 from a fresh external-user install path
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
