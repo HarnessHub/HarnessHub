@@ -4,7 +4,8 @@ issue: 95
 task: .codex/pm/tasks/product-direction/run-release-gate-and-publish-v0-1-0-rc-1.md
 title: Run release gate and publish HarnessHub v0.1.0-rc.1
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/96
 ---
 
 ## Summary
