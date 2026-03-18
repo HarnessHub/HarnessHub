@@ -103,3 +103,4 @@ HarnessHub should be treated as MVP-complete when:
 At that point, the next step is not more MVP-definition work. The next step is to cut and document the first MVP release candidate.
 
 The current release-candidate framing for that cut is documented in [0002-mvp-release-candidate.md](./0002-mvp-release-candidate.md).
+The post-RC promotion gate from `v0.1.0-rc.1` to `v0.1.0` is documented in [0005-v0-1-0-ga-go-no-go-gate.md](./0005-v0-1-0-ga-go-no-go-gate.md).
