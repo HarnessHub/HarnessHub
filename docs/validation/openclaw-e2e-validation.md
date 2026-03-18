@@ -2,11 +2,11 @@
 
 This record comes from a real local `~/.openclaw` validation run using the current `harness` CLI path.
 
-- Validated at: `2026-03-18T02:10:05.553Z`
+- Validated at: `2026-03-18T09:24:46.421Z`
 - Source directory: `~/.openclaw`
-- Artifact path: `.artifacts/openclaw-e2e/20260318T020957Z/openclaw-template.harness`
-- Artifact sha256: `9c94dbbb9e7715144f1bbc1799a572d225c0361c7eb8285c55ac8cd82ffaff2c`
-- Artifact size: `4716857` bytes
+- Artifact path: `.artifacts/openclaw-e2e/20260318T092439Z/openclaw-template.harness`
+- Artifact sha256: `329857a47217b9dbd15c188ae9d8f9f3a7cd07c3c4c33d8ede4d9878eb7428c3`
+- Artifact size: `947462` bytes
 
 ## Inspect
 
@@ -23,7 +23,7 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 ## Export
 
 - Success: `true`
-- Pack ID: `e1a3c842-8a53-455e-a211-a80ada21e59a`
+- Pack ID: `5e311579-f0cb-4148-b550-b659e1ee6c47`
 - Pack type: `template`
 - Risk level: `internal-only`
 - File count: `322`
@@ -37,7 +37,7 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 
 - Schema version: `0.5.0`
 - Adapter: `openclaw`
-- Image ID: `e1a3c842-8a53-455e-a211-a80ada21e59a`
+- Image ID: `5e311579-f0cb-4148-b550-b659e1ee6c47`
 - Binding workspace count: `1`
 - Harness intent: `agent-runtime-environment`
 - Harness target product: `openclaw`
@@ -46,8 +46,8 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 ## Import And Verify
 
 - Import success: `true`
-- Imported target: `.artifacts/openclaw-e2e/20260318T020957Z/imported`
-- Imported file count: `323`
+- Imported target: `.artifacts/openclaw-e2e/20260318T092439Z/imported`
+- Imported file count: `199`
 - Verify valid: `true`
 - Readiness class: `runtime_ready`
 - Runtime ready: `true`
@@ -59,7 +59,7 @@ This record comes from a real local `~/.openclaw` validation run using the curre
 - Inspect: Config contains API keys or tokens
 - Inspect: Agent auth-profiles.json detected (contains API credentials)
 - Inspect: Credentials directory exists
-- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T020957Z/imported; JSON5 formatting/comments were normalized.
-- Verify: none
+- Import: Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T092439Z/imported; JSON5 formatting/comments were normalized.
+- Verify: Some files may not have been imported: 199 found vs 322 expected
 
 The `.harness` artifact itself is retained only in the local `.artifacts/` directory and is intentionally not committed.

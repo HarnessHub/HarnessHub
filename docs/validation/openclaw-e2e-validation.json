@@ -1,9 +1,9 @@
 {
-  "validatedAt": "2026-03-18T02:10:05.553Z",
+  "validatedAt": "2026-03-18T09:24:46.421Z",
   "sourceDir": "~/.openclaw",
-  "artifactPath": ".artifacts/openclaw-e2e/20260318T020957Z/openclaw-template.harness",
-  "artifactSha256": "9c94dbbb9e7715144f1bbc1799a572d225c0361c7eb8285c55ac8cd82ffaff2c",
-  "artifactSizeBytes": 4716857,
+  "artifactPath": ".artifacts/openclaw-e2e/20260318T092439Z/openclaw-template.harness",
+  "artifactSha256": "329857a47217b9dbd15c188ae9d8f9f3a7cd07c3c4c33d8ede4d9878eb7428c3",
+  "artifactSizeBytes": 947462,
   "inspect": {
     "detected": true,
     "product": "openclaw",
@@ -26,7 +26,7 @@
   },
   "export": {
     "success": true,
-    "packId": "e1a3c842-8a53-455e-a211-a80ada21e59a",
+    "packId": "5e311579-f0cb-4148-b550-b659e1ee6c47",
     "packType": "template",
     "riskLevel": "internal-only",
     "fileCount": 322,
@@ -38,7 +38,7 @@
   "manifest": {
     "schemaVersion": "0.5.0",
     "image": {
-      "imageId": "e1a3c842-8a53-455e-a211-a80ada21e59a",
+      "imageId": "5e311579-f0cb-4148-b550-b659e1ee6c47",
       "adapter": "openclaw"
     },
     "lineage": {
@@ -66,10 +66,10 @@
   },
   "import": {
     "success": true,
-    "targetDir": ".artifacts/openclaw-e2e/20260318T020957Z/imported",
-    "fileCount": 323,
+    "targetDir": ".artifacts/openclaw-e2e/20260318T092439Z/imported",
+    "fileCount": 199,
     "warnings": [
-      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T020957Z/imported; JSON5 formatting/comments were normalized."
+      "Rebound workspace paths in openclaw.json to ./.artifacts/openclaw-e2e/20260318T092439Z/imported; JSON5 formatting/comments were normalized."
     ]
   },
   "verify": {
@@ -98,7 +98,9 @@
       "workspace_readable"
     ],
     "runtimeReadinessIssues": [],
-    "warnings": [],
+    "warnings": [
+      "Some files may not have been imported: 199 found vs 322 expected"
+    ],
     "errors": []
   }
 }

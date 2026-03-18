@@ -23,6 +23,8 @@ For the current product framing, see:
 - `docs/architecture/0001-harness-image-architecture.md`
 - `docs/releases/0001-mvp-exit-criteria.md`
 - `docs/releases/0002-mvp-release-candidate.md`
+- `docs/releases/0006-v0-1-0-ga-runbook.md`
+- `docs/releases/0007-v0-1-0-notes.md`
 
 ## Why
 
@@ -72,12 +74,10 @@ HarnessHub understands the current OpenClaw layout, including `agents/*`, `works
 ## Install
 
 ```bash
-npm install -g harnesshub@0.1.0-rc.1
+npm install -g harnesshub
 ```
 
 Requires Node.js >= 20.
-
-The current published install path is pinned to the active release candidate until `0.1.0` GA is cut.
 
 ## Quick Start
 

@@ -168,7 +168,7 @@ describe("harness CLI integration", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout.trim()).toBe("0.1.0-rc.1");
+    expect(result.stdout.trim()).toBe("0.1.0");
   });
 
   it("returns a failing verify result for a missing target path", () => {
