@@ -65,9 +65,11 @@ describe("committed OpenClaw validation baseline", () => {
       readinessSummary: "Imported harness is structurally valid and ready to run without additional manual steps.",
       runtimeReady: true,
       runtimeReadinessIssues: [],
-      warnings: [],
       errors: [],
     });
+    expect(baseline.verify.warnings).toEqual([
+      "Some files may not have been imported: 199 found vs 322 expected",
+    ]);
     expect(baseline.verify.checkNames).toEqual([
       "directory_exists",
       "config_exists",
