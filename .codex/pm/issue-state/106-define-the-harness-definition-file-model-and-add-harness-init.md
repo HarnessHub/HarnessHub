@@ -3,8 +3,9 @@ type: issue_state
 issue: 106
 task: .codex/pm/tasks/product-direction/define-the-harness-definition-file-model-and-add-harness-init.md
 title: Define the harness definition file model and add harness init
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/113
 ---
 
 ## Summary
