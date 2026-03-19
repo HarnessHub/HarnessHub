@@ -59,6 +59,7 @@ Harness and workflow support lives in:
 - `.githooks/pre-push` — local review/proof/closure guardrail
 - `scripts/` — PM, review checkpoint, preflight, and CLI smoke commands
 - `docs/engineering/repository-governance.md` — contributor-facing daily harness workflow
+- `docs/engineering/branching-and-release-governance.md` — stable branch and release-line policy
 
 ## Key Concepts
 
@@ -77,8 +78,12 @@ Harness and workflow support lives in:
 - Import paths in source use `.js` extensions (ESM convention)
 - Use `node scripts/codex-pm.mjs` for repository-local task, issue-state, and PR-body workflows instead of ad hoc notes
 - Keep one issue per branch and one issue per PR
-- Start each issue branch from the latest `upstream/main`
+- Start each issue branch from the latest commit on its target integration line
+- Default integration line: `upstream/main`
+- Use `upstream/release/x.y` only for active stabilization or patch-line work on that version series
+- Treat `main` as the long-lived next-version branch and `release/x.y` as a just-in-time stable line, not as a permanent `develop` branch
 - Do not keep working on a branch after its PR has merged
+- For release-line work, follow `docs/engineering/branching-and-release-governance.md` and set the matching `HARNESSHUB_BASE_REF`, `HARNESSHUB_PREFLIGHT_BASE_REF`, and `HARNESSHUB_REVIEW_BASE_REF` overrides when the local hook or preflight should compare against `upstream/release/x.y`
 - Before push, prefer `./scripts/run-codex-review-checkpoint.sh` and `./scripts/run-agent-preflight.sh`
 - Unless the user explicitly asks to stop earlier, issue-scoped work should continue through `node scripts/codex-pm.mjs issue-deliver <task-path> --issue <n> --tests "npm test"` so the branch is pushed and the PR is opened
 - Run `./scripts/run-cli-smoke.sh` when a change affects the documented command path or import/export/verify behavior

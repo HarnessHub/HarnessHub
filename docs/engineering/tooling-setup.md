@@ -16,6 +16,7 @@ The repository now includes:
 For the full daily workflow and repository rules, see:
 
 - `docs/engineering/repository-governance.md`
+- `docs/engineering/branching-and-release-governance.md`
 
 To enable the local hook:
 
@@ -25,6 +26,14 @@ To enable the local hook:
 
 After that, each push requires both a `.codex-review` file and a current `.codex-review-proof` file in the repository root unless you explicitly bypass the hook. The hook also expects your branch to contain the latest `upstream/main` by default.
 These two files are local review artifacts for the current branch and should stay untracked in normal development.
+
+For release-line work, override the default base ref:
+
+```bash
+HARNESSHUB_BASE_REF=upstream/release/0.2 git push
+HARNESSHUB_PREFLIGHT_BASE_REF=upstream/release/0.2 ./scripts/run-agent-preflight.sh
+HARNESSHUB_REVIEW_BASE_REF=upstream/release/0.2 ./scripts/run-codex-review-checkpoint.sh
+```
 
 ## Codex Review Hook
 
