@@ -10,6 +10,8 @@ export const initCommand = new Command("init")
   .option("-p, --path <path>", "Bootstrap the definition from an OpenClaw source path")
   .option("-o, --output <path>", "Definition file path")
   .option("--image-id <imageId>", "Explicit image id for the definition")
+  .option("--parent-image-id <imageId>", "Declare a local parent image by image id")
+  .option("--parent-path <path>", "Declare a local parent image by local definition or manifest path")
   .option("--force", "Overwrite an existing definition file")
   .option("-f, --format <format>", "Output format: text or json", "text")
   .action((opts) => {
@@ -21,6 +23,8 @@ export const initCommand = new Command("init")
         outputPath: opts.output,
         sourcePath: opts.path,
         imageId: opts.imageId,
+        parentImageId: opts.parentImageId,
+        parentPath: opts.parentPath,
         force: Boolean(opts.force),
       });
       console.log(formatInitDefinitionResult(result, format));

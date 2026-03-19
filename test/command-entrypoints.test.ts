@@ -177,10 +177,11 @@ describe("command entrypoints", () => {
     }));
 
     const { exportCommand } = await importFresh<typeof import("../src/commands/export.js")>("../src/commands/export.js");
-    await exportCommand.parseAsync(["node", "export", "-f", "json"], { from: "node" });
+    await exportCommand.parseAsync(["node", "export", "-f", "json", "-d", "harness.definition.json"], { from: "node" });
 
     expect(log.mock.calls[0]?.[0]).toContain("\"policyWarnings\": [");
     expect(log.mock.calls[0]?.[0]).toContain("\"outputFile\": \"/tmp/out.harness\"");
+    expect((await importFresh<typeof import("../src/core/packer.js")>("../src/core/packer.js")).exportPack).toBeDefined();
   });
 
   it("renders export command text output without warnings", async () => {
@@ -295,6 +296,31 @@ describe("command entrypoints", () => {
 
     expect(error).toHaveBeenCalledWith("Error: export failed");
     expect(process.exitCode).toBe(1);
+  });
+
+  it("passes definition path through the export command", async () => {
+    const exportPack = vi.fn(async () => ({
+      outputFile: "/tmp/out.harness",
+      manifest: {
+        packId: "pack-2",
+        packType: "template",
+        riskLevel: "safe-share",
+      },
+      fileCount: 1,
+      totalSize: 128,
+      warnings: [],
+      policyWarnings: [],
+    }));
+
+    vi.doMock("../src/core/packer.js", () => ({ exportPack }));
+
+    const { exportCommand } = await importFresh<typeof import("../src/commands/export.js")>("../src/commands/export.js");
+    await exportCommand.parseAsync(["node", "export", "-d", "./harness.definition.json"], { from: "node" });
+
+    expect(exportPack).toHaveBeenCalledWith(expect.objectContaining({
+      definitionPath: "./harness.definition.json",
+      cwd: process.cwd(),
+    }));
   });
 
   it("renders import warnings in text mode", async () => {

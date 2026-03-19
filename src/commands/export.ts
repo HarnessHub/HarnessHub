@@ -6,6 +6,7 @@ export const exportCommand = new Command("export")
   .description("Export an OpenClaw instance as a HarnessHub package")
   .option("-p, --path <path>", "Path to OpenClaw state directory")
   .option("-o, --output <path>", "Output file path")
+  .option("-d, --definition <path>", "Definition file path; defaults to harness.definition.json in the current directory when present")
   .option("-t, --type <type>", "Pack type: template or instance", "template")
   .option("--allow-pack-type-override", "Allow exporting a pack type that diverges from inspect recommendations")
   .option("-f, --format <format>", "Output format: text or json", "text")
@@ -28,6 +29,8 @@ export const exportCommand = new Command("export")
       const result = await exportPack({
         sourcePath: opts.path,
         outputPath: opts.output,
+        definitionPath: opts.definition,
+        cwd: process.cwd(),
         packType,
         allowPackTypeOverride: Boolean(opts.allowPackTypeOverride),
       });

@@ -5,9 +5,11 @@ import { openClawAdapter } from "./adapters/openclaw.js";
 import {
   HARNESS_DEFINITION_FILE,
   HARNESS_DEFINITION_SCHEMA_VERSION,
-  type HarnessAdapterId,
   type HarnessComponent,
   type HarnessDefinition,
+  type HarnessDefinitionParentReference,
+  type HarnessImageReference,
+  type Manifest,
   type OutputFormat,
   type WorkspaceBindingRule,
 } from "./types.js";
@@ -43,6 +45,8 @@ export interface InitHarnessDefinitionOptions {
   outputPath?: string;
   sourcePath?: string;
   imageId?: string;
+  parentImageId?: string;
+  parentPath?: string;
   force?: boolean;
 }
 
@@ -61,15 +65,21 @@ export function initHarnessDefinition(options: InitHarnessDefinitionOptions): In
     throw new Error(`Definition file already exists: ${definitionFile}. Use --force to overwrite it.`);
   }
 
+  if (options.parentImageId && options.parentPath) {
+    throw new Error("Choose either --parent-image-id or --parent-path, not both.");
+  }
+
   const definition = options.sourcePath
     ? createDefinitionFromOpenClaw({
         cwd,
         sourcePath: options.sourcePath,
         imageId: options.imageId,
+        parentReference: buildParentReference(options.parentImageId, options.parentPath),
       })
     : createStarterDefinition({
         cwd,
         imageId: options.imageId,
+        parentReference: buildParentReference(options.parentImageId, options.parentPath),
       });
 
   fs.mkdirSync(path.dirname(definitionFile), { recursive: true });
@@ -89,11 +99,33 @@ export function readHarnessDefinition(definitionFile: string): HarnessDefinition
   return parsed as HarnessDefinition;
 }
 
+export function readHarnessDefinitionIfPresent(definitionFile: string): HarnessDefinition | null {
+  if (!fs.existsSync(definitionFile)) return null;
+  return readHarnessDefinition(definitionFile);
+}
+
 export function assertValidHarnessDefinition(definition: unknown) {
   const errors = validateHarnessDefinition(definition);
   if (errors.length > 0) {
     throw new Error(`Harness definition validation failed: ${errors.join("; ")}`);
   }
+}
+
+export function resolveDefinitionParentImage(
+  definition: HarnessDefinition,
+  definitionFile: string
+): HarnessImageReference | null {
+  if (definition.lineage.parentImage === null) return null;
+
+  if (definition.lineage.parentImage.refType === "image-id") {
+    return {
+      imageId: definition.lineage.parentImage.value,
+    };
+  }
+
+  const baseDir = path.dirname(definitionFile);
+  const targetPath = path.resolve(baseDir, definition.lineage.parentImage.value);
+  return readParentImageReferenceFromLocalPath(targetPath);
 }
 
 export function validateHarnessDefinition(definition: unknown): string[] {
@@ -131,6 +163,7 @@ export function formatInitDefinitionResult(result: InitHarnessDefinitionResult, 
       initializedFrom: result.initializedFrom,
       imageId: result.definition.image.imageId,
       adapter: result.definition.image.adapter,
+      parentImage: result.definition.lineage.parentImage,
       components: result.definition.harness.components,
       workspaceBindings: result.definition.bindings.workspaces.length,
       warnings: result.warnings,
@@ -144,6 +177,7 @@ export function formatInitDefinitionResult(result: InitHarnessDefinitionResult, 
     `  Definition:   ${result.definitionFile}`,
     `  Image ID:     ${result.definition.image.imageId}`,
     `  Adapter:      ${result.definition.image.adapter}`,
+    `  Parent:       ${formatParentReference(result.definition.lineage.parentImage)}`,
     `  From:         ${result.initializedFrom}`,
     `  Components:   ${result.definition.harness.components.join(", ") || "(none)"}`,
     `  Bindings:     ${result.definition.bindings.workspaces.length}`,
@@ -153,7 +187,11 @@ export function formatInitDefinitionResult(result: InitHarnessDefinitionResult, 
   ].join("\n");
 }
 
-function createStarterDefinition(options: { cwd: string; imageId?: string }): HarnessDefinition {
+function createStarterDefinition(options: {
+  cwd: string;
+  imageId?: string;
+  parentReference: HarnessDefinitionParentReference | null;
+}): HarnessDefinition {
   const imageId = normalizeImageId(options.imageId ?? path.basename(options.cwd));
   const components: HarnessComponent[] = ["config", "workspace", "skills"];
   const bindings = buildWorkspaceBindings(["workspace"]);
@@ -165,10 +203,7 @@ function createStarterDefinition(options: { cwd: string; imageId?: string }): Ha
       imageId,
       adapter: "openclaw",
     },
-    lineage: {
-      parentImage: null,
-      layerOrder: [],
-    },
+    lineage: createDefinitionLineage(options.parentReference, imageId),
     harness: {
       intent: "agent-runtime-environment",
       targetProduct: "openclaw",
@@ -194,7 +229,12 @@ function createStarterDefinition(options: { cwd: string; imageId?: string }): Ha
   };
 }
 
-function createDefinitionFromOpenClaw(options: { cwd: string; sourcePath: string; imageId?: string }): HarnessDefinition {
+function createDefinitionFromOpenClaw(options: {
+  cwd: string;
+  sourcePath: string;
+  imageId?: string;
+  parentReference: HarnessDefinitionParentReference | null;
+}): HarnessDefinition {
   const inspection = openClawAdapter.inspect(options.sourcePath);
   if (!inspection.detected) {
     throw new Error(`Could not detect an OpenClaw instance at ${path.resolve(options.sourcePath)}.`);
@@ -217,10 +257,7 @@ function createDefinitionFromOpenClaw(options: { cwd: string; sourcePath: string
       imageId: normalizeImageId(inferredImageId),
       adapter: "openclaw",
     },
-    lineage: {
-      parentImage: null,
-      layerOrder: [],
-    },
+    lineage: createDefinitionLineage(options.parentReference, normalizeImageId(inferredImageId)),
     harness: {
       intent: "agent-runtime-environment",
       targetProduct: inspection.product,
@@ -332,6 +369,40 @@ function validateDefinitionLineage(value: unknown, errors: string[]) {
   validateStringArray(value.layerOrder, "lineage.layerOrder", errors);
 }
 
+export function validateOperationalDefinitionLineage(definition: HarnessDefinition, definitionFile?: string): string[] {
+  const errors: string[] = [];
+  const { parentImage, layerOrder } = definition.lineage;
+
+  if (parentImage === null) {
+    if (layerOrder.length !== 0) {
+      errors.push("lineage.layerOrder must be empty when lineage.parentImage is null");
+    }
+    return errors;
+  }
+
+  if (layerOrder.length !== 2) {
+    errors.push("lineage.layerOrder must contain exactly two entries when lineage.parentImage is set");
+    return errors;
+  }
+
+  if (layerOrder[0] !== parentImage.value) {
+    errors.push("lineage.layerOrder[0] must match lineage.parentImage.value");
+  }
+
+  if (layerOrder[1] !== definition.image.imageId) {
+    errors.push("lineage.layerOrder[1] must match image.imageId");
+  }
+
+  if (parentImage.refType === "path" && definitionFile) {
+    const resolvedPath = path.resolve(path.dirname(definitionFile), parentImage.value);
+    if (!fs.existsSync(resolvedPath)) {
+      errors.push(`lineage.parentImage path does not exist: ${resolvedPath}`);
+    }
+  }
+
+  return errors;
+}
+
 function validateHarnessMetadata(value: unknown, errors: string[]) {
   if (!isRecord(value)) {
     errors.push("harness must be an object");
@@ -424,6 +495,86 @@ function requireExactString(value: Record<string, unknown>, key: string, errors:
 function requireEnumString(value: Record<string, unknown>, key: string, allowed: Set<string>, errors: string[], label = key) {
   if (!isNonEmptyString(value[key]) || !allowed.has(String(value[key]))) {
     errors.push(`${label} must be one of: ${[...allowed].join(", ")}`);
+  }
+}
+
+function createDefinitionLineage(parentReference: HarnessDefinitionParentReference | null, imageId: string) {
+  if (parentReference === null) {
+    return {
+      parentImage: null,
+      layerOrder: [],
+    };
+  }
+
+  return {
+    parentImage: parentReference,
+    layerOrder: [parentReference.value, imageId],
+  };
+}
+
+function buildParentReference(
+  parentImageId: string | undefined,
+  parentPath: string | undefined
+): HarnessDefinitionParentReference | null {
+  if (parentImageId) {
+    return {
+      refType: "image-id",
+      value: normalizeImageId(parentImageId),
+    };
+  }
+
+  if (parentPath) {
+    return {
+      refType: "path",
+      value: parentPath,
+    };
+  }
+
+  return null;
+}
+
+function formatParentReference(reference: HarnessDefinitionParentReference | null): string {
+  if (reference === null) return "(none)";
+  return `${reference.refType}:${reference.value}`;
+}
+
+function readParentImageReferenceFromLocalPath(targetPath: string): HarnessImageReference {
+  if (!fs.existsSync(targetPath)) {
+    throw new Error(`Parent image path does not exist: ${targetPath}`);
+  }
+
+  const candidateFiles = fs.statSync(targetPath).isDirectory()
+    ? [
+        path.join(targetPath, HARNESS_DEFINITION_FILE),
+        path.join(targetPath, ".harness-manifest.json"),
+        path.join(targetPath, "manifest.json"),
+      ]
+    : [targetPath];
+
+  for (const candidateFile of candidateFiles) {
+    if (!fs.existsSync(candidateFile)) continue;
+
+    if (path.basename(candidateFile) === HARNESS_DEFINITION_FILE) {
+      const definition = readHarnessDefinition(candidateFile);
+      return { imageId: definition.image.imageId };
+    }
+
+    const manifest = readManifestCandidate(candidateFile);
+    if (manifest?.image?.imageId) {
+      return { imageId: manifest.image.imageId };
+    }
+  }
+
+  throw new Error(
+    `Parent image path must point to ${HARNESS_DEFINITION_FILE}, .harness-manifest.json, manifest.json, or a directory containing one of them: ${targetPath}`
+  );
+}
+
+function readManifestCandidate(candidateFile: string): Manifest | null {
+  try {
+    return JSON.parse(fs.readFileSync(candidateFile, "utf8")) as Manifest;
+  } catch {
+    return null;
   }
 }
 

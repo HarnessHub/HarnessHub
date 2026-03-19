@@ -181,6 +181,34 @@ Required object:
    - infers components from the detected structure
    - initializes workspace binding expectations from the detected workspace layout
 
+## Parent Image References
+
+`0.2.0` allows one optional local parent reference in the definition file.
+
+The supported forms are:
+
+- `image-id`
+  - the definition directly names the local parent image identity
+- `path`
+  - the definition points to a local `harness.definition.json`, `.harness-manifest.json`, `manifest.json`, or a directory containing one of them
+
+Definition-layer rules:
+
+- when `lineage.parentImage` is `null`, `lineage.layerOrder` must be `[]`
+- when `lineage.parentImage` is present:
+  - `lineage.layerOrder` must contain exactly two entries
+  - `lineage.layerOrder[0]` must match `lineage.parentImage.value`
+  - `lineage.layerOrder[1]` must match `image.imageId`
+
+Manifest/export-layer rules:
+
+- exported manifests do not preserve host-specific local paths
+- if the definition uses `refType: "path"`, export resolves that local path to the parent image id before writing `manifest.json`
+- exported `manifest.lineage` therefore always carries the resolved parent `imageId`
+- when a parent image exists, the exported manifest must use:
+  - `lineage.parentImage.imageId = <resolved parent image id>`
+  - `lineage.layerOrder = [<resolved parent image id>, <child image id>]`
+
 ## Example
 
 ```json
@@ -194,6 +222,56 @@ Required object:
   "lineage": {
     "parentImage": null,
     "layerOrder": []
+  },
+  "harness": {
+    "intent": "agent-runtime-environment",
+    "targetProduct": "openclaw",
+    "components": ["config", "workspace", "skills"]
+  },
+  "bindings": {
+    "workspaces": [
+      {
+        "agentId": "main",
+        "logicalPath": "workspace",
+        "targetRelativePath": "workspace",
+        "configTargets": ["agents.defaults.workspace"],
+        "required": true
+      }
+    ]
+  },
+  "rebinding": {
+    "workspaceTargetMode": "absolute-path",
+    "mutableConfigTargets": ["agents.defaults.workspace"]
+  },
+  "source": {
+    "bootstrap": "starter",
+    "detectedProduct": null,
+    "configPath": null
+  },
+  "verify": {
+    "readinessTarget": "runtime_ready",
+    "expectedComponents": ["config", "workspace", "skills"],
+    "requireWorkspaceBindings": true
+  }
+}
+```
+
+Example with a local parent image id:
+
+```json
+{
+  "schemaVersion": "0.2.0",
+  "kind": "harness-definition",
+  "image": {
+    "imageId": "child-agent",
+    "adapter": "openclaw"
+  },
+  "lineage": {
+    "parentImage": {
+      "refType": "image-id",
+      "value": "base-agent"
+    },
+    "layerOrder": ["base-agent", "child-agent"]
   },
   "harness": {
     "intent": "agent-runtime-environment",

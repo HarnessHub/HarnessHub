@@ -21,6 +21,12 @@ import type {
 } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
+import {
+  readHarnessDefinition,
+  readHarnessDefinitionIfPresent,
+  resolveDefinitionParentImage,
+  validateOperationalDefinitionLineage,
+} from "./definition.js";
 import { assertValidManifest } from "./manifest.js";
 import { isForbiddenInPackType, validatePackTypeComponents } from "./pack-contract.js";
 
@@ -88,6 +94,20 @@ function createInitialLineage(): HarnessImageLineage {
   return {
     parentImage: null,
     layerOrder: [],
+  };
+}
+
+function createResolvedLineage(packId: string, parentImage: HarnessImageLineage["parentImage"]): HarnessImageLineage {
+  if (parentImage === null) {
+    return {
+      parentImage: null,
+      layerOrder: [],
+    };
+  }
+
+  return {
+    parentImage,
+    layerOrder: [parentImage.imageId, packId],
   };
 }
 
@@ -294,6 +314,8 @@ interface ExportOptions {
   outputPath?: string;
   packType: PackType;
   allowPackTypeOverride?: boolean;
+  definitionPath?: string;
+  cwd?: string;
 }
 
 interface CollectedFile {
@@ -314,6 +336,8 @@ interface ExportResult {
 export async function exportPack(options: ExportOptions): Promise<ExportResult> {
   const stateDir = openClawAdapter.resolveStateDir(options.sourcePath);
   const configPath = openClawAdapter.findConfigFile(stateDir);
+  const definitionFile = resolveDefinitionFile(options);
+  const definition = definitionFile ? readHarnessDefinitionIfPresent(definitionFile) : null;
   if (!fs.existsSync(stateDir)) {
     throw new Error(`OpenClaw state directory not found: ${stateDir}`);
   }
@@ -367,13 +391,18 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
 
   const packId = generatePackId();
   const bindings = createBindingSemantics(workspaceBindings);
+  const lineage = resolveExportLineage({
+    definition,
+    definitionFile,
+    packId,
+  });
   const manifest: Manifest = {
     schemaVersion: SCHEMA_VERSION,
     packType,
     packId,
     createdAt: new Date().toISOString(),
     image: createImageMetadata(packId, openClawAdapter.id),
-    lineage: createInitialLineage(),
+    lineage,
     placement: createPlacementContract(),
     rebinding: createRebindingContract(bindings),
     bindings,
@@ -495,6 +524,33 @@ export async function exportPack(options: ExportOptions): Promise<ExportResult> 
   } finally {
     fs.rmSync(stagingDir, { recursive: true, force: true });
   }
+}
+
+function resolveDefinitionFile(options: ExportOptions): string | null {
+  if (options.definitionPath) {
+    return path.resolve(options.cwd ?? process.cwd(), options.definitionPath);
+  }
+
+  const implicitDefinition = path.resolve(options.cwd ?? process.cwd(), "harness.definition.json");
+  return fs.existsSync(implicitDefinition) ? implicitDefinition : null;
+}
+
+function resolveExportLineage(params: {
+  definition: ReturnType<typeof readHarnessDefinitionIfPresent>;
+  definitionFile: string | null;
+  packId: string;
+}): HarnessImageLineage {
+  if (!params.definition || !params.definitionFile) {
+    return createInitialLineage();
+  }
+
+  const errors = validateOperationalDefinitionLineage(params.definition, params.definitionFile);
+  if (errors.length > 0) {
+    throw new Error(`Definition lineage validation failed: ${errors.join("; ")}`);
+  }
+
+  const parentImage = resolveDefinitionParentImage(params.definition, params.definitionFile);
+  return createResolvedLineage(params.packId, parentImage);
 }
 
 interface ImportOptions {
