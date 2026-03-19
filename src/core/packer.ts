@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import * as tar from "tar";
 import JSON5 from "json5";
 import type {
+  HarnessAdapterId,
   BindingSemantics,
   HarnessComponent,
   HarnessMetadata,
@@ -76,7 +77,7 @@ function generatePackId(): string {
   return crypto.randomUUID();
 }
 
-function createImageMetadata(packId: string, adapter: string): HarnessImageMetadata {
+function createImageMetadata(packId: string, adapter: HarnessAdapterId): HarnessImageMetadata {
   return {
     imageId: packId,
     adapter,

@@ -64,6 +64,33 @@ afterEach(() => {
 });
 
 describe("harness CLI integration", () => {
+  it("creates a starter harness definition through the CLI", () => {
+    const repoDir = path.join(tmpDir, "repo");
+    fs.mkdirSync(repoDir, { recursive: true });
+
+    const result = runCli(["init", "-f", "json"], repoDir);
+    expect(result.status).toBe(0);
+    const data = JSON.parse(result.stdout);
+    expect(data.success).toBe(true);
+    expect(data.initializedFrom).toBe("starter");
+    expect(fs.existsSync(path.join(repoDir, "harness.definition.json"))).toBe(true);
+  });
+
+  it("bootstraps a harness definition from an OpenClaw source path through the CLI", () => {
+    const repoDir = path.join(tmpDir, "repo");
+    const sourceDir = path.join(tmpDir, "source");
+    fs.mkdirSync(repoDir, { recursive: true });
+    createTemplateSource(sourceDir);
+
+    const result = runCli(["init", "-p", sourceDir, "-f", "json"], repoDir);
+    expect(result.status).toBe(0);
+    const data = JSON.parse(result.stdout);
+    expect(data.initializedFrom).toBe("openclaw-path");
+    expect(data.components).toContain("config");
+    expect(data.components).toContain("workspace");
+    expect(data.components).toContain("skills");
+  });
+
   it("inspects a valid instance through the CLI", () => {
     const sourceDir = path.join(tmpDir, "source");
     createTemplateSource(sourceDir);

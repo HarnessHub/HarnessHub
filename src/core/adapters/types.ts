@@ -1,8 +1,8 @@
-import type { InspectResult, Manifest } from "../types.js";
+import type { HarnessAdapterId, InspectResult, Manifest } from "../types.js";
 import type { ResolvedWorkspaceBinding } from "../scanner.js";
 
 export interface HarnessAdapter {
-  readonly id: string;
+  readonly id: HarnessAdapterId;
   resolveStateDir(customPath?: string): string;
   findConfigFile(stateDir: string): string | null;
   resolveWorkspaceBindings(stateDir: string, configPath: string | null): ResolvedWorkspaceBinding[];
