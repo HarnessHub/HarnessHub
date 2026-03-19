@@ -10,13 +10,19 @@ This document explains the normal daily workflow for contributors and coding age
 
 - One issue per branch.
 - One issue per pull request.
-- Always branch from the latest `upstream/main`.
+- Start each issue branch from the latest commit on its target integration line.
+- Default target integration line: `upstream/main`.
+- Use `upstream/release/x.y` only for issues that belong to an active stable release line.
 - Do not continue work on a branch whose pull request has already merged.
 - Keep local task twins under `.codex/pm/tasks/` in sync with the GitHub issue they represent.
 
+For the stable-branch model and the relationship between `main` and `release/x.y`, see:
+
+- `docs/engineering/branching-and-release-governance.md`
+
 ## Daily Workflow
 
-1. Start from the latest `upstream/main`.
+1. Start from the latest commit on the target integration line.
 2. Create or confirm the matching GitHub issue.
 3. Create or update the local task twin under `.codex/pm/tasks/`.
 4. Move the task to `in_progress`.
