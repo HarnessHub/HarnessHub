@@ -3,7 +3,7 @@ type: task
 epic: repository-harness
 slug: document-branching-and-release-line-governance
 title: Document branching and release-line governance for stable versions
-status: in_progress
+status: done
 task_type: implementation
 labels: docs,release
 issue: 110

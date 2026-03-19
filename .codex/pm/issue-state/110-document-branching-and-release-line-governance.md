@@ -3,8 +3,8 @@ type: issue_state
 issue: 110
 task: .codex/pm/tasks/repository-harness/document-branching-and-release-line-governance.md
 title: Document branching and release-line governance for stable versions
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
