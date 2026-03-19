@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: define-the-harness-definition-file-model-and-add-harness-init
 title: Define the harness definition file model and add harness init
-status: in_progress
+status: done
 task_type: implementation
 issue: 106
 state_path: .codex/pm/issue-state/106-define-the-harness-definition-file-model-and-add-harness-init.md
