@@ -1,5 +1,7 @@
 # HarnessHub v0.2.0 PRD: Define And Local Compose
 
+中文版本：[`0004-v0-2-0-define-and-local-compose.zh.md`](./0004-v0-2-0-define-and-local-compose.zh.md)
+
 ## Status
 
 Planned post-`0.1.0` product scope document.
