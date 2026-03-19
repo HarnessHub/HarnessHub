@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: make-parent-image-references-operational-for-local-v0-2-0-definitions
 title: Make parent image references operational for local v0.2.0 definitions
-status: in_progress
+status: done
 task_type: implementation
 issue: 107
 state_path: .codex/pm/issue-state/107-make-parent-image-references-operational-for-local-v0-2-0-definitions.md
