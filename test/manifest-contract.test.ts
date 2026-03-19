@@ -81,6 +81,19 @@ describe("manifest contract coverage", () => {
     expect(() => assertValidManifest(makeValidManifest())).not.toThrow();
   });
 
+  it("requires coherent lineage ordering when a parent image is present", () => {
+    const manifest = makeValidManifest();
+    manifest.lineage = {
+      parentImage: { imageId: "parent-pack" },
+      layerOrder: ["parent-pack", "pack-1"],
+    };
+
+    expect(validateManifestContract(manifest)).toEqual([]);
+
+    manifest.lineage.layerOrder = ["wrong-parent", "pack-1"];
+    expect(validateManifestContract(manifest)).toContain("lineage.layerOrder[0] must match lineage.parentImage.imageId");
+  });
+
   it("rejects non-object manifests immediately", () => {
     expect(validateManifestContract("broken")).toEqual(["manifest must be an object"]);
   });

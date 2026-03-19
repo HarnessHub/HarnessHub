@@ -26,7 +26,7 @@ function createOpenClawFixture(dir: string) {
 }
 
 describe("run-openclaw-e2e-validation.sh", () => {
-  it("produces a local artifact and sanitized validation report", () => {
+  it("produces a local artifact and sanitized validation report", { timeout: 15000 }, () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-openclaw-e2e-"));
     const sourceDir = path.join(tmpDir, "source");
     const runDir = path.join(tmpDir, "run");

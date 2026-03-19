@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import * as tar from "tar";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(repoRoot, "dist", "cli.js");
@@ -89,6 +90,30 @@ describe("harness CLI integration", () => {
     expect(data.components).toContain("config");
     expect(data.components).toContain("workspace");
     expect(data.components).toContain("skills");
+  });
+
+  it("exports a manifest lineage using the resolved parent image id from a definition path", async () => {
+    const repoDir = path.join(tmpDir, "repo");
+    const sourceDir = path.join(tmpDir, "source");
+    const parentDir = path.join(tmpDir, "parent");
+    const packFile = path.join(tmpDir, "child.harness");
+    const extractDir = path.join(tmpDir, "extract");
+    fs.mkdirSync(repoDir, { recursive: true });
+    fs.mkdirSync(parentDir, { recursive: true });
+    createTemplateSource(sourceDir);
+
+    expect(runCli(["init", "--image-id", "base-agent", "-f", "json"], parentDir).status).toBe(0);
+    expect(runCli(["init", "--image-id", "child-agent", "--parent-path", "../parent", "-f", "json"], repoDir).status).toBe(0);
+
+    const exportResult = runCli(["export", "-p", sourceDir, "-o", packFile, "-d", "harness.definition.json", "-f", "json"], repoDir);
+    expect(exportResult.status).toBe(0);
+
+    fs.mkdirSync(extractDir, { recursive: true });
+    await tar.extract({ file: packFile, cwd: extractDir });
+    const manifest = JSON.parse(fs.readFileSync(path.join(extractDir, "manifest.json"), "utf8"));
+
+    expect(manifest.lineage.parentImage).toEqual({ imageId: "base-agent" });
+    expect(manifest.lineage.layerOrder).toEqual(["base-agent", manifest.image.imageId]);
   });
 
   it("inspects a valid instance through the CLI", () => {

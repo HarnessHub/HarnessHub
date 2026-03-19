@@ -10,7 +10,9 @@ import {
   assertValidHarnessDefinition,
   initHarnessDefinition,
   readHarnessDefinition,
+  resolveDefinitionParentImage,
   validateHarnessDefinition,
+  validateOperationalDefinitionLineage,
 } from "../src/core/definition.js";
 
 function createOpenClawSource(dir: string) {
@@ -123,6 +125,18 @@ describe("harness definition contract", () => {
     expect(errors).toContain("source.bootstrap must be one of: starter, openclaw-path");
     expect(errors).toContain("verify.requireWorkspaceBindings must be a boolean");
   });
+
+  it("requires coherent layer order when a parent image is declared", () => {
+    const definition = makeValidDefinition();
+    definition.lineage = {
+      parentImage: { refType: "image-id", value: "base-agent" },
+      layerOrder: ["wrong-parent", "demo-agent"],
+    };
+
+    expect(validateOperationalDefinitionLineage(definition as any)).toContain(
+      "lineage.layerOrder[0] must match lineage.parentImage.value"
+    );
+  });
 });
 
 describe("initHarnessDefinition", () => {
@@ -165,6 +179,60 @@ describe("initHarnessDefinition", () => {
         targetRelativePath: "workspace",
       }),
     ]);
+  });
+
+  it("declares a parent image id and keeps the definition lineage coherent", () => {
+    const cwd = path.join(tmpDir, "repo");
+    fs.mkdirSync(cwd, { recursive: true });
+
+    const result = initHarnessDefinition({
+      cwd,
+      imageId: "child-agent",
+      parentImageId: "base-agent",
+    });
+
+    expect(result.definition.lineage.parentImage).toEqual({
+      refType: "image-id",
+      value: "base-agent",
+    });
+    expect(result.definition.lineage.layerOrder).toEqual(["base-agent", "child-agent"]);
+    expect(resolveDefinitionParentImage(result.definition, result.definitionFile)).toEqual({
+      imageId: "base-agent",
+    });
+  });
+
+  it("resolves a parent path to a local definition image id", () => {
+    const parentDir = path.join(tmpDir, "parent");
+    const childDir = path.join(tmpDir, "child");
+    fs.mkdirSync(parentDir, { recursive: true });
+    fs.mkdirSync(childDir, { recursive: true });
+
+    initHarnessDefinition({
+      cwd: parentDir,
+      imageId: "parent-agent",
+    });
+
+    const result = initHarnessDefinition({
+      cwd: childDir,
+      imageId: "child-agent",
+      parentPath: "../parent",
+    });
+
+    expect(validateOperationalDefinitionLineage(result.definition, result.definitionFile)).toEqual([]);
+    expect(resolveDefinitionParentImage(result.definition, result.definitionFile)).toEqual({
+      imageId: "parent-agent",
+    });
+  });
+
+  it("rejects both parent declaration flags at once", () => {
+    const cwd = path.join(tmpDir, "repo");
+    fs.mkdirSync(cwd, { recursive: true });
+
+    expect(() => initHarnessDefinition({
+      cwd,
+      parentImageId: "base-agent",
+      parentPath: "../parent",
+    })).toThrow(/Choose either --parent-image-id or --parent-path/);
   });
 
   it("rejects overwriting an existing definition without force", () => {

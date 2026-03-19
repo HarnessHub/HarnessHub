@@ -21,7 +21,7 @@ export function validateManifestContract(manifest: unknown): string[] {
   requireExactString(manifest, "createdAt", errors);
 
   validateImageMetadata(manifest.image, errors);
-  validateLineage(manifest.lineage, errors);
+  validateLineage(manifest.lineage, manifest.image, errors);
   validatePlacement(manifest.placement, errors);
   validateRebinding(manifest.rebinding, errors);
   validateBindings(manifest.bindings, errors);
@@ -51,7 +51,7 @@ function validateImageMetadata(value: unknown, errors: string[]) {
   requireExactString(value, "adapter", errors, "image.adapter");
 }
 
-function validateLineage(value: unknown, errors: string[]) {
+function validateLineage(value: unknown, imageMetadata: unknown, errors: string[]) {
   if (!isRecord(value)) {
     errors.push("lineage must be an object");
     return;
@@ -60,6 +60,21 @@ function validateLineage(value: unknown, errors: string[]) {
     errors.push("lineage.parentImage must be null or an object with imageId");
   }
   validateStringArray(value.layerOrder, "lineage.layerOrder", errors);
+  if (value.parentImage === null && Array.isArray(value.layerOrder) && value.layerOrder.length !== 0) {
+    errors.push("lineage.layerOrder must be empty when lineage.parentImage is null");
+  }
+  if (isRecord(value.parentImage) && isNonEmptyString(value.parentImage.imageId)) {
+    if (!Array.isArray(value.layerOrder) || value.layerOrder.length !== 2) {
+      errors.push("lineage.layerOrder must contain parent and child image ids when lineage.parentImage is set");
+      return;
+    }
+    if (value.layerOrder[0] !== value.parentImage.imageId) {
+      errors.push("lineage.layerOrder[0] must match lineage.parentImage.imageId");
+    }
+    if (isRecord(imageMetadata) && isNonEmptyString(imageMetadata.imageId) && value.layerOrder[1] !== imageMetadata.imageId) {
+      errors.push("lineage.layerOrder[1] must match image.imageId");
+    }
+  }
 }
 
 function validateBindings(value: unknown, errors: string[]) {
