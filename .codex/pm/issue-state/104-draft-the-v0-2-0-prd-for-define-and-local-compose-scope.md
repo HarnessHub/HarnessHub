@@ -4,7 +4,8 @@ issue: 104
 task: .codex/pm/tasks/product-direction/draft-the-v0-2-0-prd-for-define-and-local-compose-scope.md
 title: Draft the v0.2.0 PRD for define-and-local-compose scope
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/112
 ---
 
 ## Summary
