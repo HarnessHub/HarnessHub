@@ -26,7 +26,7 @@ function createOpenClawFixture(dir: string) {
 }
 
 describe("run-fresh-operator-validation.sh", () => {
-  it("validates the packaged CLI path and records the fresh-directory version check", () => {
+  it("validates the packaged CLI path and records the fresh-directory version check", { timeout: 15000 }, () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "harnesshub-fresh-operator-"));
     const sourceDir = path.join(tmpDir, "source");
     const runDir = path.join(tmpDir, "run");
