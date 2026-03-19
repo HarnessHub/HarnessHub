@@ -4,7 +4,8 @@ issue: 110
 task: .codex/pm/tasks/repository-harness/document-branching-and-release-line-governance.md
 title: Document branching and release-line governance for stable versions
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/111
 ---
 
 ## Summary
