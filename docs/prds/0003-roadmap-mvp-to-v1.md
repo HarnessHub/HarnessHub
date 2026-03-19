@@ -9,7 +9,8 @@ Current roadmap and version framing document.
 The repository's MVP line remains the `v0.1.x` line:
 
 - `v0.1.0-rc.1` is the published MVP release candidate that established the post-RC baseline
-- `v0.1.0` is the current repository and CLI version prepared for final MVP general-availability closeout
+- `v0.1.0` is the current published MVP general-availability release
+- `v0.2.0` is the next planned post-MVP version line, focused on explicit definition and narrow local composition
 - the move to `v1.0` should happen only after post-MVP capabilities such as layering and lineage-aware import/verify are complete
 
 ## MVP Goal
@@ -59,6 +60,24 @@ The MVP should not require:
 - the codebase does not assume OpenClaw is the only future adapter
 
 The current repository-level MVP release gate is documented in [../releases/0001-mvp-exit-criteria.md](../releases/0001-mvp-exit-criteria.md).
+
+## 0.2.0 Goal
+
+Version `0.2.0` should be the first post-MVP step from transport-only image handling toward reusable harness-image definition and local composition.
+
+It should add:
+
+1. explicit harness definition
+2. one local parent/base image relationship
+3. one narrow local compose/materialize path
+4. lineage-aware export/import/verify behavior for that supported path
+
+It should not yet add:
+
+- registry-backed image lookup
+- a second production-grade adapter
+- generalized deep layering
+- broad policy or signing systems
 
 ## 1.0 Goal
 
