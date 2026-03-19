@@ -65,6 +65,57 @@ describe("command entrypoints", () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it("renders init command output in text mode", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const initHarnessDefinition = vi.fn(() => ({
+      definitionFile: "/tmp/repo/harness.definition.json",
+      initializedFrom: "starter",
+      warnings: [],
+      definition: {
+        image: { imageId: "demo-agent", adapter: "openclaw" },
+        harness: { components: ["config", "workspace", "skills"] },
+        bindings: { workspaces: [{ agentId: "main" }] },
+      },
+    }));
+    const formatInitDefinitionResult = vi.fn(() => "formatted init result");
+
+    vi.doMock("../src/core/definition.js", () => ({
+      initHarnessDefinition,
+      formatInitDefinitionResult,
+    }));
+
+    const { initCommand } = await importFresh<typeof import("../src/commands/init.js")>("../src/commands/init.js");
+    await initCommand.parseAsync(["node", "init"], { from: "node" });
+
+    expect(initHarnessDefinition).toHaveBeenCalledWith({
+      cwd: process.cwd(),
+      outputPath: undefined,
+      sourcePath: undefined,
+      imageId: undefined,
+      force: false,
+    });
+    expect(formatInitDefinitionResult).toHaveBeenCalledOnce();
+    expect(formatInitDefinitionResult.mock.calls[0]?.[1]).toBe("text");
+    expect(log).toHaveBeenCalledWith("formatted init result");
+  });
+
+  it("renders init command failures in json mode", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    vi.doMock("../src/core/definition.js", () => ({
+      initHarnessDefinition: () => {
+        throw new Error("init failed");
+      },
+      formatInitDefinitionResult: vi.fn(),
+    }));
+
+    const { initCommand } = await importFresh<typeof import("../src/commands/init.js")>("../src/commands/init.js");
+    await initCommand.parseAsync(["node", "init", "-f", "json"], { from: "node" });
+
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Error: init failed\""));
+    expect(process.exitCode).toBe(1);
+  });
+
   it("renders inspect errors in json mode", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -517,7 +568,7 @@ describe("command entrypoints", () => {
 
     expect(program.name()).toBe("harness");
     expect(program.description()).toContain("HarnessHub CLI");
-    expect(program.commands.map(command => command.name())).toEqual(["inspect", "export", "import", "verify"]);
+    expect(program.commands.map(command => command.name())).toEqual(["init", "inspect", "export", "import", "verify"]);
   });
 
   it("dispatches the CLI through parseAsync without mutating process.argv", async () => {

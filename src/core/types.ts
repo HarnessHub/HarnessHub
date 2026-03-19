@@ -1,10 +1,13 @@
 export const SCHEMA_VERSION = "0.5.0";
+export const HARNESS_DEFINITION_SCHEMA_VERSION = "0.2.0";
+export const HARNESS_DEFINITION_FILE = "harness.definition.json";
 
 export type PackType = "template" | "instance";
 
 export type RiskLevel = "safe-share" | "internal-only" | "trusted-migration-only";
 
 export type OutputFormat = "text" | "json";
+export type HarnessAdapterId = "openclaw";
 
 export interface Manifest {
   schemaVersion: string;
@@ -32,15 +35,25 @@ export type HarnessIntent = "agent-runtime-environment";
 
 export interface HarnessImageMetadata {
   imageId: string;
-  adapter: string;
+  adapter: HarnessAdapterId;
 }
 
 export interface HarnessImageReference {
   imageId: string;
 }
 
+export interface HarnessDefinitionParentReference {
+  refType: "image-id" | "path";
+  value: string;
+}
+
 export interface HarnessImageLineage {
   parentImage: HarnessImageReference | null;
+  layerOrder: string[];
+}
+
+export interface HarnessDefinitionLineage {
+  parentImage: HarnessDefinitionParentReference | null;
   layerOrder: string[];
 }
 
@@ -92,6 +105,30 @@ export interface HarnessMetadata {
   intent: HarnessIntent;
   targetProduct: string;
   components: HarnessComponent[];
+}
+
+export interface HarnessDefinition {
+  schemaVersion: string;
+  kind: "harness-definition";
+  image: HarnessImageMetadata;
+  lineage: HarnessDefinitionLineage;
+  harness: HarnessMetadata;
+  bindings: BindingSemantics;
+  rebinding: RebindingContract;
+  source: HarnessDefinitionSource;
+  verify: HarnessDefinitionVerifyIntent;
+}
+
+export interface HarnessDefinitionSource {
+  bootstrap: "starter" | "openclaw-path";
+  detectedProduct: string | null;
+  configPath: string | null;
+}
+
+export interface HarnessDefinitionVerifyIntent {
+  readinessTarget: ReadinessClass;
+  expectedComponents: HarnessComponent[];
+  requireWorkspaceBindings: boolean;
 }
 
 export interface WorkspaceBinding {
