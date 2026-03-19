@@ -3,8 +3,8 @@ type: issue_state
 issue: 104
 task: .codex/pm/tasks/product-direction/draft-the-v0-2-0-prd-for-define-and-local-compose-scope.md
 title: Draft the v0.2.0 PRD for define-and-local-compose scope
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

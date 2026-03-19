@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: draft-the-v0-2-0-prd-for-define-and-local-compose-scope
 title: Draft the v0.2.0 PRD for define-and-local-compose scope
-status: in_progress
+status: done
 task_type: implementation
 labels: docs,prd
 issue: 104
