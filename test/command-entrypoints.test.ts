@@ -116,6 +116,57 @@ describe("command entrypoints", () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it("renders compose command output in text mode", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const composeHarness = vi.fn(() => ({
+      definitionFile: "/tmp/repo/harness.definition.json",
+      parentDir: "/tmp/parent",
+      childDir: "/tmp/child",
+      targetDir: "/tmp/output",
+      imageId: "child-agent",
+      parentImageId: "base-agent",
+      overwrittenRoots: ["config", "workspace", "skills"],
+      passthroughRoots: ["credentials"],
+      warnings: [],
+    }));
+    const formatComposeResult = vi.fn(() => "formatted compose result");
+
+    vi.doMock("../src/core/compose.js", () => ({
+      composeHarness,
+      formatComposeResult,
+    }));
+
+    const { composeCommand } = await importFresh<typeof import("../src/commands/compose.js")>("../src/commands/compose.js");
+    await composeCommand.parseAsync(["node", "compose", "-p", "/tmp/child"], { from: "node" });
+
+    expect(composeHarness).toHaveBeenCalledWith({
+      cwd: process.cwd(),
+      definitionPath: undefined,
+      sourcePath: "/tmp/child",
+      outputPath: undefined,
+      force: false,
+    });
+    expect(formatComposeResult).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledWith("formatted compose result");
+  });
+
+  it("renders compose command failures in json mode", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    vi.doMock("../src/core/compose.js", () => ({
+      composeHarness: () => {
+        throw new Error("compose failed");
+      },
+      formatComposeResult: vi.fn(),
+    }));
+
+    const { composeCommand } = await importFresh<typeof import("../src/commands/compose.js")>("../src/commands/compose.js");
+    await composeCommand.parseAsync(["node", "compose", "-f", "json"], { from: "node" });
+
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("\"error\":\"Error: compose failed\""));
+    expect(process.exitCode).toBe(1);
+  });
+
   it("renders inspect errors in json mode", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -594,7 +645,7 @@ describe("command entrypoints", () => {
 
     expect(program.name()).toBe("harness");
     expect(program.description()).toContain("HarnessHub CLI");
-    expect(program.commands.map(command => command.name())).toEqual(["init", "inspect", "export", "import", "verify"]);
+    expect(program.commands.map(command => command.name())).toEqual(["init", "compose", "inspect", "export", "import", "verify"]);
   });
 
   it("dispatches the CLI through parseAsync without mutating process.argv", async () => {
