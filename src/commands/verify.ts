@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { verify } from "../core/verifier.js";
 import { printVerifyResult } from "../utils/output.js";
 import { openClawAdapter } from "../core/adapters/openclaw.js";
-import type { Manifest, OutputFormat } from "../core/types.js";
+import { HARNESS_DEFINITION_FILE, type Manifest, type OutputFormat } from "../core/types.js";
 
 export const verifyCommand = new Command("verify")
   .description("Verify an imported OpenClaw instance is structurally complete")
@@ -28,7 +28,13 @@ export const verifyCommand = new Command("verify")
         }
       }
 
-      const result = verify(targetDir, manifest);
+      let definition: unknown;
+      const definitionPath = path.join(targetDir, HARNESS_DEFINITION_FILE);
+      if (fs.existsSync(definitionPath)) {
+        definition = JSON.parse(fs.readFileSync(definitionPath, "utf-8"));
+      }
+
+      const result = verify(targetDir, manifest, definition);
       printVerifyResult(result as unknown as Record<string, unknown>, format);
 
       if (!result.valid) {

@@ -532,7 +532,18 @@ function resolveDefinitionFile(options: ExportOptions): string | null {
   }
 
   const implicitDefinition = path.resolve(options.cwd ?? process.cwd(), "harness.definition.json");
-  return fs.existsSync(implicitDefinition) ? implicitDefinition : null;
+  if (fs.existsSync(implicitDefinition)) {
+    return implicitDefinition;
+  }
+
+  if (options.sourcePath) {
+    const sourceDefinition = path.resolve(openClawAdapter.resolveStateDir(options.sourcePath), "harness.definition.json");
+    if (fs.existsSync(sourceDefinition)) {
+      return sourceDefinition;
+    }
+  }
+
+  return null;
 }
 
 function resolveExportLineage(params: {

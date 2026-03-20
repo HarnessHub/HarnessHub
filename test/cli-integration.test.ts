@@ -143,9 +143,33 @@ describe("harness CLI integration", () => {
     expect(data.success).toBe(true);
     expect(data.parentDir).toBe(parentDir);
     expect(fs.readFileSync(path.join(outputDir, "workspace", "AGENTS.md"), "utf8")).toContain("Child Agent");
+    expect(JSON.parse(fs.readFileSync(path.join(outputDir, "harness.definition.json"), "utf8")).lineage).toEqual({
+      parentImage: { refType: "image-id", value: "compose-parent" },
+      layerOrder: ["compose-parent", "child-agent"],
+    });
 
     const composedConfig = JSON.parse(fs.readFileSync(path.join(outputDir, "openclaw.json"), "utf8"));
     expect(composedConfig.agents.defaults.workspace).toBe(path.join(outputDir, "workspace"));
+  });
+
+  it("verifies a composed output using the local definition snapshot when no manifest is present", () => {
+    const repoDir = path.join(tmpDir, "verify-compose-repo");
+    const parentDir = path.join(tmpDir, "verify-compose-parent");
+    const childDir = path.join(tmpDir, "verify-compose-child");
+    const outputDir = path.join(tmpDir, "verify-compose-output");
+    fs.mkdirSync(repoDir, { recursive: true });
+    createTemplateSource(parentDir);
+    createTemplateSource(childDir);
+
+    expect(runCli(["init", "--image-id", "child-agent", "--parent-path", "../verify-compose-parent", "-f", "json"], repoDir).status).toBe(0);
+    expect(runCli(["compose", "-p", childDir, "-o", outputDir, "-f", "json"], repoDir).status).toBe(0);
+
+    const verifyResult = runCli(["verify", "-p", outputDir, "-f", "json"]);
+    expect(verifyResult.status).toBe(0);
+    const data = JSON.parse(verifyResult.stdout);
+    expect(data.valid).toBe(true);
+    expect(data.checks.some((check: { name: string; passed: boolean }) => check.name === "lineage_declaration" && check.passed)).toBe(true);
+    expect(data.checks.some((check: { name: string; passed: boolean }) => check.name === "lineage_materialization" && check.passed)).toBe(true);
   });
 
   it("inspects a valid instance through the CLI", () => {
