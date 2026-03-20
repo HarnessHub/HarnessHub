@@ -4,7 +4,8 @@ issue: 109
 task: .codex/pm/tasks/product-direction/make-export-and-verify-lineage-aware-for-composed-v0-2-0-images.md
 title: Make export and verify lineage-aware for composed v0.2.0 images
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/116
 ---
 
 ## Summary
