@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: refactor-builder-and-materialization-boundaries-for-definition-driven-v0-2-0-flows
 title: Refactor builder and materialization boundaries for definition-driven v0.2.0 flows
-status: in_progress
+status: done
 task_type: implementation
 issue: 108
 state_path: .codex/pm/issue-state/108-refactor-builder-and-materialization-boundaries-for-definition-driven-v0-2-0-flows.md

@@ -3,8 +3,8 @@ type: issue_state
 issue: 108
 task: .codex/pm/tasks/product-direction/refactor-builder-and-materialization-boundaries-for-definition-driven-v0-2-0-flows.md
 title: Refactor builder and materialization boundaries for definition-driven v0.2.0 flows
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
