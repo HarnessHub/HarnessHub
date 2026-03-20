@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: make-export-and-verify-lineage-aware-for-composed-v0-2-0-images
 title: Make export and verify lineage-aware for composed v0.2.0 images
-status: in_progress
+status: done
 task_type: implementation
 issue: 109
 state_path: .codex/pm/issue-state/109-make-export-and-verify-lineage-aware-for-composed-v0-2-0-images.md

@@ -3,8 +3,8 @@ type: issue_state
 issue: 109
 task: .codex/pm/tasks/product-direction/make-export-and-verify-lineage-aware-for-composed-v0-2-0-images.md
 title: Make export and verify lineage-aware for composed v0.2.0 images
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary
