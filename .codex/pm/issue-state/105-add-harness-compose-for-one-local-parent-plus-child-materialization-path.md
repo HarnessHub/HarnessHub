@@ -4,7 +4,8 @@ issue: 105
 task: .codex/pm/tasks/product-direction/add-harness-compose-for-one-local-parent-plus-child-materialization-path.md
 title: Add harness compose for one local parent-plus-child materialization path
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/115
 ---
 
 ## Summary
