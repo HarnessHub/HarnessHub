@@ -306,6 +306,10 @@ describe("export + import", () => {
     expect(fs.readFileSync(path.join(outputDir, "workspace", "AGENTS.md"), "utf8")).toContain("Child Agent");
     expect(fs.existsSync(path.join(outputDir, "workspace", "SOUL.md"))).toBe(true);
     expect(fs.existsSync(path.join(outputDir, "credentials", "oauth.json"))).toBe(true);
+    expect(JSON.parse(fs.readFileSync(path.join(outputDir, "harness.definition.json"), "utf8")).lineage).toEqual({
+      parentImage: { refType: "image-id", value: "parent" },
+      layerOrder: ["parent", "child-agent"],
+    });
 
     const composedConfig = JSON.parse(fs.readFileSync(path.join(outputDir, "openclaw.json"), "utf8"));
     expect(composedConfig.agents.defaults.workspace).toBe(path.join(outputDir, "workspace"));
@@ -707,6 +711,71 @@ describe("export + import", () => {
     expect(verifyResult.checks.some(c => c.name === "manifest_image" && c.passed)).toBe(true);
     expect(verifyResult.checks.some(c => c.name === "binding_semantics" && c.passed)).toBe(true);
   });
+
+  it("exports a composed output using the source-path definition snapshot", async () => {
+    const parentDir = createMockInstance(path.join(tmpDir, "compose-export-parent"));
+    const childDir = createMockInstance(path.join(tmpDir, "compose-export-child"));
+    const repoDir = path.join(tmpDir, "compose-export-repo");
+    const composedDir = path.join(tmpDir, "compose-export-output");
+    const packFile = path.join(tmpDir, "compose-export.harness");
+
+    fs.mkdirSync(repoDir, { recursive: true });
+    fs.writeFileSync(path.join(repoDir, "harness.definition.json"), JSON.stringify({
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-compose", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "path", value: "../compose-export-parent" },
+        layerOrder: ["../compose-export-parent", "child-compose"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    }, null, 2));
+
+    composeHarness({
+      cwd: repoDir,
+      sourcePath: childDir,
+      outputPath: composedDir,
+    });
+
+    const exportResult = await exportPack({
+      sourcePath: composedDir,
+      outputPath: packFile,
+      packType: "template",
+      cwd: tmpDir,
+    });
+
+    expect(exportResult.manifest.lineage.parentImage).toEqual({ imageId: "compose-export-parent" });
+    expect(exportResult.manifest.lineage.layerOrder).toEqual(["compose-export-parent", exportResult.manifest.image.imageId]);
+  });
 });
 
 describe("verify", () => {
@@ -719,6 +788,156 @@ describe("verify", () => {
     expect(result.readinessClass).toBe("runtime_ready");
     expect(result.remediationSteps).toEqual([]);
     expect(result.errors).toHaveLength(0);
+  });
+
+  it("reports lineage-aware success for a composed local result with a definition snapshot", () => {
+    const dir = createMockInstance(path.join(tmpDir, "verify-composed"));
+    fs.writeFileSync(path.join(dir, "harness.definition.json"), JSON.stringify({
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-compose", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "image-id", value: "base-compose" },
+        layerOrder: ["base-compose", "child-compose"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    }, null, 2));
+
+    const definition = JSON.parse(fs.readFileSync(path.join(dir, "harness.definition.json"), "utf8"));
+    const result = verify(dir, undefined, definition);
+
+    expect(result.valid).toBe(true);
+    expect(result.readinessClass).toBe("runtime_ready");
+    expect(result.checks.some((check) => check.name === "lineage_declaration" && check.passed)).toBe(true);
+    expect(result.checks.some((check) => check.name === "lineage_materialization" && check.passed)).toBe(true);
+  });
+
+  it("distinguishes lineage materialization failures from declaration failures", () => {
+    const dir = createMockInstance(path.join(tmpDir, "verify-lineage-missing-skills"));
+    fs.rmSync(path.join(dir, "workspace", "skills"), { recursive: true, force: true });
+    const definition = {
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-compose", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "image-id", value: "base-compose" },
+        layerOrder: ["base-compose", "child-compose"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    };
+
+    const result = verify(dir, undefined, definition);
+    expect(result.valid).toBe(true);
+    expect(result.readinessClass).toBe("manual_steps_required");
+    expect(result.checks.some((check) => check.name === "lineage_declaration" && check.passed)).toBe(true);
+    expect(result.checks.some((check) => check.name === "lineage_materialization" && !check.passed)).toBe(true);
+    expect(result.runtimeReadinessIssues).toContain("Lineage materialization missing expected component: skills");
+  });
+
+  it("fails verification when lineage declaration metadata is inconsistent", () => {
+    const dir = createMockInstance(path.join(tmpDir, "verify-lineage-invalid"));
+    const definition = {
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-compose", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "image-id", value: "base-compose" },
+        layerOrder: ["wrong-parent", "child-compose"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    };
+
+    const result = verify(dir, undefined, definition);
+    expect(result.valid).toBe(false);
+    expect(result.readinessClass).toBe("structurally_invalid");
+    expect(result.checks.some((check) => check.name === "definition_contract" && !check.passed)).toBe(true);
   });
 
   it("fails for non-existent directory", () => {

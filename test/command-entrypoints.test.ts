@@ -485,7 +485,7 @@ describe("command entrypoints", () => {
     await verifyCommand.parseAsync(["node", "verify"], { from: "node" });
 
     expect(resolveStateDir).toHaveBeenCalled();
-    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", { packId: "pack-3" });
+    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", { packId: "pack-3" }, undefined);
     expect(printVerifyResult).toHaveBeenCalledWith(expect.objectContaining({
       readinessClass: "runtime_ready",
     }), "text");
@@ -519,9 +519,9 @@ describe("command entrypoints", () => {
     const { verifyCommand } = await importFresh<typeof import("../src/commands/verify.js")>("../src/commands/verify.js");
     await verifyCommand.parseAsync(["node", "verify"], { from: "node" });
 
-    expect(existsSync).toHaveBeenCalledTimes(2);
+    expect(existsSync).toHaveBeenCalledTimes(3);
     expect(readFileSync).not.toHaveBeenCalled();
-    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", undefined);
+    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", undefined, undefined);
     expect(process.exitCode).toBe(1);
     expect(printVerifyResult).toHaveBeenCalledWith(expect.objectContaining({
       readinessClass: "manual_steps_required",
@@ -556,7 +556,65 @@ describe("command entrypoints", () => {
     await verifyCommand.parseAsync(["node", "verify"], { from: "node" });
 
     expect(readFileSync).toHaveBeenCalledOnce();
-    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", { packId: "manifest-pack" });
+    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", { packId: "manifest-pack" }, undefined);
+  });
+
+  it("loads a local definition snapshot when verify has no manifest candidates", async () => {
+    const existsSync = vi.fn((candidate: string) => candidate.endsWith("harness.definition.json"));
+    const readFileSync = vi.fn((candidate: string) => {
+      if (candidate.endsWith("harness.definition.json")) {
+        return JSON.stringify({
+          schemaVersion: "0.2.0",
+          kind: "harness-definition",
+          image: { imageId: "child-compose", adapter: "openclaw" },
+          lineage: {
+            parentImage: { refType: "image-id", value: "base-compose" },
+            layerOrder: ["base-compose", "child-compose"],
+          },
+          harness: {
+            intent: "agent-runtime-environment",
+            targetProduct: "openclaw",
+            components: ["config", "workspace", "skills"],
+          },
+          bindings: { workspaces: [] },
+          rebinding: { workspaceTargetMode: "absolute-path", mutableConfigTargets: [] },
+          source: { bootstrap: "starter", detectedProduct: null, configPath: null },
+          verify: {
+            readinessTarget: "runtime_ready",
+            expectedComponents: ["config", "workspace", "skills"],
+            requireWorkspaceBindings: true,
+          },
+        });
+      }
+      return "{}";
+    });
+    const verify = vi.fn(() => ({
+      valid: true,
+      readinessClass: "runtime_ready",
+      runtimeReady: true,
+      readinessSummary: "Ready to run.",
+      checks: [],
+      warnings: [],
+      runtimeReadinessIssues: [],
+      remediationSteps: [],
+      errors: [],
+    }));
+
+    vi.doMock("node:fs", () => ({
+      default: { existsSync, readFileSync },
+    }));
+    vi.doMock("../src/core/verifier.js", () => ({ verify }));
+    vi.doMock("../src/utils/output.js", () => ({ printVerifyResult: vi.fn() }));
+    vi.doMock("../src/core/adapters/openclaw.js", () => ({
+      openClawAdapter: { resolveStateDir: () => "/tmp/openclaw" },
+    }));
+
+    const { verifyCommand } = await importFresh<typeof import("../src/commands/verify.js")>("../src/commands/verify.js");
+    await verifyCommand.parseAsync(["node", "verify"], { from: "node" });
+
+    expect(verify).toHaveBeenCalledWith("/tmp/openclaw", undefined, expect.objectContaining({
+      image: { imageId: "child-compose", adapter: "openclaw" },
+    }));
   });
 
   it("verifies an explicit target path and falls back to the hidden manifest file", async () => {
@@ -589,7 +647,7 @@ describe("command entrypoints", () => {
     await verifyCommand.parseAsync(["node", "verify", "--path", "./fixture-state"], { from: "node" });
 
     expect(resolveStateDir).not.toHaveBeenCalled();
-    expect(verify).toHaveBeenCalledWith(expect.stringMatching(/fixture-state$/), { packId: "hidden-pack" });
+    expect(verify).toHaveBeenCalledWith(expect.stringMatching(/fixture-state$/), { packId: "hidden-pack" }, undefined);
     expect(printVerifyResult).toHaveBeenCalledWith(expect.objectContaining({
       readinessClass: "runtime_ready",
     }), "text");

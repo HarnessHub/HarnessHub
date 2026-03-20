@@ -71,6 +71,7 @@ The output directory is a local OpenClaw-style materialization suitable for:
 - manual inspection of the composed result
 
 After compose, workspace paths in the output config are rebound to the materialized output directory.
+The output also persists a local `harness.definition.json` snapshot with the resolved parent image id so later export and verify flows can recover lineage semantics without depending on the original repo path layout.
 
 ## Non-Goals
 

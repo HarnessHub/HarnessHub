@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import JSON5 from "json5";
-import type { Manifest, VerifyResult, VerifyCheck, ReadinessClass } from "./types.js";
+import { validateHarnessDefinition, validateOperationalDefinitionLineage } from "./definition.js";
+import type { HarnessComponent, HarnessDefinition, Manifest, VerifyResult, VerifyCheck, ReadinessClass } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
 import { validateManifestContract } from "./manifest.js";
@@ -9,13 +10,14 @@ import { validatePackTypeComponents } from "./pack-contract.js";
 
 const REQUIRED_WORKSPACE_FILES = ["AGENTS.md"];
 
-export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
+export function verify(targetDir: string, manifest?: Manifest, definition?: unknown): VerifyResult {
   const checks: VerifyCheck[] = [];
   const warnings: string[] = [];
   const errors: string[] = [];
   const runtimeReadinessIssues: string[] = [];
   const manifestWorkspaces = manifest?.workspaces ?? [];
   const manifestBindingRules = manifest?.bindings?.workspaces ?? [];
+  const parsedDefinition = definition as HarnessDefinition | undefined;
 
   // Check 1: Target directory exists
   const dirExists = fs.existsSync(targetDir);
@@ -358,6 +360,57 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
     }
   }
 
+  if (definition !== undefined) {
+    const definitionErrors = validateHarnessDefinition(definition);
+    const operationalDefinitionErrors = definitionErrors.length === 0
+      ? validateOperationalDefinitionLineage(definition as HarnessDefinition)
+      : [];
+    const allDefinitionErrors = [...definitionErrors, ...operationalDefinitionErrors];
+    checks.push({
+      name: "definition_contract",
+      passed: allDefinitionErrors.length === 0,
+      message: allDefinitionErrors.length === 0
+        ? "Definition contract is valid"
+        : allDefinitionErrors.join("; "),
+    });
+    if (allDefinitionErrors.length > 0) {
+      errors.push(...allDefinitionErrors.map((error) => `Definition contract error: ${error}`));
+      runtimeReadinessIssues.push(...allDefinitionErrors.map((error) => `Definition contract error: ${error}`));
+      return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues);
+    }
+  }
+
+  const lineageMetadata = resolveLineageMetadata(manifest, parsedDefinition);
+  if (lineageMetadata) {
+    const declarationErrors = validateLineageDeclaration(lineageMetadata.parentImageId, lineageMetadata.layerOrder, lineageMetadata.childImageId);
+    checks.push({
+      name: "lineage_declaration",
+      passed: declarationErrors.length === 0,
+      message: declarationErrors.length === 0
+        ? `Lineage declaration ${lineageMetadata.parentImageId ?? "root"} -> ${lineageMetadata.childImageId}`
+        : declarationErrors.join("; "),
+    });
+    if (declarationErrors.length > 0) {
+      errors.push(...declarationErrors.map((error) => `Lineage declaration error: ${error}`));
+      runtimeReadinessIssues.push(...declarationErrors.map((error) => `Lineage declaration error: ${error}`));
+      return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues);
+    }
+
+    const expectedComponents = parsedDefinition?.verify.expectedComponents
+      ?? manifest?.harness?.components
+      ?? [];
+    const materializationFailures = validateLineageMaterialization(targetDir, expectedComponents);
+    checks.push({
+      name: "lineage_materialization",
+      passed: materializationFailures.length === 0,
+      message: materializationFailures.length === 0
+        ? `Lineage materialization validated for ${expectedComponents.length} expected components`
+        : materializationFailures.join("; "),
+    });
+    warnings.push(...materializationFailures);
+    runtimeReadinessIssues.push(...materializationFailures);
+  }
+
   // Check 8: Workspace files are readable
   if (hasWorkspace) {
     const wsFiles = workspaceDirs.flatMap((dir) => {
@@ -389,6 +442,90 @@ export function verify(targetDir: string, manifest?: Manifest): VerifyResult {
     c => c.passed || !["directory_exists", "workspace_exists"].includes(c.name)
   );
   return finalizeVerifyResult(checks, warnings, errors, runtimeReadinessIssues, valid);
+}
+
+function resolveLineageMetadata(
+  manifest: Manifest | undefined,
+  definition: HarnessDefinition | undefined
+): { parentImageId: string | null; childImageId: string; layerOrder: string[] } | null {
+  if (manifest) {
+    return {
+      parentImageId: manifest.lineage.parentImage?.imageId ?? null,
+      childImageId: manifest.image.imageId,
+      layerOrder: manifest.lineage.layerOrder,
+    };
+  }
+  if (definition) {
+    return {
+      parentImageId: definition.lineage.parentImage?.value ?? null,
+      childImageId: definition.image.imageId,
+      layerOrder: definition.lineage.layerOrder,
+    };
+  }
+  return null;
+}
+
+function validateLineageDeclaration(
+  parentImageId: string | null,
+  layerOrder: readonly string[],
+  childImageId: string
+): string[] {
+  const errors: string[] = [];
+  if (parentImageId === null) {
+    if (layerOrder.length !== 0) {
+      errors.push("Lineage layer order must be empty when no parent image is declared");
+    }
+    return errors;
+  }
+  if (layerOrder.length !== 2) {
+    errors.push("Lineage layer order must contain exactly two entries when a parent image is declared");
+    return errors;
+  }
+  if (layerOrder[0] !== parentImageId) {
+    errors.push("Lineage layer order must start with the declared parent image id");
+  }
+  if (layerOrder[1] !== childImageId) {
+    errors.push("Lineage layer order must end with the declared child image id");
+  }
+  return errors;
+}
+
+function validateLineageMaterialization(targetDir: string, expectedComponents: readonly HarnessComponent[]): string[] {
+  const failures: string[] = [];
+  for (const component of expectedComponents) {
+    switch (component) {
+      case "workspace":
+        if (!hasWorkspaceMaterialized(targetDir)) {
+          failures.push("Lineage materialization missing expected component: workspace");
+        }
+        break;
+      case "config":
+        if (openClawAdapter.findConfigFile(targetDir) === null) {
+          failures.push("Lineage materialization missing expected component: config");
+        }
+        break;
+      case "skills":
+        if (!hasSkillsMaterialized(targetDir)) {
+          failures.push("Lineage materialization missing expected component: skills");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return failures;
+}
+
+function hasWorkspaceMaterialized(targetDir: string): boolean {
+  return fs.existsSync(path.join(targetDir, "workspace"))
+    || fs.readdirSync(targetDir, { withFileTypes: true }).some((entry) => entry.isDirectory() && entry.name.startsWith("workspace-"));
+}
+
+function hasSkillsMaterialized(targetDir: string): boolean {
+  const workspaceRoots = ["workspace", ...fs.readdirSync(targetDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("workspace-"))
+    .map((entry) => entry.name)];
+  return workspaceRoots.some((workspaceRoot) => fs.existsSync(path.join(targetDir, workspaceRoot, "skills")));
 }
 
 function finalizeVerifyResult(

@@ -5,6 +5,7 @@ import { openClawAdapter } from "./adapters/openclaw.js";
 import { readHarnessDefinition, validateOperationalDefinitionLineage } from "./definition.js";
 import {
   HARNESS_DEFINITION_FILE,
+  HARNESS_DEFINITION_SCHEMA_VERSION,
   type HarnessDefinition,
   type OutputFormat,
   type WorkspaceBinding,
@@ -95,6 +96,7 @@ export function composeHarness(options: ComposeOptions): ComposeResult {
   copyEntries(parent.entries, targetDir);
   copyEntries(child.entries, targetDir);
   const warnings = rebindComposedConfig(targetDir, child.workspaceBindings);
+  writeComposedDefinitionSnapshot(targetDir, definition, resolveParentImageId(definition, parentDir));
 
   return {
     definitionFile,
@@ -196,6 +198,25 @@ function resolveParentImageId(definition: HarnessDefinition, parentDir: string):
     return readHarnessDefinition(parentDefinitionFile).image.imageId;
   }
   return path.basename(parentDir);
+}
+
+function writeComposedDefinitionSnapshot(
+  targetDir: string,
+  definition: HarnessDefinition,
+  parentImageId: string
+) {
+  const snapshot: HarnessDefinition = {
+    ...definition,
+    schemaVersion: HARNESS_DEFINITION_SCHEMA_VERSION,
+    lineage: {
+      parentImage: {
+        refType: "image-id",
+        value: parentImageId,
+      },
+      layerOrder: [parentImageId, definition.image.imageId],
+    },
+  };
+  fs.writeFileSync(path.join(targetDir, HARNESS_DEFINITION_FILE), `${JSON.stringify(snapshot, null, 2)}\n`);
 }
 
 function collectComposeSource(stateDir: string): ComposeSource {
