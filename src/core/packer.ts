@@ -4,29 +4,33 @@ import crypto from "node:crypto";
 import * as tar from "tar";
 import JSON5 from "json5";
 import type {
-  HarnessAdapterId,
-  BindingSemantics,
   HarnessComponent,
-  HarnessMetadata,
   HarnessImageLineage,
-  HarnessImageMetadata,
+  HarnessMetadata,
   Manifest,
   PackType,
-  PlacementContract,
-  RebindingContract,
   RiskLevel,
   SensitiveFlags,
   WorkspaceBinding,
-  WorkspaceBindingRule,
 } from "./types.js";
 import { SCHEMA_VERSION } from "./types.js";
 import { openClawAdapter } from "./adapters/openclaw.js";
+import {
+  createBindingSemantics,
+  DEFAULT_COMPONENT_ROOTS,
+  createImageMetadata,
+  createInitialLineage,
+  createPlacementContract,
+  createRebindingContract,
+  createResolvedLineage,
+} from "./builder.js";
 import {
   readHarnessDefinition,
   readHarnessDefinitionIfPresent,
   resolveDefinitionParentImage,
   validateOperationalDefinitionLineage,
 } from "./definition.js";
+import { copyDirRecursive, restoreImportedMaterialization } from "./materialization.js";
 import { assertValidManifest } from "./manifest.js";
 import { isForbiddenInPackType, validatePackTypeComponents } from "./pack-contract.js";
 
@@ -69,83 +73,8 @@ const ALWAYS_EXCLUDE = [
   "*.bak.*",
 ];
 
-const DEFAULT_COMPONENT_ROOTS = {
-  config: "config",
-  workspace: "workspace",
-  workspaces: "workspaces",
-  reports: "reports",
-  state: "state",
-} as const;
-
-const DEFAULT_PERSISTED_MANIFEST_PATH = ".harness-manifest.json";
-
 function generatePackId(): string {
   return crypto.randomUUID();
-}
-
-function createImageMetadata(packId: string, adapter: HarnessAdapterId): HarnessImageMetadata {
-  return {
-    imageId: packId,
-    adapter,
-  };
-}
-
-function createInitialLineage(): HarnessImageLineage {
-  return {
-    parentImage: null,
-    layerOrder: [],
-  };
-}
-
-function createResolvedLineage(packId: string, parentImage: HarnessImageLineage["parentImage"]): HarnessImageLineage {
-  if (parentImage === null) {
-    return {
-      parentImage: null,
-      layerOrder: [],
-    };
-  }
-
-  return {
-    parentImage,
-    layerOrder: [parentImage.imageId, packId],
-  };
-}
-
-function createBindingSemantics(workspaces: readonly WorkspaceBinding[]): BindingSemantics {
-  const workspaceRules: WorkspaceBindingRule[] = workspaces.map((workspace) => ({
-    agentId: workspace.agentId,
-    logicalPath: workspace.logicalPath,
-    targetRelativePath: workspace.isDefault ? "workspace" : workspace.logicalPath,
-    configTargets: workspace.isDefault
-      ? ["agents.defaults.workspace", `agents.list[${workspace.agentId}].workspace`]
-      : [`agents.list[${workspace.agentId}].workspace`],
-    required: true,
-  }));
-
-  return {
-    workspaces: workspaceRules,
-  };
-}
-
-function createPlacementContract(): PlacementContract {
-  return {
-    reservedRoots: [
-      DEFAULT_COMPONENT_ROOTS.config,
-      DEFAULT_COMPONENT_ROOTS.workspace,
-      DEFAULT_COMPONENT_ROOTS.workspaces,
-      DEFAULT_COMPONENT_ROOTS.reports,
-      DEFAULT_COMPONENT_ROOTS.state,
-    ],
-    componentRoots: { ...DEFAULT_COMPONENT_ROOTS },
-    persistedManifestPath: DEFAULT_PERSISTED_MANIFEST_PATH,
-  };
-}
-
-function createRebindingContract(bindings: BindingSemantics): RebindingContract {
-  return {
-    workspaceTargetMode: "absolute-path",
-    mutableConfigTargets: [...new Set(bindings.workspaces.flatMap((binding) => binding.configTargets))],
-  };
 }
 
 function assessRisk(sensitive: SensitiveFlags, packType: PackType): RiskLevel {
@@ -626,28 +555,7 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
 
     fs.mkdirSync(targetDir, { recursive: true });
 
-    // Restore workspace/ → workspace/
-    const wsSource = path.join(tempDir, manifest.placement.componentRoots.workspace);
-    if (fs.existsSync(wsSource)) {
-      copyDirRecursive(wsSource, path.join(targetDir, manifest.placement.componentRoots.workspace));
-    }
-
-    const workspacesSource = path.join(tempDir, manifest.placement.componentRoots.workspaces);
-    if (fs.existsSync(workspacesSource)) {
-      restoreAgentWorkspaces(workspacesSource, targetDir);
-    }
-
-    // Restore config/ → root level (config files go to stateDir root)
-    const configSource = path.join(tempDir, manifest.placement.componentRoots.config);
-    if (fs.existsSync(configSource)) {
-      restoreConfigDir(configSource, targetDir);
-    }
-
-    // Restore state/ → preserving nested structure
-    const stateSource = path.join(tempDir, manifest.placement.componentRoots.state);
-    if (fs.existsSync(stateSource)) {
-      restoreStateDir(stateSource, targetDir);
-    }
+    restoreImportedMaterialization(tempDir, targetDir, manifest);
 
     openClawAdapter.rebindImportedConfig(targetDir, manifest, warnings);
     fs.writeFileSync(
@@ -668,64 +576,5 @@ export async function importPack(options: ImportOptions): Promise<ImportResult> 
     return { targetDir, manifest, fileCount, warnings };
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
-  }
-}
-
-function restoreAgentWorkspaces(workspacesSource: string, targetDir: string) {
-  const entries = fs.readdirSync(workspacesSource, { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    copyDirRecursive(
-      path.join(workspacesSource, entry.name),
-      path.join(targetDir, `workspace-${entry.name}`)
-    );
-  }
-}
-
-/** Restore config directory: root-level configs go to stateDir root,
- *  subdirectories (hooks/, extensions/, etc.) preserve structure */
-function restoreConfigDir(configSource: string, targetDir: string) {
-  const entries = fs.readdirSync(configSource, { withFileTypes: true });
-  for (const entry of entries) {
-    const src = path.join(configSource, entry.name);
-    if (entry.isDirectory()) {
-      // Subdirectories like hooks/, extensions/ go to targetDir/<name>/
-      copyDirRecursive(src, path.join(targetDir, entry.name));
-    } else {
-      // Root config files go directly to targetDir/
-      fs.copyFileSync(src, path.join(targetDir, entry.name));
-    }
-  }
-}
-
-/** Restore state directory preserving nested structure:
- *  state/agents/<id>/... → agents/<id>/...
- *  state/credentials/... → credentials/...
- *  state/<file> → <file> */
-function restoreStateDir(stateSource: string, targetDir: string) {
-  const entries = fs.readdirSync(stateSource, { withFileTypes: true });
-  for (const entry of entries) {
-    const src = path.join(stateSource, entry.name);
-    const dest = path.join(targetDir, entry.name);
-    if (entry.isDirectory()) {
-      copyDirRecursive(src, dest);
-    } else {
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(src, dest);
-    }
-  }
-}
-
-function copyDirRecursive(src: string, dest: string) {
-  fs.mkdirSync(dest, { recursive: true });
-  const entries = fs.readdirSync(src, { withFileTypes: true });
-  for (const entry of entries) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
-    }
   }
 }

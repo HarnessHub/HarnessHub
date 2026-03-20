@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import JSON5 from "json5";
 import { openClawAdapter } from "./adapters/openclaw.js";
+import { createBindingSemantics } from "./builder.js";
 import { readHarnessDefinition, validateOperationalDefinitionLineage } from "./definition.js";
+import { rebindWorkspaceTargets } from "./materialization.js";
 import {
   HARNESS_DEFINITION_FILE,
   HARNESS_DEFINITION_SCHEMA_VERSION,
@@ -340,52 +341,9 @@ function intersectSets(left: Set<string>, right: Set<string>): string[] {
 }
 
 function rebindComposedConfig(targetDir: string, workspaceBindings: readonly WorkspaceBinding[]): string[] {
-  const configPath = openClawAdapter.findConfigFile(targetDir);
-  if (!configPath || workspaceBindings.length === 0) return [];
-
-  let parsed: any;
-  try {
-    parsed = JSON5.parse(fs.readFileSync(configPath, "utf8"));
-  } catch {
-    return [`Could not parse config for workspace rebinding: ${path.basename(configPath)}`];
-  }
-
-  if (!parsed || typeof parsed !== "object") {
-    return [];
-  }
-
-  if (!parsed.agents || typeof parsed.agents !== "object") {
-    parsed.agents = {};
-  }
-  if (!parsed.agents.defaults || typeof parsed.agents.defaults !== "object") {
-    parsed.agents.defaults = {};
-  }
-  if (!Array.isArray(parsed.agents.list)) {
-    parsed.agents.list = [];
-  }
-
-  let changed = false;
-  for (const workspace of workspaceBindings) {
-    const targetWorkspacePath = path.join(targetDir, workspace.isDefault ? "workspace" : workspace.logicalPath);
-    if (workspace.isDefault && parsed.agents.defaults.workspace !== targetWorkspacePath) {
-      parsed.agents.defaults.workspace = targetWorkspacePath;
-      changed = true;
-    }
-
-    const agentEntry = parsed.agents.list.find((entry: any) => {
-      const id = typeof entry?.id === "string" ? entry.id.trim().toLowerCase() : "";
-      return id === workspace.agentId;
-    });
-    if (agentEntry && agentEntry.workspace !== targetWorkspacePath) {
-      agentEntry.workspace = targetWorkspacePath;
-      changed = true;
-    }
-  }
-
-  if (!changed) return [];
-
-  fs.writeFileSync(configPath, `${JSON.stringify(parsed, null, 2)}\n`);
-  return [
-    `Rebound workspace paths in ${path.basename(configPath)} to ${targetDir}; JSON5 formatting/comments were normalized.`,
-  ];
+  return rebindWorkspaceTargets({
+    targetDir,
+    configPath: openClawAdapter.findConfigFile(targetDir),
+    bindings: createBindingSemantics(workspaceBindings).workspaces,
+  });
 }
