@@ -3,8 +3,8 @@ type: issue_state
 issue: 105
 task: .codex/pm/tasks/product-direction/add-harness-compose-for-one-local-parent-plus-child-materialization-path.md
 title: Add harness compose for one local parent-plus-child materialization path
-status: in_progress
-delivery_stage: implementing
+status: done
+delivery_stage: ready_to_deliver
 ---
 
 ## Summary

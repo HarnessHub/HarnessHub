@@ -3,7 +3,7 @@ type: task
 epic: product-direction
 slug: add-harness-compose-for-one-local-parent-plus-child-materialization-path
 title: Add harness compose for one local parent-plus-child materialization path
-status: in_progress
+status: done
 task_type: implementation
 issue: 105
 state_path: .codex/pm/issue-state/105-add-harness-compose-for-one-local-parent-plus-child-materialization-path.md
