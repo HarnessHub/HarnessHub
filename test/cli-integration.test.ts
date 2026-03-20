@@ -116,6 +116,38 @@ describe("harness CLI integration", () => {
     expect(manifest.lineage.layerOrder).toEqual(["base-agent", manifest.image.imageId]);
   });
 
+  it("composes a child state on top of a local parent path through the CLI", () => {
+    const repoDir = path.join(tmpDir, "compose-repo");
+    const parentDir = path.join(tmpDir, "compose-parent");
+    const childDir = path.join(tmpDir, "compose-child");
+    const outputDir = path.join(tmpDir, "compose-output");
+    fs.mkdirSync(repoDir, { recursive: true });
+    createTemplateSource(parentDir);
+    createTemplateSource(childDir);
+
+    fs.writeFileSync(path.join(childDir, "workspace", "AGENTS.md"), "# Child Agent\n");
+    fs.writeFileSync(path.join(childDir, "openclaw.json"), JSON.stringify({
+      agents: {
+        defaults: { workspace: path.join(childDir, "workspace") },
+        list: [{ id: "main", default: true, workspace: path.join(childDir, "workspace") }],
+      },
+    }, null, 2));
+
+    const initResult = runCli(["init", "--image-id", "child-agent", "--parent-path", "../compose-parent", "-f", "json"], repoDir);
+    expect(initResult.status).toBe(0);
+
+    const composeResult = runCli(["compose", "-p", childDir, "-o", outputDir, "-f", "json"], repoDir);
+    expect(composeResult.status).toBe(0);
+
+    const data = JSON.parse(composeResult.stdout);
+    expect(data.success).toBe(true);
+    expect(data.parentDir).toBe(parentDir);
+    expect(fs.readFileSync(path.join(outputDir, "workspace", "AGENTS.md"), "utf8")).toContain("Child Agent");
+
+    const composedConfig = JSON.parse(fs.readFileSync(path.join(outputDir, "openclaw.json"), "utf8"));
+    expect(composedConfig.agents.defaults.workspace).toBe(path.join(outputDir, "workspace"));
+  });
+
   it("inspects a valid instance through the CLI", () => {
     const sourceDir = path.join(tmpDir, "source");
     createTemplateSource(sourceDir);

@@ -5,6 +5,7 @@ import os from "node:os";
 import * as tar from "tar";
 import { inspect } from "../src/core/scanner.js";
 import { exportPack, importPack } from "../src/core/packer.js";
+import { composeHarness } from "../src/core/compose.js";
 import { verify } from "../src/core/verifier.js";
 
 /** Create a minimal OpenClaw instance with actual directory structure */
@@ -237,6 +238,134 @@ describe("inspect", () => {
 });
 
 describe("export + import", () => {
+  it("composes a local child state on top of a parent materialization", () => {
+    const parentDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "parent"));
+    const childDir = createMockInstance(path.join(tmpDir, "child"));
+    const repoDir = path.join(tmpDir, "repo");
+    const outputDir = path.join(tmpDir, "composed");
+
+    fs.mkdirSync(repoDir, { recursive: true });
+    fs.writeFileSync(path.join(repoDir, "harness.definition.json"), JSON.stringify({
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-agent", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "path", value: "../parent" },
+        layerOrder: ["../parent", "child-agent"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    }, null, 2));
+
+    fs.writeFileSync(path.join(childDir, "workspace", "AGENTS.md"), "# Child Agent\n");
+    fs.writeFileSync(path.join(childDir, "workspace", "CHILD.md"), "# Child Extra\n");
+    fs.writeFileSync(path.join(childDir, "openclaw.json"), JSON.stringify({
+      agents: {
+        defaults: { workspace: path.join(childDir, "workspace") },
+        list: [{ id: "main", default: true, workspace: path.join(childDir, "workspace") }],
+      },
+    }, null, 2));
+
+    const result = composeHarness({
+      cwd: repoDir,
+      sourcePath: childDir,
+      outputPath: outputDir,
+    });
+
+    expect(result.targetDir).toBe(outputDir);
+    expect(result.parentImageId).toBe("parent");
+    expect(fs.existsSync(path.join(outputDir, "workspace", "AGENTS.md"))).toBe(true);
+    expect(fs.readFileSync(path.join(outputDir, "workspace", "AGENTS.md"), "utf8")).toContain("Child Agent");
+    expect(fs.existsSync(path.join(outputDir, "workspace", "SOUL.md"))).toBe(true);
+    expect(fs.existsSync(path.join(outputDir, "credentials", "oauth.json"))).toBe(true);
+
+    const composedConfig = JSON.parse(fs.readFileSync(path.join(outputDir, "openclaw.json"), "utf8"));
+    expect(composedConfig.agents.defaults.workspace).toBe(path.join(outputDir, "workspace"));
+  });
+
+  it("fails compose when parent and child overlap on an unsupported passthrough root", () => {
+    const parentDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "parent-conflict"));
+    const childDir = createMockInstanceWithSensitiveData(path.join(tmpDir, "child-conflict"));
+    const repoDir = path.join(tmpDir, "repo-conflict");
+
+    fs.mkdirSync(repoDir, { recursive: true });
+    fs.writeFileSync(path.join(repoDir, "harness.definition.json"), JSON.stringify({
+      schemaVersion: "0.2.0",
+      kind: "harness-definition",
+      image: { imageId: "child-agent", adapter: "openclaw" },
+      lineage: {
+        parentImage: { refType: "path", value: "../parent-conflict" },
+        layerOrder: ["../parent-conflict", "child-agent"],
+      },
+      harness: {
+        intent: "agent-runtime-environment",
+        targetProduct: "openclaw",
+        components: ["config", "workspace", "skills", "agents"],
+      },
+      bindings: {
+        workspaces: [
+          {
+            agentId: "main",
+            logicalPath: "workspace",
+            targetRelativePath: "workspace",
+            configTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+            required: true,
+          },
+        ],
+      },
+      rebinding: {
+        workspaceTargetMode: "absolute-path",
+        mutableConfigTargets: ["agents.defaults.workspace", "agents.list[main].workspace"],
+      },
+      source: {
+        bootstrap: "starter",
+        detectedProduct: null,
+        configPath: null,
+      },
+      verify: {
+        readinessTarget: "runtime_ready",
+        expectedComponents: ["config", "workspace", "skills"],
+        requireWorkspaceBindings: true,
+      },
+    }, null, 2));
+
+    expect(() => composeHarness({
+      cwd: repoDir,
+      sourcePath: childDir,
+      outputPath: path.join(tmpDir, "composed-conflict"),
+    })).toThrow(/Unsupported component overlap during compose: \.env, agents, credentials, cron, memory/);
+
+    expect(fs.existsSync(parentDir)).toBe(true);
+  });
+
   it("exports a template pack", async () => {
     const instanceDir = createMockInstance(path.join(tmpDir, "instance"));
     const outputFile = path.join(tmpDir, "test.harness");

@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { composeCommand } from "./commands/compose.js";
 import { initCommand } from "./commands/init.js";
 import { inspectCommand } from "./commands/inspect.js";
 import { exportCommand } from "./commands/export.js";
@@ -19,6 +20,7 @@ export function createProgram(): Command {
     .version("0.1.0");
 
   program.addCommand(initCommand);
+  program.addCommand(composeCommand);
   program.addCommand(inspectCommand);
   program.addCommand(exportCommand);
   program.addCommand(importCommand);
