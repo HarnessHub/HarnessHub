@@ -4,7 +4,8 @@ issue: 108
 task: .codex/pm/tasks/product-direction/refactor-builder-and-materialization-boundaries-for-definition-driven-v0-2-0-flows.md
 title: Refactor builder and materialization boundaries for definition-driven v0.2.0 flows
 status: done
-delivery_stage: ready_to_deliver
+delivery_stage: pr_opened
+pr_url: https://github.com/HarnessHub/HarnessHub/pull/117
 ---
 
 ## Summary
